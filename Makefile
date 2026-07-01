@@ -7,7 +7,7 @@
 # collapse into plain `npm run` invocations. The publish flow runs the full
 # quality gate (lint, typecheck, test, build) before pushing to the registry.
 
-.PHONY: help install ci build typecheck lint test test-watch \
+.PHONY: help install ci build typecheck lint test test-watch coverage \
         pack-dry release-check publish publish-dry clean
 
 # Default
@@ -41,6 +41,9 @@ test: ## Run Vitest once
 
 test-watch: ## Run Vitest in watch mode
 	npm run test:watch
+
+coverage: ## Run Vitest with a v8 coverage report
+	npm run test:coverage
 
 # ─── Package ─────────────────────────────────────────────────────────
 

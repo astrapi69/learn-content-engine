@@ -10,6 +10,7 @@ import {
   singleJsonLessonAdapter,
   type LessonSetContext,
   type LessonSourceAdapter,
+  type ParsedSetBook,
 } from "./content-engine.js";
 import type { ContentSetSource } from "./types/index.js";
 
@@ -108,6 +109,12 @@ describe("Content-Engine — canonical set-entry projection", () => {
     ).toEqual({ target: "es", source: "de" });
   });
 
+  it("falls back to an empty target and ``en`` source when nothing is declared", () => {
+    // Boundary: neither ``target_language`` nor the ``language`` alias is
+    // present, so target resolves to the final ``?? ""`` fallback.
+    expect(resolveLanguagePair({})).toEqual({ target: "", source: "en" });
+  });
+
   it("falls back to ``sets/{id}`` when no path is declared", () => {
     expect(setBasePath({ id: "fr-a1" })).toBe("sets/fr-a1");
     expect(setBasePath({ id: "fr-a1", path: "sets/de/fr-a1" })).toBe("sets/de/fr-a1");
@@ -121,6 +128,23 @@ describe("Content-Engine — canonical set-entry projection", () => {
       author: "X",
       url: null,
       asin: null,
+    });
+  });
+
+  it("keeps string url + asin and coerces a non-string author to null", () => {
+    // Boundary between the ``typeof === "string" ? ... : null`` arms:
+    // url/asin hit the string arm, author (null) hits the null arm.
+    const book = asContentSetBook({
+      title: "A Book",
+      author: null,
+      url: "https://example.test/book",
+      asin: "B000000000",
+    } as ParsedSetBook);
+    expect(book).toEqual({
+      title: "A Book",
+      author: null,
+      url: "https://example.test/book",
+      asin: "B000000000",
     });
   });
 
@@ -175,5 +199,45 @@ describe("Content-Engine — canonical set-entry projection", () => {
     );
     expect(entry.update_available).toBe(true);
     expect(entry.cached_version).toBe("1.0.0");
+  });
+
+  it("does not mark update_available when the cached version matches (boundary)", () => {
+    // The boundary between "no cache -> false" and "differs -> true":
+    // a non-null cache equal to the current version stays false.
+    const entry = asContentSetEntry(
+      SOURCE,
+      { id: "fr-a1", title: "French A1", target_language: "fr", level: "A1", version: "1.0.0", lesson_count: 10 },
+      "1.0.0",
+    );
+    expect(entry.update_available).toBe(false);
+    expect(entry.cached_version).toBe("1.0.0");
+  });
+
+  it("passes through downloaded_at, explicit status and optional set fields", () => {
+    const entry = asContentSetEntry(
+      SOURCE,
+      {
+        id: "fr-a1",
+        title: "French A1",
+        title_native: "Français A1",
+        target_language: "fr",
+        source_language: "de",
+        level: "A1",
+        version: "1.0.0",
+        lesson_count: 10,
+        description: "Beginner French",
+        tags: ["french", "a1"],
+        cover_image: "cover.png",
+      },
+      null,
+      "2026-07-01T00:00:00Z",
+      "deferred",
+    );
+    expect(entry.downloaded_at).toBe("2026-07-01T00:00:00Z");
+    expect(entry.status).toBe("deferred");
+    expect(entry.title_native).toBe("Français A1");
+    expect(entry.description).toBe("Beginner French");
+    expect(entry.tags).toEqual(["french", "a1"]);
+    expect(entry.cover_image).toBe("cover.png");
   });
 });
