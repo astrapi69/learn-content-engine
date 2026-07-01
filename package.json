@@ -1,0 +1,63 @@
+{
+  "name": "learn-content-engine",
+  "version": "0.1.0",
+  "description": "Framework-agnostic TypeScript engine that parses lesson content from pluggable sources into a canonical lesson object.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Asterios Raptis",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/astrapi69/learn-content-engine.git"
+  },
+  "homepage": "https://github.com/astrapi69/learn-content-engine#readme",
+  "bugs": {
+    "url": "https://github.com/astrapi69/learn-content-engine/issues"
+  },
+  "keywords": [
+    "adaptive-learner",
+    "content",
+    "lesson",
+    "parser",
+    "content-engine",
+    "spaced-repetition",
+    "typescript"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "yaml": "^2.9.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.13.0",
+    "@types/node": "^22.7.0",
+    "eslint": "^9.13.0",
+    "typescript": "^5.6.0",
+    "typescript-eslint": "^8.10.0",
+    "vitest": "^2.1.0"
+  }
+}
