@@ -15,11 +15,27 @@ EXP-042). Tracks the lesson schema at **v1.5**.
 
 ```bash
 npm install learn-content-engine
-# or pin to a git revision (no npm registry needed):
-npm install github:astrapi69/learn-content-engine
 ```
 
 ESM, ships TypeScript declarations, Node >= 18.
+
+### As a git dependency
+
+For development loops against an unreleased revision, or when consuming a fork,
+install straight from GitHub, pinned to a commit or tag for reproducibility:
+
+```jsonc
+// package.json of the host app
+{
+  "dependencies": {
+    "learn-content-engine": "github:astrapi69/learn-content-engine#<commit-or-tag>"
+  }
+}
+```
+
+`dist/` is not committed, so on install npm runs the package's `prepare` script
+(`npm run build`) to compile `dist/` (JS + `.d.ts`) from source in the checkout.
+No extra step is needed in the host - a plain `npm install` builds the engine.
 
 ## Quick example
 
