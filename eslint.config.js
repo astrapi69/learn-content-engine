@@ -19,4 +19,14 @@ export default tseslint.config(
       "@typescript-eslint/consistent-type-imports": "error",
     },
   },
+  {
+    // Node-run helper scripts (on-demand tooling, not part of the library build).
+    files: ["scripts/**/*.mjs"],
+    languageOptions: {
+      globals: {
+        process: "readonly",
+        console: "readonly",
+      },
+    },
+  },
 );

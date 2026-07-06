@@ -8,7 +8,7 @@
 # quality gate (lint, typecheck, test, build) before pushing to the registry.
 
 .PHONY: help install ci build typecheck lint test test-watch coverage \
-        pack-dry release-check publish publish-dry clean
+        conformance-real pack-dry release-check publish publish-dry clean
 
 # Default
 help: ## Show all targets
@@ -44,6 +44,11 @@ test-watch: ## Run Vitest in watch mode
 
 coverage: ## Run Vitest with a v8 coverage report
 	npm run test:coverage
+
+# ─── Conformance (on-demand, needs network) ──────────────────────────
+
+conformance-real: build ## Clone both content repos (read-only) and run every set + lesson through the full engine pipeline
+	node scripts/conformance-real.mjs
 
 # ─── Package ─────────────────────────────────────────────────────────
 
