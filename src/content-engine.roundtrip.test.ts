@@ -11,7 +11,7 @@ import {
   setBasePath,
   type LessonSetContext,
 } from "./content-engine.js";
-import type { ContentSetSource } from "./types/index.js";
+import type { ContentLessonInlineExample, ContentSetSource } from "./types/index.js";
 
 /**
  * Round-trip / integration test for the content-engine boundary.
@@ -146,5 +146,48 @@ describe("Content-Engine round-trip — set context drives lesson parse", () => 
         source: pair.expectSource,
       });
     }
+  });
+});
+
+describe("Content-Engine round-trip — v1.5 inline examples (additive)", () => {
+  const manifest = parseManifest(readFixture("manifest.yaml"));
+  const frContext = contextFromEntry(asContentSetEntry(SOURCE, manifest!.sets![0]!, null));
+
+  it("carries examples unchanged onto a theory step (text + code), typed", () => {
+    const lesson = parseLesson(readFixture("lessons/with-examples.json"), frContext);
+    const theory = lesson.steps[0]!;
+    // The canonical type now exposes ``examples`` — typed access, not a cast.
+    const examples: ContentLessonInlineExample[] = theory.examples ?? [];
+    expect(examples).toEqual([
+      { title: "Plain sentence", content: "Squares of 0..4 are 0, 1, 4, 9, 16." },
+      { title: "Python", language: "python", content: "squares = [n * n for n in range(5)]" },
+    ]);
+    // The code example is distinguished from plain text by its ``language``.
+    expect(examples[0]!.language).toBeUndefined();
+    expect(examples[1]!.language).toBe("python");
+  });
+
+  it("coexists with the v1.4 example_url on the same step", () => {
+    const lesson = parseLesson(readFixture("lessons/with-examples.json"), frContext);
+    const theory = lesson.steps[0]!;
+    expect(theory.example_url).toBe("https://example.test/list-comprehensions");
+    expect(theory.examples).toHaveLength(2);
+  });
+
+  it("carries examples onto an exercise as well", () => {
+    const lesson = parseLesson(readFixture("lessons/with-examples.json"), frContext);
+    const exercise = lesson.steps[1]!.exercise!;
+    const examples: ContentLessonInlineExample[] = exercise.examples ?? [];
+    expect(examples).toEqual([
+      { language: "python", content: "cubes = [n ** 3 for n in range(5)]" },
+    ]);
+  });
+
+  it("stays backward-compatible: a 1.4 lesson without examples is unchanged", () => {
+    // Abwaertskompatibilitaet as an assertion: an existing fixture that predates
+    // v1.5 parses fine and simply has no ``examples`` on its steps.
+    const lesson = parseLesson(readFixture("lessons/inherits-context.json"), frContext);
+    expect(lesson.steps[0]!.examples).toBeUndefined();
+    expect(lesson.id).toBe("01-greetings");
   });
 });

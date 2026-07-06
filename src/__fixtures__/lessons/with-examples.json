@@ -1,0 +1,36 @@
+{
+  "id": "04-with-examples",
+  "title": "Inline Examples (schema v1.5)",
+  "description": "A lesson that exercises the additive v1.5 ``examples`` field on BOTH a theory step and an exercise, with a plain-text example and a syntax-highlighted code example. Coexists with the v1.4 example_url on the same step.",
+  "estimated_minutes": 9,
+  "steps": [
+    {
+      "id": "theory-1",
+      "type": "theory",
+      "body": "A list comprehension builds a list from an iterable in one expression.",
+      "example_url": "https://example.test/list-comprehensions",
+      "examples": [
+        { "title": "Plain sentence", "content": "Squares of 0..4 are 0, 1, 4, 9, 16." },
+        { "title": "Python", "language": "python", "content": "squares = [n * n for n in range(5)]" }
+      ]
+    },
+    {
+      "id": "exercise-1",
+      "type": "exercise",
+      "exercise": {
+        "id": "ex-1",
+        "type": "free_text",
+        "prompt": "Write a comprehension that squares 0..4.",
+        "accept": ["[n*n for n in range(5)]"],
+        "card_ids": [],
+        "distractors": [],
+        "examples": [
+          { "language": "python", "content": "cubes = [n ** 3 for n in range(5)]" }
+        ]
+      }
+    }
+  ],
+  "cards": [
+    { "id": "comprehension", "front": "list comprehension", "back": "one-expression list builder", "media_type": "text", "difficulty": 2 }
+  ]
+}
