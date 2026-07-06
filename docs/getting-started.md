@@ -19,6 +19,9 @@ Or pin to a git revision (no npm needed):
 npm install github:astrapi69/learn-content-engine
 ```
 
+On a git install npm runs the package's `prepare` script (`npm run build`) to
+compile `dist/` from source - a plain `npm install` is enough, no extra step.
+
 The package is ESM and ships TypeScript declarations. Node >= 18.
 
 ## Five-minute example
