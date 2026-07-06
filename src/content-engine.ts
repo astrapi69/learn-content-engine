@@ -7,7 +7,7 @@
  * import was repointed at the library's own `./types`.
  *
  * The **canonical internal format** is the single-JSON lesson object
- * ({@link ContentLesson}, schema_version 1.4, EXP-039). A **source adapter**
+ * ({@link ContentLesson}, schema_version 1.5, EXP-039). A **source adapter**
  * turns raw source data into that canonical object; today exactly one adapter
  * exists (single-JSON). The boundary is drawn so that a future, newly-defined
  * multi-file source format COULD plug in here as an additional adapter without
@@ -189,6 +189,11 @@ export function asContentSetEntry(
  * A lesson file does not carry the language pair / domain — the parent set is
  * authoritative — so those are injected from ``context`` when absent (a lesson
  * that declares its own, e.g. an exported standalone, keeps it).
+ *
+ * Only the language pair + domain are re-mapped here; every other field
+ * (``steps``, ``cards``, and the v1.5 ``examples`` carried on theory steps and
+ * exercises) passes through the spread unchanged, so 1.4 and 1.5 lessons are
+ * both accepted and the optional ``examples`` reaches the canonical object.
  */
 export const singleJsonLessonAdapter: LessonSourceAdapter = (rawText, context) => {
   const parsed = JSON.parse(rawText) as ContentLesson;

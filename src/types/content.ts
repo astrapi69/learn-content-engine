@@ -22,6 +22,7 @@ import type {
   ClozeBlank as GeneratedClozeBlank,
   Direction as GeneratedDirection,
   Exercise as GeneratedExercise,
+  InlineExample as GeneratedInlineExample,
   Lesson as GeneratedLesson,
   LessonResource as GeneratedLessonResource,
   LessonStep as GeneratedLessonStep,
@@ -114,16 +115,27 @@ export type ContentLessonClozeBlank = GeneratedClozeBlank;
  *  content JSON). */
 export type ContentLessonResource = GeneratedLessonResource;
 
+/** One inline worked example (schema v1.5, additive). Carries example content
+ *  INLINE (a sample sentence, or a syntax-highlighted code snippet when
+ *  ``language`` is set) — distinct from ``LessonStep.example_url`` (v1.4),
+ *  which links OUT to an external illustration; the two may coexist. Appears
+ *  on {@link ContentLessonStep} and {@link ContentLessonExercise} as
+ *  ``examples``. */
+export type ContentLessonInlineExample = GeneratedInlineExample;
+
 /** The smallest learnable unit. ``tags`` is always present at runtime
  *  (``default_factory=list``). */
 export type ContentLessonCard = RequireKeys<GeneratedCard, "tags">;
 
 /** One exercise step. ``card_ids`` + ``distractors`` are always present at
- *  runtime (``default_factory=list``). */
+ *  runtime (``default_factory=list``). Carries the optional v1.5 ``examples``
+ *  ({@link ContentLessonInlineExample}[]) inherited from the generated shape. */
 export type ContentLessonExercise = RequireKeys<GeneratedExercise, "card_ids" | "distractors">;
 
 /** One step in the lesson sequence. Re-wires ``exercise`` to the
- *  consumer-facing {@link ContentLessonExercise}. */
+ *  consumer-facing {@link ContentLessonExercise}. A theory step carries the
+ *  optional v1.5 ``examples`` ({@link ContentLessonInlineExample}[]) alongside
+ *  the v1.4 ``example_url``. */
 export type ContentLessonStep = Omit<GeneratedLessonStep, "exercise"> & {
   exercise?: ContentLessonExercise | null;
 };
