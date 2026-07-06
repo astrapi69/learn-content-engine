@@ -1,0 +1,23 @@
+{
+  "id": "conf-cloze-select",
+  "title": "Cloze (select mode, single multiple choice)",
+  "steps": [
+    {
+      "id": "s1",
+      "type": "exercise",
+      "exercise": {
+        "id": "c1",
+        "type": "cloze",
+        "cloze_mode": "select",
+        "prompt": "Choose the correct completion.",
+        "card_ids": [],
+        "distractors": ["Germany", "Spain"],
+        "sentence": "Paris is the capital of ___.",
+        "blanks": [
+          { "accept": ["France"] }
+        ]
+      }
+    }
+  ],
+  "cards": []
+}

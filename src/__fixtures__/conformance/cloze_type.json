@@ -1,0 +1,24 @@
+{
+  "id": "conf-cloze-type",
+  "title": "Cloze (type mode)",
+  "steps": [
+    {
+      "id": "s1",
+      "type": "exercise",
+      "exercise": {
+        "id": "c1",
+        "type": "cloze",
+        "cloze_mode": "type",
+        "prompt": "Fill in the blanks.",
+        "card_ids": [],
+        "distractors": [],
+        "sentence": "Je ___ etudiant et je ___ ici.",
+        "blanks": [
+          { "accept": ["suis"] },
+          { "accept": ["reste"], "hint": "to stay" }
+        ]
+      }
+    }
+  ],
+  "cards": []
+}

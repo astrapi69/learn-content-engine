@@ -1,0 +1,21 @@
+{
+  "id": "conf-cloze-multiselect",
+  "title": "Cloze (multiselect, select all that apply)",
+  "steps": [
+    {
+      "id": "s1",
+      "type": "exercise",
+      "exercise": {
+        "id": "c1",
+        "type": "cloze",
+        "cloze_mode": "multiselect",
+        "prompt": "Select all that apply.",
+        "card_ids": [],
+        "sentence": "Which of these are prime numbers?",
+        "accept": ["2", "3", "5"],
+        "distractors": ["4", "6"]
+      }
+    }
+  ],
+  "cards": []
+}

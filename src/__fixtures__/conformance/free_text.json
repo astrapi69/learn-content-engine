@@ -1,0 +1,21 @@
+{
+  "id": "conf-free-text",
+  "title": "Free text exercise",
+  "steps": [
+    {
+      "id": "s1",
+      "type": "exercise",
+      "exercise": {
+        "id": "f1",
+        "type": "free_text",
+        "prompt": "How do you say 'hallo' in French?",
+        "card_ids": ["bonjour"],
+        "distractors": [],
+        "accept": ["bonjour", "Bonjour"]
+      }
+    }
+  ],
+  "cards": [
+    { "id": "bonjour", "front": "bonjour", "back": "hallo" }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "id": "conf-matching",
+  "title": "Matching exercise",
+  "steps": [
+    {
+      "id": "s1",
+      "type": "exercise",
+      "exercise": {
+        "id": "m1",
+        "type": "matching",
+        "prompt": "Match each greeting to its translation.",
+        "card_ids": ["bonjour", "merci"],
+        "distractors": [],
+        "pairs": [
+          { "left": "bonjour", "right": "hallo" },
+          { "left": "merci", "right": "danke" }
+        ]
+      }
+    }
+  ],
+  "cards": [
+    { "id": "bonjour", "front": "bonjour", "back": "hallo" },
+    { "id": "merci", "front": "merci", "back": "danke" }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "id": "conf-field-variants",
+  "title": "Field variants across schema versions",
+  "description": "Covers the 1.2 direction field, the 1.4 example_url/example_label pair, the 1.5 inline examples (text + code, on theory AND exercise), lesson resources, card token_roles and a code media_type card.",
+  "target_language": "fr",
+  "source_language": "de",
+  "domain": "language",
+  "estimated_minutes": 12,
+  "steps": [
+    {
+      "id": "t1",
+      "type": "theory",
+      "title": "Greetings",
+      "body": "**Bonjour** is the standard daytime greeting.",
+      "example_url": "https://example.test/greetings",
+      "example_label": "See a worked example",
+      "examples": [
+        { "title": "Sample sentence", "content": "Bonjour, comment ca va ?" },
+        { "title": "Code", "language": "python", "content": "print('bonjour')" }
+      ]
+    },
+    {
+      "id": "e1",
+      "type": "exercise",
+      "theory_ref": "t1",
+      "exercise": {
+        "id": "ex1",
+        "type": "free_text",
+        "prompt": "Translate 'hallo' into French.",
+        "direction": "source_to_target",
+        "card_ids": ["bonjour"],
+        "distractors": [],
+        "accept": ["bonjour"],
+        "examples": [
+          { "language": "python", "content": "greeting = 'bonjour'" }
+        ]
+      }
+    }
+  ],
+  "cards": [
+    {
+      "id": "bonjour",
+      "front": "bonjour",
+      "back": "hallo",
+      "media_type": "text",
+      "difficulty": 1,
+      "tags": ["greeting"],
+      "token_roles": [{ "token": "bonjour", "role": "noun" }]
+    },
+    {
+      "id": "list-comp",
+      "front": "list comprehension",
+      "back": "a one-expression list builder",
+      "media_type": "code",
+      "code_language": "python",
+      "code_snippet": "[n * n for n in range(5)]",
+      "expected_output": "[0, 1, 4, 9, 16]"
+    }
+  ],
+  "resources": [
+    { "type": "article", "title": "Further reading", "url": "https://example.test/reading" }
+  ]
+}

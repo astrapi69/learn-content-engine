@@ -1,0 +1,20 @@
+{
+  "id": "conf-word-tiles",
+  "title": "Word tiles exercise",
+  "steps": [
+    {
+      "id": "s1",
+      "type": "exercise",
+      "exercise": {
+        "id": "w1",
+        "type": "word_tiles",
+        "prompt": "Arrange the tiles into a sentence.",
+        "card_ids": [],
+        "distractors": [],
+        "tiles": ["je", "suis", "ici"],
+        "accept_orderings": [[0, 1, 2]]
+      }
+    }
+  ],
+  "cards": []
+}
