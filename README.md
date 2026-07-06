@@ -84,9 +84,51 @@ const lesson = parseLesson(rawText, setContext, myAdapter);
 | `resolveLanguagePair` | fn | language-pair resolution (legacy alias + `en` default) |
 | `setBasePath` | fn | repo-relative base dir for a set |
 | `asContentSetBook` | fn | project a manifest book block → `ContentSetBook \| null` |
+| `validateLesson` | fn | validate a lesson against the bundled schema + semantic rules → `ValidationResult` |
+| `validateManifest` | fn | validate a manifest against the bundled schema (legacy alias normalized) |
 | `ContentLesson`, `ContentSetEntry`, `ContentSetBook`, `ContentSetSource`, … | types | the canonical internal format |
 | `ContentLessonInlineExample` | type | one inline worked example (schema v1.5) on a theory step or exercise |
+| `ValidationResult`, `ValidationIssue` | types | the `validate*` return shape (`{ valid, errors[] }`) |
 | `LessonSetContext`, `LessonSourceAdapter`, `ParsedManifest`, `ParsedSet` | types | adapter + manifest surface |
+
+The bundled JSON-Schema artifact ships too, so a content repo can mirror against
+it directly: `import schema from "learn-content-engine/schema/lesson.schema.json"`.
+
+## Conformance
+
+The engine proves it carries the **whole** lesson format, so third parties can
+build their own apps (and content repos) on it without depending on the app.
+
+- **`parse` is permissive** (`JSON.parse` + set-context injection); **`validate`
+  is an explicit, opt-in step**. The consumer decides when to enforce the format:
+
+  ```ts
+  import { validateLesson } from "learn-content-engine";
+
+  const result = validateLesson(JSON.parse(rawLessonJson));
+  if (!result.valid) console.error(result.errors); // [{ path, message }, …]
+  ```
+
+- **Strict, by design.** `validate` runs the bundled `schema/lesson.schema.json`
+  (draft 2020-12, `additionalProperties: false`) **plus** the cross-field
+  semantic rules that mirror the app's Pydantic `model_validator`s (per-type
+  required fields, cloze marker/blank count, `multiselect` disjointness, picture
+  "exactly one correct", card referential integrity). Unknown fields are
+  **rejected** — deliberate parity with the app, which is what makes this a
+  trustworthy format reference.
+- **CI truth = vendored fixtures.** The suite carries a valid fixture for every
+  `ExerciseType` and mode (`matching`, `picture_choice`, `free_text`,
+  `word_tiles`, `cloze` `type` / `select` / `multiselect`) plus a field-variant
+  fixture, each asserted to round-trip typed **and** validate; a negative suite
+  asserts every rejection class. These run offline in `npm test`.
+- **Ultimate proof = real content.** `make conformance-real` clones both public
+  content repos (read-only, depth 1) and drives every set and lesson through the
+  full pipeline, counting exercises by type. On-demand (needs network), not part
+  of the mandatory CI.
+
+  ```bash
+  make conformance-real
+  ```
 
 ## Scope (what this library deliberately is NOT)
 
@@ -102,12 +144,14 @@ import boundary is the extraction seam: consumer → engine, never the reverse.
 
 ## Status — migration pending
 
-This library is the **extracted** engine. The Adaptive Learner app does **not**
-consume it yet; that migration is follow-up work (EXP-042 section 7). Until then
-the parse/transform logic exists in **two** places — the original in the app
-repo (`frontend/src/lib/content/engine/`) and this library — kept in sync by
-hand. This package is configured to be publishable but has **not** been
-published to npm.
+This library is the **extracted** engine, published to npm. The Adaptive Learner
+app does **not** consume it yet; that migration is follow-up work (EXP-042
+section 7). Until then the parse/transform logic exists in **two** places — the
+original in the app repo (`frontend/src/lib/content/engine/`) and this library —
+kept in sync by the [schema-sync procedure](#schema-sync-from-adaptive-learner).
+A further follow-up decouples the content repos: they mirror their shape-parity
+source against this engine's bundled `schema/lesson.schema.json` instead of the
+app (app-vs-engine then becomes the new parity test).
 
 ## Develop
 
@@ -135,18 +179,30 @@ drift silently. Keep drift a visible, defined step:
    generated file — it is `GENERATED … DO NOT EDIT`):
    `cp adaptive-learner/frontend/src/storage/types/content/lesson-schema.generated.ts src/types/lesson-schema.generated.ts`
    (the app regenerates it via `make sync-schema`).
-3. If the bump adds a field, surface it on the canonical `Content*` types in
+3. Copy the **bundled JSON-Schema artifacts** verbatim (these ship in the
+   package and are what `validate*` and the content repos mirror against):
+   `cp adaptive-learner/schema/lesson.schema.json schema/lesson.schema.json` and
+   `cp adaptive-learner/schema/content-manifest.schema.json schema/content-manifest.schema.json`.
+   If a bump adds a semantic (cross-field) rule, mirror it in `src/validate.ts`.
+4. If the bump adds a field, surface it on the canonical `Content*` types in
    `src/types/content.ts` (a thin alias / doc note; the field usually flows in
    automatically because the aliases derive from the generated shape) and export
    it through `src/types/index.ts` + `src/index.ts`.
-4. Bump the `schema_version` doc in `src/content-engine.ts`, extend the fixtures
+5. Bump the `schema_version` doc in `src/content-engine.ts`, extend the fixtures
    under `src/__fixtures__/` with the new field, and add round-trip +
    backward-compatibility tests.
-5. Version-bump the library (additive field → minor) and record it in the
+6. Version-bump the library (additive field → minor) and record it in the
    changelog below.
 
 ## Changelog
 
+- **0.3.0** — Conformance suite: an explicit, opt-in `validateLesson` /
+  `validateManifest` API (`ajv` against the bundled, strict
+  `schema/lesson.schema.json` + semantic rules mirroring the app's
+  `model_validator`s), the schema shipped as a package artifact, a vendored
+  fixture per `ExerciseType`/mode with round-trip + negative suites, and a
+  `make conformance-real` target that runs the full pipeline over both content
+  repos (513 lessons, 100% parse). Additive; 1.4/1.5 lessons stay valid.
 - **0.2.0** — Schema nachzug 1.4 → 1.5: additive `examples`
   (`ContentLessonInlineExample`: `content` + optional `language` / `title`) on
   theory steps and exercises, coexisting with the v1.4 `example_url`. Parity
