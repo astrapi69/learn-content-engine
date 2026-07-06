@@ -56,6 +56,28 @@ of the generated file says `DO NOT EDIT` for this reason.
 - One commit per logical change.
 - Do not `--amend` + force-push an open PR; add a new commit instead.
 
+## Releasing
+
+**Every** version ships through the same ordered steps, so the npm registry and
+`main` never silently diverge (the registry once lagged `main` by two minor
+versions - do not let that recur):
+
+1. **Bump** `version` in `package.json` (semver: additive feature -> minor,
+   docs/fix -> patch; skip only for changes that alter nothing shipped).
+2. **Changelog** - add the entry to the README `## Changelog` section.
+3. **`make release-check`** - must be green (lint + typecheck + test + build).
+4. **Commit + push** the bump + changelog to `main`.
+5. **Tag** `vX.Y.Z` on that commit (annotated) and push it:
+   `git tag -a vX.Y.Z -m "vX.Y.Z - <summary>" && git push origin vX.Y.Z`.
+   Verify the target rather than assume it (`git log -S '"version": "X.Y.Z"'`).
+6. **GitHub release** for the tag, body = the changelog excerpt
+   (`gh release create vX.Y.Z --latest --notes-file ...`).
+7. **`make publish`** - re-runs `release-check`, then `npm publish`
+   (`npm whoami` first). Confirm with `npm view learn-content-engine version`.
+
+Do steps 5-7 for every release, in this order. A version that is committed but
+not tagged + published is not done.
+
 ## Adding a new exercise type
 
 The lesson schema's authority currently lives in the Adaptive Learner app
