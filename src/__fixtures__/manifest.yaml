@@ -1,0 +1,50 @@
+# Round-trip fixture: a realistic repo-level manifest with several sets that
+# together exercise the manifest -> canonical-entry seam. Derived from the
+# shape of adaptive-learner-content/manifest.yaml (schema_version 1.2).
+schema_version: '1.2'
+name: Round-trip Fixture Repo
+description: A small multi-set manifest for the content-engine round-trip test.
+sets:
+  # Full modern set: target/source pair, domain, tags, cover, book block.
+  - id: fr-a1
+    title: French A1
+    title_native: Français A1
+    target_language: fr
+    source_language: de
+    domain: language
+    level: A1
+    path: sets/de/fr-a1
+    version: '1.0.0'
+    lesson_count: 2
+    description: Beginner French for German speakers.
+    tags:
+      - french
+      - a1
+    cover_image: covers/fr-a1.png
+    book:
+      title: Assimil Französisch
+      author: Anthony Bulger
+      url: https://example.test/assimil-fr
+      asin: B0000FR001
+  # Legacy set: only the pre-v1.2 ``language`` alias, no source_language,
+  # no domain -> the engine must default source to ``en`` and domain to
+  # ``language``, and mirror ``language`` into both target fields.
+  - id: es-a1
+    title: Spanish A1
+    language: es
+    level: A1
+    version: '1.0.0'
+    lesson_count: 1
+  # Knowledge-domain set with an explicit path override.
+  - id: psych-intro
+    title: Psychology Intro
+    target_language: de
+    source_language: de
+    domain: psychology
+    level: A1
+    path: sets/de/psych-intro
+    version: '2.1.0'
+    lesson_count: 1
+    tags:
+      - psychology
+      - starter

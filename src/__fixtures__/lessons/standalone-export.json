@@ -1,0 +1,15 @@
+{
+  "id": "02-standalone",
+  "title": "Standalone Export",
+  "description": "A lesson exported on its own that declares its OWN language pair and domain; the adapter must keep these and NOT overwrite them with the set context.",
+  "target_language": "es",
+  "source_language": "en",
+  "domain": "programming",
+  "estimated_minutes": 12,
+  "steps": [
+    { "id": "theory-1", "type": "theory", "body": "A variable binds a name to a value." }
+  ],
+  "cards": [
+    { "id": "variable", "front": "variable", "back": "a named value", "media_type": "text", "difficulty": 2 }
+  ]
+}

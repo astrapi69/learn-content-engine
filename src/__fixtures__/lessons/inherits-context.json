@@ -1,0 +1,13 @@
+{
+  "id": "01-greetings",
+  "title": "Greetings",
+  "description": "A lesson that carries no language pair or domain of its own, so the parent set's context is injected by the single-JSON adapter.",
+  "estimated_minutes": 8,
+  "steps": [
+    { "id": "theory-1", "type": "theory", "body": "Bonjour is the standard daytime greeting." }
+  ],
+  "cards": [
+    { "id": "bonjour", "front": "bonjour", "back": "hallo", "media_type": "text", "difficulty": 1 },
+    { "id": "merci", "front": "merci", "back": "danke", "media_type": "text", "difficulty": 1 }
+  ]
+}
