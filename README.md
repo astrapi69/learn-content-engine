@@ -112,8 +112,11 @@ drift silently. Keep drift a visible, defined step:
    (the app regenerates it via `make sync-schema`).
 3. Copy the **bundled JSON-Schema artifacts** verbatim (these ship in the
    package and are what `validate*` and the content repos mirror against):
-   `cp adaptive-learner/schema/lesson.schema.json schema/lesson.schema.json` and
-   `cp adaptive-learner/schema/content-manifest.schema.json schema/content-manifest.schema.json`.
+   `cp adaptive-learner/schema/lesson.schema.json schema/lesson.schema.json`,
+   `cp adaptive-learner/schema/content-manifest.schema.json schema/content-manifest.schema.json` and
+   `cp adaptive-learner/schema/quality-rules.json schema/quality-rules.json`
+   (the shared quality minimums travel the same app → engine → consumers
+   channel as the schemas).
    If a bump adds a semantic (cross-field) rule, mirror it in `src/validate.ts`.
 4. If the bump adds a field, surface it on the canonical `Content*` types in
    `src/types/content.ts` (a thin alias / doc note; the field usually flows in
