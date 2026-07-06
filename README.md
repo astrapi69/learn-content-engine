@@ -1,77 +1,52 @@
 # learn-content-engine
 
-Framework-agnostic TypeScript engine that parses lesson content from pluggable
-sources into a canonical lesson object.
+Framework-agnostic TypeScript engine that parses **and validates** lesson
+content from pluggable sources into a canonical lesson object.
 
-This is the extracted **content engine** of
-[Adaptive Learner](https://github.com/astrapi69/adaptive-learner) (EXP-042): the
-`source → canonical` boundary. It takes raw content (today a **single-JSON**
-lesson, plus a `manifest.yaml`) and a set context, and produces the canonical
-internal lesson / set-entry objects. It contains **no** network, storage, or UI
-code — the host supplies the bytes and keeps fetch + persistence.
-
-Tracks the app lesson schema at **v1.5** (EXP-039). The canonical types are
-thin aliases of the generated schema types, so the engine stays in parity with
-the Pydantic source of truth — see [Schema sync from adaptive-learner](#schema-sync-from-adaptive-learner).
+It takes raw content (a **single-JSON** lesson plus a `manifest.yaml`) and a set
+context, and produces canonical lesson / set-entry objects. It contains **no**
+network, storage, or UI code - you supply the bytes and keep fetch +
+persistence. The bundled, strict JSON-Schema makes it a self-contained **format
+reference**: you can author and validate lessons without the app that originated
+the format ([Adaptive Learner](https://github.com/astrapi69/adaptive-learner),
+EXP-042). Tracks the lesson schema at **v1.5**.
 
 ## Install
 
 ```bash
 npm install learn-content-engine
+# or pin to a git revision (no npm registry needed):
+npm install github:astrapi69/learn-content-engine
 ```
 
-## Usage
+ESM, ships TypeScript declarations, Node >= 18.
 
-Parse a raw single-JSON lesson into the canonical `ContentLesson`:
+## Quick example
 
 ```ts
-import { parseLesson, type LessonSetContext } from "learn-content-engine";
+import { parseLesson, validateLesson, type LessonSetContext } from "learn-content-engine";
 
-const setContext: LessonSetContext = {
-  language: "fr",
-  target_language: "fr",
-  source_language: "de",
-  domain: "language",
+const context: LessonSetContext = {
+  language: "fr", target_language: "fr", source_language: "en", domain: "language",
 };
+const raw = `{ "id": "01", "title": "Greetings", "steps": [
+  { "id": "s1", "type": "exercise",
+    "exercise": { "id": "e1", "type": "free_text", "prompt": "Say hello.", "accept": ["bonjour"] } }
+] }`;
 
-const rawJson = '{ "id": "01-greetings", "title": "Begrüßungen", "cards": [], "steps": [] }';
-
-const lesson = parseLesson(rawJson, setContext);
-// → canonical ContentLesson; the set's language pair + domain are injected
-//   when the lesson file omits them.
-lesson.target_language; // "fr"
-lesson.source_language; // "de"
+const lesson = parseLesson(raw, context);        // canonical ContentLesson (set context injected)
+const result = validateLesson(JSON.parse(raw));  // explicit, opt-in validation
+if (!result.valid) console.error(result.errors); // [{ path, message }, …]
 ```
 
-Project a raw `manifest.yaml` set into a canonical `ContentSetEntry`:
+## Documentation
 
-```ts
-import { parseManifest, asContentSetEntry } from "learn-content-engine";
-
-const manifest = parseManifest(rawManifestYaml);
-const entry = asContentSetEntry(
-  { source: "astrapi69/adaptive-learner-content", branch: "main" },
-  manifest!.sets![0],
-  /* cachedVersion */ null,
-);
-```
-
-### Custom source adapters (the extension seam)
-
-`parseLesson` delegates to a **source adapter** (`rawText + context →
-ContentLesson`). The only built-in is `singleJsonLessonAdapter`. A future
-multi-file source format plugs in as another adapter with the same signature —
-no change to the caller's fetch or storage:
-
-```ts
-import { parseLesson, type LessonSourceAdapter } from "learn-content-engine";
-
-const myAdapter: LessonSourceAdapter = (rawText, context) => {
-  /* build a canonical ContentLesson from your own source format */
-};
-
-const lesson = parseLesson(rawText, setContext, myAdapter);
-```
+- [**Getting started**](docs/getting-started.md) - install, the 5-minute pipeline example.
+- [**Concepts**](docs/concepts.md) - the pipeline, context inheritance, the legacy alias, schema policy.
+- [**Lesson format reference**](docs/lesson-format.md) - every field and exercise type, with tested examples.
+- [**Validation**](docs/validation.md) - the strict schema, the semantic rules, the error model.
+- [**Architecture**](docs/architecture.md) - the engine boundary, parity with the app, roadmap.
+- [**Contributing**](CONTRIBUTING.md) - TDD workflow, release gate, adding an exercise type.
 
 ## Public API
 
@@ -91,77 +66,17 @@ const lesson = parseLesson(rawText, setContext, myAdapter);
 | `ValidationResult`, `ValidationIssue` | types | the `validate*` return shape (`{ valid, errors[] }`) |
 | `LessonSetContext`, `LessonSourceAdapter`, `ParsedManifest`, `ParsedSet` | types | adapter + manifest surface |
 
-The bundled JSON-Schema artifact ships too, so a content repo can mirror against
-it directly: `import schema from "learn-content-engine/schema/lesson.schema.json"`.
+The bundled JSON-Schema ships too, so a content repo can mirror against it
+directly: `import schema from "learn-content-engine/schema/lesson.schema.json"`.
 
-## Conformance
+## Scope
 
-The engine proves it carries the **whole** lesson format, so third parties can
-build their own apps (and content repos) on it without depending on the app.
-
-- **`parse` is permissive** (`JSON.parse` + set-context injection); **`validate`
-  is an explicit, opt-in step**. The consumer decides when to enforce the format:
-
-  ```ts
-  import { validateLesson } from "learn-content-engine";
-
-  const result = validateLesson(JSON.parse(rawLessonJson));
-  if (!result.valid) console.error(result.errors); // [{ path, message }, …]
-  ```
-
-- **Strict, by design.** `validate` runs the bundled `schema/lesson.schema.json`
-  (draft 2020-12, `additionalProperties: false`) **plus** the cross-field
-  semantic rules that mirror the app's Pydantic `model_validator`s (per-type
-  required fields, cloze marker/blank count, `multiselect` disjointness, picture
-  "exactly one correct", card referential integrity). Unknown fields are
-  **rejected** — deliberate parity with the app, which is what makes this a
-  trustworthy format reference.
-- **CI truth = vendored fixtures.** The suite carries a valid fixture for every
-  `ExerciseType` and mode (`matching`, `picture_choice`, `free_text`,
-  `word_tiles`, `cloze` `type` / `select` / `multiselect`) plus a field-variant
-  fixture, each asserted to round-trip typed **and** validate; a negative suite
-  asserts every rejection class. These run offline in `npm test`.
-- **Ultimate proof = real content.** `make conformance-real` clones both public
-  content repos (read-only, depth 1) and drives every set and lesson through the
-  full pipeline, counting exercises by type. On-demand (needs network), not part
-  of the mandatory CI.
-
-  ```bash
-  make conformance-real
-  ```
-
-## Scope (what this library deliberately is NOT)
-
-Per the EXP-042 lib boundary, this package contains **only** parse / transform /
-types + the single-JSON source adapter. It does **not** include:
-
-- **Fetch** (GitHub fetcher, raw base URLs) — stays in the host.
-- **Storage** (IndexedDB / Dexie cache, DB keys) — stays in the host.
-- **UI** — no React or any renderer.
-
-That is why the engine imports only content *types* and a YAML parser. The
-import boundary is the extraction seam: consumer → engine, never the reverse.
-
-## Status — migration pending
-
-This library is the **extracted** engine, published to npm. The Adaptive Learner
-app does **not** consume it yet; that migration is follow-up work (EXP-042
-section 7). Until then the parse/transform logic exists in **two** places — the
-original in the app repo (`frontend/src/lib/content/engine/`) and this library —
-kept in sync by the [schema-sync procedure](#schema-sync-from-adaptive-learner).
-A further follow-up decouples the content repos: they mirror their shape-parity
-source against this engine's bundled `schema/lesson.schema.json` instead of the
-app (app-vs-engine then becomes the new parity test).
-
-## Develop
-
-```bash
-npm install
-npm run build      # tsc → dist/ (JS + .d.ts declarations)
-npm test           # vitest
-npm run lint       # eslint
-npm run typecheck  # tsc --noEmit
-```
+Per the EXP-042 boundary, this package contains **only** parse / transform /
+validate / types + the single-JSON source adapter - **no** fetch, storage, or
+UI; those stay in the host. See [architecture.md](docs/architecture.md). The app
+does **not** consume this library yet (EXP-042 section 7); until then the logic
+lives in two places, kept in parity by the
+[schema-sync procedure](#schema-sync-from-adaptive-learner).
 
 ## Schema sync from adaptive-learner
 
@@ -196,6 +111,11 @@ drift silently. Keep drift a visible, defined step:
 
 ## Changelog
 
+- **0.3.1** — Documentation: a self-contained `docs/` set (getting-started,
+  concepts, lesson-format reference, validation, architecture) + `CONTRIBUTING`,
+  README trimmed to an entry point. Every `json` example in the format reference
+  is extracted and validated by a test (one per exercise type + cloze mode).
+  Docs-only; no API change.
 - **0.3.0** — Conformance suite: an explicit, opt-in `validateLesson` /
   `validateManifest` API (`ajv` against the bundled, strict
   `schema/lesson.schema.json` + semantic rules mirroring the app's
