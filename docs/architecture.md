@@ -63,13 +63,16 @@ The engine is moving from "extracted copy" to "the format authority":
 1. **Conformance (done).** `validate*`, a fixture per exercise type/mode, a
    negative suite, and a real-content run - the engine provably carries the
    whole format.
-2. **Mirror decoupling.** The content repos switch their shape-parity source
-   from the app to this engine's bundled `schema/lesson.schema.json`. Parity
-   becomes engine-vs-content.
-3. **App as a consumer.** The app migrates to import this library instead of its
-   in-tree copy (EXP-042 section 7); app-vs-engine becomes the new parity test.
-4. **Schema authority.** Once the app consumes the engine, schema ownership can
-   move here, and the sync direction flips.
+2. **Mirror decoupling (done).** The content repos switch their shape-parity
+   source from the app to this engine's bundled `schema/lesson.schema.json`,
+   pinned in `schema/engine-version.txt`. Parity is engine-vs-content.
+3. **App as a consumer (done).** The app imports this library (pinned in its
+   `frontend/package.json`) instead of an in-tree copy; app-vs-engine is the
+   parity test.
+4. **Schema authority (open).** The lesson schema's source of truth still lives
+   in the app's Pydantic model (`adaptive_learner_content_loader.schema`), which
+   generates the schema the engine vendors. Once schema ownership moves here, the
+   sync direction flips (app consuming the engine's schema instead of feeding it).
 
 Each stage is independent and additive; none requires a consumer to know
 anything about the app.

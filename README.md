@@ -89,10 +89,13 @@ directly: `import schema from "learn-content-engine/schema/lesson.schema.json"`.
 
 Per the EXP-042 boundary, this package contains **only** parse / transform /
 validate / types + the single-JSON source adapter - **no** fetch, storage, or
-UI; those stay in the host. See [architecture.md](docs/architecture.md). The app
-does **not** consume this library yet (EXP-042 section 7); until then the logic
-lives in two places, kept in parity by the
-[schema-sync procedure](#schema-sync-from-adaptive-learner).
+UI; those stay in the host. See [architecture.md](docs/architecture.md). The
+[adaptive-learner](https://github.com/astrapi69/adaptive-learner) app **consumes
+this library** (pinned in its `frontend/package.json`), so parse/validate/types
+live here once; app-vs-engine is the parity test. The lesson schema's source of
+truth still lives in the app's Pydantic model and is vendored here by the
+[schema-sync procedure](#schema-sync-from-adaptive-learner) (schema authority has
+not yet moved to the engine - see the [roadmap](docs/architecture.md#roadmap)).
 
 ## Schema sync from adaptive-learner
 
