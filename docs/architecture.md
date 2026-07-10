@@ -74,8 +74,10 @@ The engine is moving from "extracted copy" to "the format authority":
    engine and carries an engine-owned `$id`; the app and content repos consume it
    (the app's Pydantic became a conforming editorial tool, its parity gate
    reversed to engine-as-reference). The flip was byte-equivalent - only `$id`
-   changed. Remaining follow-ups: move TypeScript-type generation into the engine
-   (D1b), and let the app generate its Pydantic from the engine schema (D3b).
+   changed. TypeScript-type generation now also lives here (v0.6.1,
+   `make sync-types`, gated in CI). Remaining follow-up: let the app generate its
+   Pydantic from the engine schema (D3b). New schema features (e.g.
+   `multiple_choice`, `from_cards`) now originate here.
 
 Each stage is independent and additive; none requires a consumer to know
 anything about the app.

@@ -1,10 +1,10 @@
 /**
  * GENERATED from schema/lesson.schema.json via
- * scripts/generate_lesson_types.mjs (EXP-039). DO NOT EDIT.
+ * scripts/generate-lesson-types.mjs. DO NOT EDIT.
  *
- * Source of truth is the Pydantic model
- * (adaptive_learner_content_loader.schema). Edit the model, run
- * `make sync-schema`, then `make sync-lesson-types`.
+ * This engine is the canonical source of the lesson schema. These types are
+ * derived from schema/lesson.schema.json; edit the schema, then run
+ * `make sync-types`.
  */
 
 /**

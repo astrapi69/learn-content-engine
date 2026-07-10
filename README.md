@@ -116,15 +116,21 @@ The lesson schema's `$id` is engine-owned:
 `https://astrapi69.github.io/learn-content-engine/schema/lesson.schema.json`.
 
 To evolve the schema, edit the artifact here (the frozen byte baseline in
-`src/schema-baseline.test.ts` guards against accidental content drift), mirror
-any new cross-field rule in `src/validate.ts`, extend the fixtures + rule
-catalog, and bump the version; consumers then re-pin. Moving the TypeScript-type
-generation (`src/types/lesson-schema.generated.ts`) into the engine is a planned
-follow-up (see the roadmap); until then the generated types still derive from the
-schema and remain byte-identical.
+`src/schema-baseline.test.ts` guards against accidental content drift), run
+`make sync-types` to regenerate `src/types/lesson-schema.generated.ts` from it,
+mirror any new cross-field rule in `src/validate.ts`, extend the fixtures + rule
+catalog, and bump the version; consumers then re-pin. The TypeScript types are
+generated here (in-engine, `scripts/generate-lesson-types.mjs`), so they cannot
+drift from the schema; the drift gate runs in `release-check` + CI.
 
 ## Changelog
 
+- **0.6.1** - Tooling: the lesson TypeScript types are now regenerated from
+  `schema/lesson.schema.json` by an in-engine generator
+  (`scripts/generate-lesson-types.mjs`, `make sync-types`), gated in
+  `release-check` + CI (`--check`). Completes the D1b follow-up (type generation
+  moved here). Types are byte-identical; only the generator banner changed. No
+  API or schema change.
 - **0.6.0** - **Schema authority moved to the engine** (roadmap stage 4). The
   lesson schema is now the authored canonical source here; the app and content
   repos consume it (source-of-truth chain: engine → app + content). The flip is

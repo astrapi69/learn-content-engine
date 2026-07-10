@@ -85,9 +85,9 @@ not tagged + published is not done.
 As of v0.6.0 the engine holds [schema authority](README.md#schema-authority), so
 a **new `ExerciseType` now starts here**:
 
-1. Add the enum value + fields to the authored `schema/lesson.schema.json` (and
-   regenerate the TS types, until type-generation moves into the engine). The
-   [byte baseline](src/schema-baseline.test.ts) intentionally goes red on a
+1. Add the enum value + fields to the authored `schema/lesson.schema.json`, then
+   run `make sync-types` to regenerate `src/types/lesson-schema.generated.ts`.
+   The [byte baseline](src/schema-baseline.test.ts) intentionally goes red on a
    schema change - update it in the same commit so the change is deliberate.
 2. Mirror the new type's cross-field rule in `src/validate.ts` (RED first: add a
    rejecting negative test, then implement) with `E-*`/`W-*` rule ids + catalog

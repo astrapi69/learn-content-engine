@@ -20,6 +20,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Lesson-types drift gate (regenerate from schema, expect no diff)
+        run: node scripts/generate-lesson-types.mjs --check
+
       - name: Lint
         run: npm run lint
 
