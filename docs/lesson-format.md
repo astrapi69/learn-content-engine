@@ -409,3 +409,92 @@ top-level field: `name`. Each set requires `id`, `title`, `target_language`
 The set's `path` is the repo-relative directory holding its `lessons/` folder;
 it defaults to `sets/{id}` when omitted. See
 [concepts.md](concepts.md) for how set context flows into each lesson.
+
+## Rule catalog
+
+`validateLesson` returns `{ valid, errors, warnings }`. **Errors** block (`valid`
+is false); **warnings** never block - they flag likely authoring mistakes. Every
+issue carries a stable `id`, a `severity`, and a `docAnchor`. IDs are stable API:
+a downstream (e.g. a content-repo) validator can mirror a rule by its id without
+drifting.
+
+### Errors (block)
+
+| ID | Rule |
+|---|---|
+| `E-SCHEMA` | Structural schema violation (missing required field, wrong type, bad enum value). |
+| `E-UNKNOWN-FIELD` | An unknown field is present (the schema is strict, `additionalProperties: false`). |
+| `E-STEP-THEORY-BODY` | A [theory step](#steps) has no `body`. |
+| `E-STEP-THEORY-EXERCISE` | A theory step also carries an `exercise`. |
+| `E-STEP-EXERCISE-PAYLOAD` | An exercise step has no `exercise` payload. |
+| `E-STEP-EXERCISE-BODY` | An exercise step also carries a `body`. |
+| `E-MATCH-PAIRS` | [`matching`](#matching) has empty/missing `pairs`. |
+| `E-PIC-MIN` | [`picture_choice`](#picture_choice) has fewer than 2 `images`. |
+| `E-PIC-ONE-CORRECT` | `picture_choice` does not have exactly one `is_correct: "true"`. |
+| `E-FREETEXT-ACCEPT` | [`free_text`](#free_text) has empty/missing `accept`. |
+| `E-TILES-MIN` | [`word_tiles`](#word_tiles) has fewer than 2 `tiles`. |
+| `E-TILES-ORDERING` | An `accept_orderings` entry is not a permutation of the tile indices. |
+| `E-CLOZE-SENTENCE` | [`cloze`](#cloze) (`type`/`select`) has no `sentence`. |
+| `E-CLOZE-BLANKS` | `cloze` (`type`/`select`) has no `blanks`. |
+| `E-CLOZE-MARKERS` | `cloze` `___` marker count does not equal `blanks.length`. |
+| `E-CLOZE-SELECT-DISTRACTORS` | `cloze` `select` has no `distractors`. |
+| `E-CLOZE-MS-SENTENCE` | `cloze` `multiselect` has no `sentence` (question stem). |
+| `E-CLOZE-MS-ACCEPT` | `cloze` `multiselect` has empty `accept`. |
+| `E-CLOZE-MS-DISTRACTORS` | `cloze` `multiselect` has empty `distractors`. |
+| `E-CLOZE-MS-DISJOINT` | `cloze` `multiselect` `accept` and `distractors` overlap. |
+| `E-CARD-REF` | An exercise `card_ids` entry does not resolve to a [card](#cards). |
+
+### Warnings (advise, never block)
+
+| ID | Rule |
+|---|---|
+| `W-CARD-UNUSED` | A card is defined but no exercise ever drills it (dead material). |
+| `W-MATCH-AMBIG` | A `matching` has duplicate `left` or `right` values (ambiguous pairing). |
+| `W-TILES-DUP` | A `word_tiles` has duplicate tiles but no `accept_orderings` (swapping identical tiles yields the same sentence yet may grade as wrong). |
+| `W-DISTRACTOR-ANSWER` | A `cloze` `select` distractor equals an accepted answer. |
+| `W-PIC-DUP-LABEL` | A `picture_choice` distractor shares its `label` with the correct image. |
+| `W-HINT-LENGTH` | A hint reveals the answer length (e.g. "four letters") - redundant with the app's automatic length display. |
+
+## Linting
+
+The package ships a CLI so you get these errors **and** warnings offline, in
+seconds, without a CI round-trip:
+
+```bash
+npx learn-content-engine lint sets/en/fr-a1/lessons/*.json
+# ERROR sets/.../03.json
+#   [E-CARD-REF] /steps/2/exercise/card_ids exercise references unknown card 'keopi'  (see docs/lesson-format.md#cards)
+# WARN  sets/.../05.json
+#   [W-TILES-DUP] /steps/1/exercise WORD_TILES has duplicate tiles ...  (see docs/lesson-format.md#word_tiles)
+# OK    sets/.../01.json
+```
+
+Exit code is 1 when any file has errors (warnings alone exit 0). Add `--json`
+for machine-readable output (editor integration).
+
+## Editor setup
+
+Bind the bundled schema in your editor for autocomplete and inline errors while
+typing. **Do not** add a `"$schema"` key inside a lesson file - the schema is
+strict (`additionalProperties: false`) and would reject it. Instead map it
+externally. In VS Code (`.vscode/settings.json`):
+
+```jsonc
+{
+  "json.schemas": [
+    {
+      "fileMatch": ["**/lessons/*.json"],
+      "url": "./node_modules/learn-content-engine/schema/lesson.schema.json"
+    },
+    {
+      "fileMatch": ["**/manifest.json"],
+      "url": "./node_modules/learn-content-engine/schema/content-manifest.schema.json"
+    }
+  ]
+}
+```
+
+This gives field/enum completion and catches structural mistakes (typos in
+`type`, missing required fields) as you type. The semantic rules and warnings
+above are not expressible in JSON-Schema - run `learn-content-engine lint` for
+those.

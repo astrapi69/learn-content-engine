@@ -20,8 +20,8 @@ export default tseslint.config(
     },
   },
   {
-    // Node-run helper scripts (on-demand tooling, not part of the library build).
-    files: ["scripts/**/*.mjs"],
+    // Node-run helper scripts + the CLI shim (not part of the library build).
+    files: ["scripts/**/*.mjs", "bin/**/*.mjs"],
     languageOptions: {
       globals: {
         process: "readonly",

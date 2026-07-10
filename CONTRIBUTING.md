@@ -97,4 +97,6 @@ engine:
 
 When schema authority later moves to this engine (see
 [architecture.md](docs/architecture.md#roadmap)), this recipe will start here
-instead.
+instead. A worked example of an app-first change (the `multiple_choice` type,
+`word_tiles` grade-by-string, `from_cards`) is designed in
+[docs/proposals/author-ergonomics-app-track.md](docs/proposals/author-ergonomics-app-track.md).

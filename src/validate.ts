@@ -1,23 +1,24 @@
 /**
- * Schema validation against the bundled canonical artifacts (TEIL B).
+ * Schema validation + author lints against the bundled canonical artifacts.
  *
  * ``parse`` stays permissive (JSON.parse + spread); validation is an EXPLICIT,
  * opt-in step the consumer runs when it wants the format contract enforced.
  *
- * Two layers, mirroring the app's Pydantic pipeline (field validation before
- * the model_validators):
+ * Layers, mirroring the app's Pydantic pipeline (field validation before the
+ * model_validators), plus a non-blocking author-lint layer on top:
  *   1. STRUCTURAL - ajv against the bundled ``schema/lesson.schema.json``
- *      (draft 2020-12). The schema is STRICT (``additionalProperties: false``
- *      everywhere), so unknown fields are rejected - deliberate parity with the
- *      app, which is what makes the engine a trustworthy format reference.
- *   2. SEMANTIC - cross-field rules the JSON-Schema cannot express (per-type
- *      required fields, cloze marker/blank count, multiselect disjointness,
- *      picture "exactly one correct", referential integrity). These mirror the
- *      app's ``model_validator`` methods verbatim and run only once the input
- *      is structurally valid.
+ *      (draft 2020-12, STRICT: ``additionalProperties: false`` everywhere).
+ *   2. SEMANTIC (errors) - cross-field rules the JSON-Schema cannot express,
+ *      mirroring the app's ``model_validator`` methods (per-type required
+ *      fields, cloze marker/blank count, multiselect disjointness, picture
+ *      "exactly one correct", referential integrity).
+ *   3. AUTHOR LINTS (warnings) - never block (``valid`` stays errors-only), but
+ *      catch common authoring mistakes early (unused cards, ambiguous matching,
+ *      duplicate word tiles, answer-as-distractor, length-revealing hints).
  *
- * The same ``schema/lesson.schema.json`` is the shipped artifact content-repos
- * will later mirror against (the decoupling follow-up).
+ * Every issue carries a stable ``id``, a ``severity``, and a ``docAnchor`` so
+ * the message is actionable and a thin downstream validator can mirror the rule
+ * without drifting. The rule catalog lives in ``docs/lesson-format.md``.
  */
 
 import { readFileSync } from "node:fs";
@@ -28,17 +29,42 @@ import type { ErrorObject, ValidateFunction } from "ajv";
 
 import type { Exercise, Lesson, LessonStep } from "./types/lesson-schema.generated.js";
 
-/** One validation problem: a JSON-pointer-ish path plus a human-readable reason. */
+/** Whether an issue blocks (``error``) or merely advises (``warning``). */
+export type ValidationSeverity = "error" | "warning";
+
+/** One validation problem: a JSON-pointer-ish path, a human-readable reason, a
+ *  stable rule ``id``, its ``severity``, and a ``docAnchor`` into the docs. */
 export interface ValidationIssue {
   path: string;
   message: string;
+  id: string;
+  severity: ValidationSeverity;
+  docAnchor: string;
 }
 
-/** The outcome of a validate call: ``valid`` plus the (possibly empty) issues. */
+/** The outcome of a validate call. ``valid`` is errors-only - ``warnings``
+ *  never block. */
 export interface ValidationResult {
   valid: boolean;
   errors: ValidationIssue[];
+  warnings: ValidationIssue[];
 }
+
+const DOC = "docs/lesson-format.md";
+
+function makeIssue(
+  severity: ValidationSeverity,
+  id: string,
+  path: string,
+  message: string,
+  anchor: string,
+): ValidationIssue {
+  return { path, message, id, severity, docAnchor: `${DOC}#${anchor}` };
+}
+const err = (id: string, path: string, message: string, anchor: string): ValidationIssue =>
+  makeIssue("error", id, path, message, anchor);
+const warn = (id: string, path: string, message: string, anchor: string): ValidationIssue =>
+  makeIssue("warning", id, path, message, anchor);
 
 const loadSchema = (fileName: string): object =>
   JSON.parse(
@@ -51,51 +77,84 @@ const ajv = new Ajv2020({ allErrors: true, strict: false });
 const structuralLesson: ValidateFunction = ajv.compile(loadSchema("lesson.schema.json"));
 const structuralManifest: ValidateFunction = ajv.compile(loadSchema("content-manifest.schema.json"));
 
-/** Map ajv's error objects to our issue shape, naming the offending key for
+/** Map ajv's error objects to error issues, naming the offending key for
  *  ``additionalProperties`` rejections so the message is actionable. */
-function toIssues(errors: ErrorObject[]): ValidationIssue[] {
+function toStructuralIssues(errors: ErrorObject[]): ValidationIssue[] {
   return errors.map((error) => {
     const params = error.params as { additionalProperty?: unknown };
-    const extra = typeof params.additionalProperty === "string" ? ` (${params.additionalProperty})` : "";
-    return { path: error.instancePath || "/", message: `${error.message}${extra}` };
+    const path = error.instancePath || "/";
+    if (typeof params.additionalProperty === "string") {
+      return err("E-UNKNOWN-FIELD", path, `${error.message} (${params.additionalProperty})`, "rule-catalog");
+    }
+    return err("E-SCHEMA", path, `${error.message}`, "rule-catalog");
   });
 }
 
 /** Count non-overlapping ``___`` markers (matches Python ``str.count('___')``). */
 const markerCount = (sentence: string): number => sentence.split("___").length - 1;
 
+/** True when an array has a repeated value. */
+const hasDuplicate = <T>(values: T[]): boolean => new Set(values).size !== values.length;
+
+/** True when a hint reveals the answer length (e.g. "vier Buchstaben" / "4 letters"). */
+const mentionsAnswerLength = (hint: string): boolean =>
+  /(\d+|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|two|three|four|five|six|seven|eight|nine|ten)/i.test(hint) &&
+  /(buchstabe|zeichen|letter|character)/i.test(hint);
+
 function checkMatching(exercise: Exercise, path: string, issues: ValidationIssue[]): void {
-  if (!exercise.pairs || exercise.pairs.length === 0) {
-    issues.push({ path, message: "MATCHING exercise requires non-empty 'pairs'" });
+  const pairs = exercise.pairs;
+  if (!pairs || pairs.length === 0) {
+    issues.push(err("E-MATCH-PAIRS", path, "MATCHING exercise requires non-empty 'pairs'", "matching"));
+    return;
+  }
+  if (hasDuplicate(pairs.map((pair) => pair.left)) || hasDuplicate(pairs.map((pair) => pair.right))) {
+    issues.push(
+      warn("W-MATCH-AMBIG", path, "MATCHING has duplicate 'left' or 'right' values (ambiguous pairing)", "matching"),
+    );
   }
 }
 
 function checkPictureChoice(exercise: Exercise, path: string, issues: ValidationIssue[]): void {
   const images = exercise.images;
   if (!images || images.length < 2) {
-    issues.push({ path, message: "PICTURE_CHOICE requires at least 2 'images'" });
+    issues.push(err("E-PIC-MIN", path, "PICTURE_CHOICE requires at least 2 'images'", "picture_choice"));
     return;
   }
-  const correct = images.filter((image) => image.is_correct === "true").length;
-  if (correct !== 1) {
-    issues.push({
-      path,
-      message: "PICTURE_CHOICE must have exactly one image marked 'is_correct': 'true'",
-    });
+  const correct = images.filter((image) => image.is_correct === "true");
+  if (correct.length !== 1) {
+    issues.push(
+      err("E-PIC-ONE-CORRECT", path, "PICTURE_CHOICE must have exactly one image marked 'is_correct': 'true'", "picture_choice"),
+    );
+  }
+  const correctLabels = new Set(correct.map((image) => image.label));
+  if (images.some((image) => image.is_correct !== "true" && correctLabels.has(image.label))) {
+    issues.push(
+      warn("W-PIC-DUP-LABEL", path, "PICTURE_CHOICE distractor shares a 'label' with the correct image", "picture_choice"),
+    );
   }
 }
 
 function checkFreeText(exercise: Exercise, path: string, issues: ValidationIssue[]): void {
   if (!exercise.accept || exercise.accept.length === 0) {
-    issues.push({ path, message: "FREE_TEXT exercise requires non-empty 'accept'" });
+    issues.push(err("E-FREETEXT-ACCEPT", path, "FREE_TEXT exercise requires non-empty 'accept'", "free_text"));
   }
 }
 
 function checkWordTiles(exercise: Exercise, path: string, issues: ValidationIssue[]): void {
   const tiles = exercise.tiles;
   if (!tiles || tiles.length < 2) {
-    issues.push({ path, message: "WORD_TILES requires at least 2 'tiles'" });
+    issues.push(err("E-TILES-MIN", path, "WORD_TILES requires at least 2 'tiles'", "word_tiles"));
     return;
+  }
+  if (hasDuplicate(tiles) && !exercise.accept_orderings) {
+    issues.push(
+      warn(
+        "W-TILES-DUP",
+        path,
+        "WORD_TILES has duplicate tiles but no 'accept_orderings' - swapping identical tiles yields the same sentence yet may grade as wrong",
+        "word_tiles",
+      ),
+    );
   }
   if (!exercise.accept_orderings) return;
   const expected = tiles.map((_tile, index) => index);
@@ -103,32 +162,40 @@ function checkWordTiles(exercise: Exercise, path: string, issues: ValidationIssu
     const sorted = [...ordering].sort((a, b) => a - b);
     const isPermutation = sorted.length === expected.length && sorted.every((value, index) => value === expected[index]);
     if (!isPermutation) {
-      issues.push({
-        path,
-        message: `accept_orderings entry ${JSON.stringify(ordering)} must be a permutation of [0..${tiles.length - 1}]`,
-      });
+      issues.push(
+        err(
+          "E-TILES-ORDERING",
+          path,
+          `accept_orderings entry ${JSON.stringify(ordering)} must be a permutation of [0..${tiles.length - 1}]`,
+          "word_tiles",
+        ),
+      );
     }
   }
 }
 
 function checkClozeMultiselect(exercise: Exercise, path: string, issues: ValidationIssue[]): void {
   if (!exercise.sentence) {
-    issues.push({ path, message: "CLOZE multiselect requires a non-empty 'sentence' (the question)" });
+    issues.push(err("E-CLOZE-MS-SENTENCE", path, "CLOZE multiselect requires a non-empty 'sentence' (the question)", "cloze"));
   }
   const accept = exercise.accept ?? [];
   if (accept.length === 0) {
-    issues.push({ path, message: "CLOZE multiselect requires non-empty 'accept' (the correct options)" });
+    issues.push(err("E-CLOZE-MS-ACCEPT", path, "CLOZE multiselect requires non-empty 'accept' (the correct options)", "cloze"));
   }
   const distractors = exercise.distractors ?? [];
   if (distractors.length === 0) {
-    issues.push({ path, message: "CLOZE multiselect requires non-empty 'distractors'" });
+    issues.push(err("E-CLOZE-MS-DISTRACTORS", path, "CLOZE multiselect requires non-empty 'distractors'", "cloze"));
   }
   const overlap = accept.filter((option) => distractors.includes(option));
   if (overlap.length > 0) {
-    issues.push({
-      path,
-      message: `CLOZE multiselect 'accept' and 'distractors' must be disjoint; shared option(s): ${JSON.stringify(overlap)}`,
-    });
+    issues.push(
+      err(
+        "E-CLOZE-MS-DISJOINT",
+        path,
+        `CLOZE multiselect 'accept' and 'distractors' must be disjoint; shared option(s): ${JSON.stringify(overlap)}`,
+        "cloze",
+      ),
+    );
   }
 }
 
@@ -139,23 +206,36 @@ function checkCloze(exercise: Exercise, path: string, issues: ValidationIssue[])
   }
   const sentence = exercise.sentence;
   if (!sentence) {
-    issues.push({ path, message: "CLOZE exercise requires non-empty 'sentence'" });
+    issues.push(err("E-CLOZE-SENTENCE", path, "CLOZE exercise requires non-empty 'sentence'", "cloze"));
     return;
   }
   const blanks = exercise.blanks;
   if (!blanks || blanks.length === 0) {
-    issues.push({ path, message: "CLOZE exercise requires non-empty 'blanks'" });
+    issues.push(err("E-CLOZE-BLANKS", path, "CLOZE exercise requires non-empty 'blanks'", "cloze"));
     return;
   }
   const markers = markerCount(sentence);
   if (markers !== blanks.length) {
-    issues.push({
-      path,
-      message: `CLOZE marker count mismatch: sentence has ${markers} '___' markers but blanks has ${blanks.length} entries`,
-    });
+    issues.push(
+      err(
+        "E-CLOZE-MARKERS",
+        path,
+        `CLOZE marker count mismatch: sentence has ${markers} '___' markers but blanks has ${blanks.length} entries`,
+        "cloze",
+      ),
+    );
   }
-  if (exercise.cloze_mode === "select" && (!exercise.distractors || exercise.distractors.length === 0)) {
-    issues.push({ path, message: "CLOZE with cloze_mode='select' requires non-empty 'distractors'" });
+  if (exercise.cloze_mode === "select") {
+    if (!exercise.distractors || exercise.distractors.length === 0) {
+      issues.push(err("E-CLOZE-SELECT-DISTRACTORS", path, "CLOZE with cloze_mode='select' requires non-empty 'distractors'", "cloze"));
+      return;
+    }
+    const accepted = new Set(blanks.flatMap((blank) => blank.accept));
+    if (exercise.distractors.some((distractor) => accepted.has(distractor))) {
+      issues.push(
+        warn("W-DISTRACTOR-ANSWER", path, "CLOZE select has a distractor equal to an accepted answer", "cloze"),
+      );
+    }
   }
 }
 
@@ -175,8 +255,13 @@ function checkExercise(
 ): void {
   for (const cardId of exercise.card_ids ?? []) {
     if (!knownCardIds.has(cardId)) {
-      issues.push({ path: `${path}/card_ids`, message: `exercise references unknown card '${cardId}'` });
+      issues.push(err("E-CARD-REF", `${path}/card_ids`, `exercise references unknown card '${cardId}'`, "cards"));
     }
+  }
+  if (exercise.hint && mentionsAnswerLength(exercise.hint)) {
+    issues.push(
+      warn("W-HINT-LENGTH", path, "hint reveals the answer length - redundant with the app's automatic length display", "rule-catalog"),
+    );
   }
   const check = EXERCISE_CHECKS[exercise.type];
   if (check) check(exercise, path, issues);
@@ -184,43 +269,62 @@ function checkExercise(
 
 function checkStep(step: LessonStep, path: string, knownCardIds: Set<string>, issues: ValidationIssue[]): void {
   if (step.type === "theory") {
-    if (!step.body) issues.push({ path, message: "THEORY step requires non-empty 'body'" });
-    if (step.exercise != null) issues.push({ path, message: "THEORY step must not carry 'exercise'" });
+    if (!step.body) issues.push(err("E-STEP-THEORY-BODY", path, "THEORY step requires non-empty 'body'", "steps"));
+    if (step.exercise != null) issues.push(err("E-STEP-THEORY-EXERCISE", path, "THEORY step must not carry 'exercise'", "steps"));
     return;
   }
   // EXERCISE step
   if (step.exercise == null) {
-    issues.push({ path, message: "EXERCISE step requires an 'exercise' payload" });
+    issues.push(err("E-STEP-EXERCISE-PAYLOAD", path, "EXERCISE step requires an 'exercise' payload", "steps"));
   } else {
     checkExercise(step.exercise, `${path}/exercise`, knownCardIds, issues);
   }
   if (step.body != null) {
-    issues.push({ path, message: "EXERCISE step must not carry 'body' (use the exercise prompt instead)" });
+    issues.push(err("E-STEP-EXERCISE-BODY", path, "EXERCISE step must not carry 'body' (use the exercise prompt instead)", "steps"));
   }
 }
 
-/** Semantic pass mirroring the app's model_validators. Assumes the input is
- *  already structurally valid (so the schema-typed shape is trustworthy). */
+/** Warn about cards that no exercise ever drills (dead learning material). */
+function checkUnusedCards(lesson: Lesson, issues: ValidationIssue[]): void {
+  const used = new Set<string>();
+  for (const step of lesson.steps) {
+    for (const cardId of step.exercise?.card_ids ?? []) used.add(cardId);
+  }
+  for (const card of lesson.cards ?? []) {
+    if (!used.has(card.id)) {
+      issues.push(warn("W-CARD-UNUSED", "/cards", `card '${card.id}' is defined but never referenced by an exercise`, "cards"));
+    }
+  }
+}
+
+/** Semantic + lint pass. Assumes the input is already structurally valid (so the
+ *  schema-typed shape is trustworthy). Returns a mixed error/warning list. */
 function semanticIssues(lesson: Lesson): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
   const knownCardIds = new Set<string>((lesson.cards ?? []).map((card) => card.id));
   lesson.steps.forEach((step, index) => {
     checkStep(step, `/steps/${index}`, knownCardIds, issues);
   });
+  checkUnusedCards(lesson, issues);
   return issues;
 }
 
+const split = (issues: ValidationIssue[]): ValidationResult => {
+  const errors = issues.filter((issue) => issue.severity === "error");
+  const warnings = issues.filter((issue) => issue.severity === "warning");
+  return { valid: errors.length === 0, errors, warnings };
+};
+
 /**
- * Validate a lesson object against the bundled canonical schema + the semantic
- * cross-field rules. Returns ``{ valid, errors }``; ``errors`` carries a path
- * and a human-readable message for each problem. Does not throw.
+ * Validate a lesson against the bundled canonical schema, the semantic
+ * cross-field rules, and the author lints. Returns ``{ valid, errors, warnings
+ * }``; ``valid`` is errors-only (warnings never block). Does not throw.
  */
 export function validateLesson(input: unknown): ValidationResult {
   if (!structuralLesson(input)) {
-    return { valid: false, errors: toIssues(structuralLesson.errors as ErrorObject[]) };
+    return { valid: false, errors: toStructuralIssues(structuralLesson.errors as ErrorObject[]), warnings: [] };
   }
-  const errors = semanticIssues(input as Lesson);
-  return { valid: errors.length === 0, errors };
+  return split(semanticIssues(input as Lesson));
 }
 
 /** Drop the legacy ``language`` alias into ``target_language`` on each set
@@ -245,12 +349,12 @@ function normalizeManifestAliases(input: unknown): unknown {
 /**
  * Validate a raw parsed manifest against the bundled
  * ``content-manifest.schema.json`` (strict), after normalizing the legacy
- * ``language`` alias. Returns ``{ valid, errors }``; does not throw.
+ * ``language`` alias. Returns ``{ valid, errors, warnings }``; does not throw.
  */
 export function validateManifest(input: unknown): ValidationResult {
   const normalized = normalizeManifestAliases(input);
   if (!structuralManifest(normalized)) {
-    return { valid: false, errors: toIssues(structuralManifest.errors as ErrorObject[]) };
+    return { valid: false, errors: toStructuralIssues(structuralManifest.errors as ErrorObject[]), warnings: [] };
   }
-  return { valid: true, errors: [] };
+  return { valid: true, errors: [], warnings: [] };
 }
