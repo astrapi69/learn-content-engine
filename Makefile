@@ -8,7 +8,8 @@
 # quality gate (lint, typecheck, test, build) before pushing to the registry.
 
 .PHONY: help install ci build typecheck lint test test-watch coverage \
-        conformance-real pack-dry release-check publish publish-dry clean
+        sync-types sync-types-check conformance-real pack-dry release-check \
+        publish publish-dry clean
 
 # Default
 help: ## Show all targets
@@ -45,6 +46,14 @@ test-watch: ## Run Vitest in watch mode
 coverage: ## Run Vitest with a v8 coverage report
 	npm run test:coverage
 
+# ─── Schema types (canonical: engine authors the schema) ─────────────
+
+sync-types: ## Regenerate src/types/lesson-schema.generated.ts from schema/lesson.schema.json
+	node scripts/generate-lesson-types.mjs
+
+sync-types-check: ## Exit non-zero if the generated lesson types drift from the schema
+	node scripts/generate-lesson-types.mjs --check
+
 # ─── Conformance (on-demand, needs network) ──────────────────────────
 
 conformance-real: build ## Clone both content repos (read-only) and run every set + lesson through the full engine pipeline
@@ -57,7 +66,7 @@ pack-dry: build ## Show publish contents of the tarball without publishing
 
 # ─── Release ─────────────────────────────────────────────────────────
 
-release-check: lint typecheck test build ## Full quality gate before publishing
+release-check: sync-types-check lint typecheck test build ## Full quality gate before publishing
 	@echo "Release check passed."
 
 publish-dry: release-check ## Dry-run publish to npm (no upload)
