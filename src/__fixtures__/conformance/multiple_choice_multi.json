@@ -1,0 +1,24 @@
+{
+  "id": "conf-multiple-choice-multi",
+  "title": "Multiple choice (select all that apply)",
+  "steps": [
+    {
+      "id": "s1",
+      "type": "exercise",
+      "exercise": {
+        "id": "mc1",
+        "type": "multiple_choice",
+        "multiple": true,
+        "prompt": "Welche dieser Zahlen sind Primzahlen?",
+        "card_ids": [],
+        "options": [
+          { "text": "2", "correct": true },
+          { "text": "3", "correct": true },
+          { "text": "4" },
+          { "text": "5", "correct": true }
+        ]
+      }
+    }
+  ],
+  "cards": []
+}

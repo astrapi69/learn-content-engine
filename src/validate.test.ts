@@ -45,6 +45,8 @@ const EXERCISE_TYPES = [
   "cloze_type",
   "cloze_select",
   "cloze_multiselect",
+  "multiple_choice_single",
+  "multiple_choice_multi",
 ] as const;
 
 describe("validateLesson — positive: every conformance fixture is accepted", () => {

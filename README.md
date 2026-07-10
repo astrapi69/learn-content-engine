@@ -125,6 +125,15 @@ drift from the schema; the drift gate runs in `release-check` + CI.
 
 ## Changelog
 
+- **0.8.0** - Feature (Bucket B): native **`multiple_choice`** exercise type
+  (schema **v1.6** - a new type is a minor schema bump per the ExerciseType
+  policy; 1.x content stays valid). At least two `options` (`{text, correct?}`,
+  texts unique); `multiple: false` = single choice (exactly one correct),
+  `multiple: true` = select-all (exact-set grading, no partial credit).
+  Coexists with the `cloze` select/multiselect vehicle - nothing deprecated.
+  New rules `E-MC-OPTIONS` / `E-MC-ONE-CORRECT` / `E-MC-MIN-CORRECT` /
+  `E-MC-DUP-OPTION`. **Not yet rendered by the app** - the app-side renderer +
+  grader (part 2) makes it a complete feature; the app re-pins then.
 - **0.7.0** - Feature (Bucket B): matching `from_cards`. A `matching` exercise
   can derive its `pairs` from the referenced cards (left = `front`,
   right = `back`) instead of duplicating them - set `"from_cards": true` with

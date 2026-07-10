@@ -77,6 +77,7 @@ describe("docs/lesson-format.md — minimum coverage of the type catalog", () =>
       "cloze",
       "free_text",
       "matching",
+      "multiple_choice",
       "picture_choice",
       "word_tiles",
     ]);

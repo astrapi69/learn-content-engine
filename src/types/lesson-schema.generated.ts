@@ -228,6 +228,22 @@ export type Label = string;
  */
 export type Src = string;
 /**
+ * MULTIPLE_CHOICE: when false (default) exactly one option is correct (single choice); when true the learner selects ALL correct options ('select all that apply', graded by exact-set match). Ignored by the other exercise types.
+ */
+export type Multiple = boolean;
+/**
+ * MULTIPLE_CHOICE: list of {text, correct?} answer options (schema v1.6). At least two options; ``multiple`` controls whether exactly one or at least one must be marked correct. Correctness is a per-option flag, so no separate accept/distractor lists (and no disjointness rule) are needed. The renderer shuffles before display.
+ */
+export type Options = MultipleChoiceOption[] | null;
+/**
+ * Set to true on the correct option(s). Exactly one with ``multiple: false``; at least one with ``multiple: true``.
+ */
+export type Correct = boolean;
+/**
+ * The option text shown to the learner. Unique within the exercise - the text IS the option, so a duplicate would be ambiguous.
+ */
+export type Text = string;
+/**
  * MATCHING: list of {left, right} pairs to match up. The renderer shuffles before display.
  */
 export type Pairs = Pair[] | null;
@@ -254,7 +270,7 @@ export type Tiles = string[] | null;
 /**
  * Which exercise renderer handles this step.
  */
-export type ExerciseType = "matching" | "picture_choice" | "free_text" | "word_tiles" | "cloze";
+export type ExerciseType = "matching" | "picture_choice" | "free_text" | "word_tiles" | "cloze" | "multiple_choice";
 /**
  * Slug-safe id, unique within the lesson.
  */
@@ -467,6 +483,8 @@ export interface Exercise {
   hint?: Hint2;
   id: Id2;
   images?: Images;
+  multiple?: Multiple;
+  options?: Options;
   pairs?: Pairs;
   prompt: Prompt;
   sentence?: Sentence;
@@ -511,6 +529,21 @@ export interface PictureImage {
   is_correct?: IsCorrect;
   label: Label;
   src: Src;
+}
+/**
+ * One answer option in a MULTIPLE_CHOICE exercise (schema v1.6).
+ *
+ * Correctness is a per-option flag, so the type needs no separate
+ * accept/distractor lists and no disjointness rule - the structure
+ * makes that class of authoring error impossible. Grading contract:
+ * with ``multiple: false`` exactly one option carries ``correct``
+ * and a single pick is graded; with ``multiple: true`` the learner
+ * must select the exact set of correct options (no partial credit,
+ * mirroring the cloze multiselect grading).
+ */
+export interface MultipleChoiceOption {
+  correct?: Correct;
+  text: Text;
 }
 /**
  * One left↔right pair in a MATCHING exercise.

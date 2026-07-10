@@ -248,12 +248,38 @@ function checkCloze(exercise: Exercise, path: string, issues: ValidationIssue[])
   }
 }
 
+function checkMultipleChoice(exercise: Exercise, path: string, issues: ValidationIssue[]): void {
+  const options = exercise.options;
+  if (!options || options.length < 2) {
+    issues.push(err("E-MC-OPTIONS", path, "MULTIPLE_CHOICE requires at least 2 'options'", "multiple_choice"));
+    return;
+  }
+  const correctCount = options.filter((option) => option.correct === true).length;
+  if (exercise.multiple === true) {
+    if (correctCount === 0) {
+      issues.push(
+        err("E-MC-MIN-CORRECT", path, "MULTIPLE_CHOICE with 'multiple' requires at least one option marked 'correct'", "multiple_choice"),
+      );
+    }
+  } else if (correctCount !== 1) {
+    issues.push(
+      err("E-MC-ONE-CORRECT", path, "MULTIPLE_CHOICE (single) must have exactly one option marked 'correct'", "multiple_choice"),
+    );
+  }
+  if (hasDuplicate(options.map((option) => option.text))) {
+    issues.push(
+      err("E-MC-DUP-OPTION", path, "MULTIPLE_CHOICE option texts must be unique (the text IS the option)", "multiple_choice"),
+    );
+  }
+}
+
 const EXERCISE_CHECKS: Record<string, (exercise: Exercise, path: string, issues: ValidationIssue[]) => void> = {
   matching: checkMatching,
   picture_choice: checkPictureChoice,
   free_text: checkFreeText,
   word_tiles: checkWordTiles,
   cloze: checkCloze,
+  multiple_choice: checkMultipleChoice,
 };
 
 function checkExercise(
