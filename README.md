@@ -92,47 +92,47 @@ validate / types + the single-JSON source adapter - **no** fetch, storage, or
 UI; those stay in the host. See [architecture.md](docs/architecture.md). The
 [adaptive-learner](https://github.com/astrapi69/adaptive-learner) app **consumes
 this library** (pinned in its `frontend/package.json`), so parse/validate/types
-live here once; app-vs-engine is the parity test. The lesson schema's source of
-truth still lives in the app's Pydantic model and is vendored here by the
-[schema-sync procedure](#schema-sync-from-adaptive-learner) (schema authority has
-not yet moved to the engine - see the [roadmap](docs/architecture.md#roadmap)).
+live here once. As of **v0.6.0 this engine is the canonical source of the lesson
+schema** (schema authority moved here, [roadmap](docs/architecture.md#roadmap)
+stage 4); the app and content repos consume it. See
+[Schema authority](#schema-authority).
 
-## Schema sync from adaptive-learner
+## Schema authority
 
-The lesson schema's **source of truth** is the Pydantic model in the
-[adaptive-learner](https://github.com/astrapi69/adaptive-learner) app
-(`adaptive_learner_content_loader.schema`, EXP-039). It generates
-`schema/lesson.schema.json` and, from it, the TypeScript types this engine
-vendors as `src/types/lesson-schema.generated.ts`. Every app schema bump (the
-`x-schema-version` field) **triggers an engine follow-up** — otherwise the two
-drift silently. Keep drift a visible, defined step:
+The **canonical source** of the lesson schema is this engine's
+[`schema/lesson.schema.json`](schema/lesson.schema.json) (+
+`content-manifest.schema.json`, `quality-rules.json`). It is an **authored**
+artifact here; consumers mirror the schema shipped in each pinned engine release:
 
-1. Get the app's current `develop`:
-   `git clone --depth 1 https://github.com/astrapi69/adaptive-learner`.
-2. Copy its **generated** types verbatim into this repo (no hand-edits to the
-   generated file — it is `GENERATED … DO NOT EDIT`):
-   `cp adaptive-learner/frontend/src/storage/types/content/lesson-schema.generated.ts src/types/lesson-schema.generated.ts`
-   (the app regenerates it via `make sync-schema`).
-3. Copy the **bundled JSON-Schema artifacts** verbatim (these ship in the
-   package and are what `validate*` and the content repos mirror against):
-   `cp adaptive-learner/schema/lesson.schema.json schema/lesson.schema.json`,
-   `cp adaptive-learner/schema/content-manifest.schema.json schema/content-manifest.schema.json` and
-   `cp adaptive-learner/schema/quality-rules.json schema/quality-rules.json`
-   (the shared quality minimums travel the same app → engine → consumers
-   channel as the schemas).
-   If a bump adds a semantic (cross-field) rule, mirror it in `src/validate.ts`.
-4. If the bump adds a field, surface it on the canonical `Content*` types in
-   `src/types/content.ts` (a thin alias / doc note; the field usually flows in
-   automatically because the aliases derive from the generated shape) and export
-   it through `src/types/index.ts` + `src/index.ts`.
-5. Bump the `schema_version` doc in `src/content-engine.ts`, extend the fixtures
-   under `src/__fixtures__/` with the new field, and add round-trip +
-   backward-compatibility tests.
-6. Version-bump the library (additive field → minor) and record it in the
-   changelog below.
+- **The app** ([adaptive-learner](https://github.com/astrapi69/adaptive-learner))
+  keeps its Pydantic models as an *editorial tool* for its own runtime types, but
+  its generated schema must be **byte-identical** to the engine's - its parity
+  gate now treats the engine as the reference (the app conforms to the engine,
+  not the reverse).
+- **Content repos** mirror the schema from the pinned engine release via their
+  drift tool (`schema/engine-version.txt`).
+
+The lesson schema's `$id` is engine-owned:
+`https://astrapi69.github.io/learn-content-engine/schema/lesson.schema.json`.
+
+To evolve the schema, edit the artifact here (the frozen byte baseline in
+`src/schema-baseline.test.ts` guards against accidental content drift), mirror
+any new cross-field rule in `src/validate.ts`, extend the fixtures + rule
+catalog, and bump the version; consumers then re-pin. Moving the TypeScript-type
+generation (`src/types/lesson-schema.generated.ts`) into the engine is a planned
+follow-up (see the roadmap); until then the generated types still derive from the
+schema and remain byte-identical.
 
 ## Changelog
 
+- **0.6.0** - **Schema authority moved to the engine** (roadmap stage 4). The
+  lesson schema is now the authored canonical source here; the app and content
+  repos consume it (source-of-truth chain: engine → app + content). The flip is
+  **byte-equivalent** - only the `$id` changed (now engine-owned,
+  `https://astrapi69.github.io/learn-content-engine/schema/...`); same types,
+  fields, enums and constraints, and `x-schema-version` stays `1.5`. A frozen byte
+  baseline (`src/schema-baseline.test.ts`) guards against content drift. No
+  behavior change; consumers re-pin to 0.6.0.
 - **0.5.0** - Author ergonomics (additive, back-compat): `validate*` gains a
   non-blocking `warnings[]` layer and every issue carries a stable `id`,
   `severity` and `docAnchor` (`valid` stays errors-only). New author lints -

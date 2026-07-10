@@ -42,11 +42,13 @@ not the percentage, is the goal.
 
 ## Never hand-edit generated files
 
-`src/types/lesson-schema.generated.ts` and the `schema/*.json` artifacts are
-**generated** from the app's Pydantic model (EXP-039). Do not edit them by hand
-- re-vendor them via the
-[schema-sync procedure](README.md#schema-sync-from-adaptive-learner). The header
-of the generated file says `DO NOT EDIT` for this reason.
+The `schema/*.json` artifacts are the **authored canonical source** (this engine
+holds schema authority as of v0.6.0); edit them deliberately - the frozen byte
+baseline (`src/schema-baseline.test.ts`) guards against accidental content drift,
+and consumers re-pin. See [Schema authority](README.md#schema-authority).
+`src/types/lesson-schema.generated.ts` is still **generated** from the schema
+(its header says `DO NOT EDIT`); do not hand-edit it - moving that generation
+into the engine is a planned follow-up.
 
 ## Commits
 
@@ -80,23 +82,23 @@ not tagged + published is not done.
 
 ## Adding a new exercise type
 
-The lesson schema's authority currently lives in the Adaptive Learner app
-(EXP-039); this engine mirrors it. So a **new `ExerciseType` starts there**, not
-here: it needs a minor `schema_version` bump, a new enum value, its renderer,
-and its semantic validator in the app. Once the app ships it, pull it into the
-engine:
+As of v0.6.0 the engine holds [schema authority](README.md#schema-authority), so
+a **new `ExerciseType` now starts here**:
 
-1. Re-vendor the generated types and `schema/*.json`
-   ([schema-sync procedure](README.md#schema-sync-from-adaptive-learner)).
+1. Add the enum value + fields to the authored `schema/lesson.schema.json` (and
+   regenerate the TS types, until type-generation moves into the engine). The
+   [byte baseline](src/schema-baseline.test.ts) intentionally goes red on a
+   schema change - update it in the same commit so the change is deliberate.
 2. Mirror the new type's cross-field rule in `src/validate.ts` (RED first: add a
-   rejecting negative test, then implement).
+   rejecting negative test, then implement) with `E-*`/`W-*` rule ids + catalog
+   rows.
 3. Add a valid fixture under `src/__fixtures__/conformance/` and a tested
    example in [`docs/lesson-format.md`](docs/lesson-format.md) - the coverage
    assertion in `src/docs-examples.test.ts` expects one example per type/mode.
-4. Bump the library version (additive -> minor) and update the changelog.
+4. Bump the library version (additive -> minor) and update the changelog; the
+   app + content repos then re-pin and mirror.
 
-When schema authority later moves to this engine (see
-[architecture.md](docs/architecture.md#roadmap)), this recipe will start here
-instead. A worked example of an app-first change (the `multiple_choice` type,
-`word_tiles` grade-by-string, `from_cards`) is designed in
+Consumers (app renderer/grader) still need the type wired on their side. A worked
+design of such a change (the `multiple_choice` type, `word_tiles`
+grade-by-string, `from_cards`) is in
 [docs/proposals/author-ergonomics-app-track.md](docs/proposals/author-ergonomics-app-track.md).
