@@ -125,6 +125,13 @@ drift from the schema; the drift gate runs in `release-check` + CI.
 
 ## Changelog
 
+- **0.7.0** - Feature (Bucket B): matching `from_cards`. A `matching` exercise
+  can derive its `pairs` from the referenced cards (left = `front`,
+  right = `back`) instead of duplicating them - set `"from_cards": true` with
+  `card_ids` and omit `pairs`. The engine resolves it to concrete pairs at parse
+  time, so no renderer changes. Additive + optional; `x-schema-version` stays
+  `1.5`. New rules `E-MATCH-FROMCARDS-CARDS` / `E-MATCH-FROMCARDS-PAIRS`. First
+  schema feature authored in the engine post-flip.
 - **0.6.1** - Tooling: the lesson TypeScript types are now regenerated from
   `schema/lesson.schema.json` by an in-engine generator
   (`scripts/generate-lesson-types.mjs`, `make sync-types`), gated in

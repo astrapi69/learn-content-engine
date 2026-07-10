@@ -200,6 +200,10 @@ export type Distractors = string[];
  */
 export type Examples1 = InlineExample[] | null;
 /**
+ * MATCHING: when true, the exercise derives its ``pairs`` from the referenced cards (left = card ``front``, right = card ``back``) instead of listing them explicitly, so a definition lives in one place. Requires non-empty ``card_ids`` and forbids an explicit ``pairs`` list. The engine resolves it to concrete ``pairs`` at parse time. Additive + optional; schema_version stays 1.5.
+ */
+export type FromCards = boolean;
+/**
  * Optional Markdown hint shown on demand. The viewer renders this behind a 'Need a hint?' button.
  */
 export type Hint2 = string | null;
@@ -459,6 +463,7 @@ export interface Exercise {
   direction?: Direction;
   distractors?: Distractors;
   examples?: Examples1;
+  from_cards?: FromCards;
   hint?: Hint2;
   id: Id2;
   images?: Images;
