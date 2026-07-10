@@ -1,6 +1,6 @@
 {
   "name": "learn-content-engine",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Framework-agnostic TypeScript engine that parses lesson content from pluggable sources into a canonical lesson object.",
   "type": "module",
   "license": "MIT",

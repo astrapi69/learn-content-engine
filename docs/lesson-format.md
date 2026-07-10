@@ -25,6 +25,7 @@ The canonical schema ships in the package at
   - [free_text](#free_text)
   - [word_tiles](#word_tiles)
   - [cloze](#cloze) (`type`, `select`, `multiselect`)
+  - [multiple_choice](#multiple_choice)
   - [direction](#direction)
 - [Manifest format](#manifest-format)
 
@@ -394,6 +395,72 @@ and `distractors` the wrong ones. The two lists must be non-empty and
 }
 ```
 
+### multiple_choice
+
+First-class text multiple choice (schema v1.6). Requires at least two `options`
+(`{text, correct?}`); option texts must be unique (the text IS the option).
+`multiple` selects the mode:
+
+**`multiple: false`** (default) - single choice: exactly **one** option carries
+`"correct": true`, the learner picks one.
+
+```json
+{
+  "id": "right-of-way",
+  "title": "Vorfahrt",
+  "steps": [
+    {
+      "id": "s1",
+      "type": "exercise",
+      "exercise": {
+        "id": "mc1",
+        "type": "multiple_choice",
+        "prompt": "Wer hat an einer Kreuzung ohne Zeichen Vorfahrt?",
+        "options": [
+          { "text": "Wer von rechts kommt", "correct": true },
+          { "text": "Wer von links kommt" },
+          { "text": "Das groessere Fahrzeug" }
+        ]
+      }
+    }
+  ]
+}
+```
+
+**`multiple: true`** - "select all that apply": **at least one** option is
+correct; the learner must select the exact set of correct options (graded by
+exact-set match, no partial credit - the same contract as `cloze` `multiselect`).
+
+```json
+{
+  "id": "primes",
+  "title": "Primzahlen",
+  "steps": [
+    {
+      "id": "s1",
+      "type": "exercise",
+      "exercise": {
+        "id": "mc1",
+        "type": "multiple_choice",
+        "multiple": true,
+        "prompt": "Welche dieser Zahlen sind Primzahlen?",
+        "options": [
+          { "text": "2", "correct": true },
+          { "text": "3", "correct": true },
+          { "text": "4" },
+          { "text": "5", "correct": true }
+        ]
+      }
+    }
+  ]
+}
+```
+
+Correctness is a per-option flag, so there are no separate accept/distractor
+lists and no disjointness rule - the structure makes that authoring error
+impossible. `multiple_choice` **coexists** with the [`cloze`](#cloze)
+`select`/`multiselect` forms; existing cloze-based multiple choice stays valid.
+
 ### direction
 
 Any exercise may set `direction` to control which way a card is drilled:
@@ -473,6 +540,10 @@ drifting.
 | `E-CLOZE-MS-ACCEPT` | `cloze` `multiselect` has empty `accept`. |
 | `E-CLOZE-MS-DISTRACTORS` | `cloze` `multiselect` has empty `distractors`. |
 | `E-CLOZE-MS-DISJOINT` | `cloze` `multiselect` `accept` and `distractors` overlap. |
+| `E-MC-OPTIONS` | [`multiple_choice`](#multiple_choice) has fewer than 2 `options`. |
+| `E-MC-ONE-CORRECT` | `multiple_choice` (single) does not have exactly one option marked `correct`. |
+| `E-MC-MIN-CORRECT` | `multiple_choice` with `multiple` has no option marked `correct`. |
+| `E-MC-DUP-OPTION` | `multiple_choice` option texts are not unique. |
 | `E-CARD-REF` | An exercise `card_ids` entry does not resolve to a [card](#cards). |
 
 ### Warnings (advise, never block)

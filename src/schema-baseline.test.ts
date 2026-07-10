@@ -14,6 +14,11 @@ import { describe, it, expect } from "vitest";
 
 const NEW_ID_BASE = "https://astrapi69.github.io/learn-content-engine/schema";
 
+/** The current, deliberately-set schema version. Bumping it is a conscious
+ *  release decision (new exercise type = minor); update it together with the
+ *  frozen baseline in the same commit. */
+const EXPECTED_SCHEMA_VERSION = "1.6";
+
 const readText = (relativePath: string): string =>
   readFileSync(fileURLToPath(new URL(relativePath, import.meta.url)), "utf8");
 
@@ -35,10 +40,10 @@ describe("schema baseline - the flip changes only $id", () => {
       expect(normalizeId(live)).toBe(normalizeId(baseline));
     });
 
-    it(`${name}: x-schema-version is unchanged (1.5)`, () => {
+    it(`${name}: x-schema-version matches the deliberate pin (${EXPECTED_SCHEMA_VERSION})`, () => {
       const version = (schema: string): string => JSON.parse(schema)["x-schema-version"] as string;
       expect(version(live)).toBe(version(baseline));
-      expect(version(live)).toBe("1.5");
+      expect(version(live)).toBe(EXPECTED_SCHEMA_VERSION);
     });
 
     it(`${name}: $id is the new engine-owned identifier`, () => {

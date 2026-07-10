@@ -1,0 +1,22 @@
+{
+  "id": "conf-multiple-choice-single",
+  "title": "Multiple choice (single answer)",
+  "steps": [
+    {
+      "id": "s1",
+      "type": "exercise",
+      "exercise": {
+        "id": "mc1",
+        "type": "multiple_choice",
+        "prompt": "Wer hat an einer Kreuzung ohne Zeichen Vorfahrt?",
+        "card_ids": [],
+        "options": [
+          { "text": "Wer von rechts kommt", "correct": true },
+          { "text": "Wer von links kommt" },
+          { "text": "Das groessere Fahrzeug" }
+        ]
+      }
+    }
+  ],
+  "cards": []
+}
