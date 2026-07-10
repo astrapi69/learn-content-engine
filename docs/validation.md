@@ -7,11 +7,18 @@ format**. You choose when to run it:
 import { validateLesson, validateManifest } from "learn-content-engine";
 
 const result = validateLesson(JSON.parse(rawLessonJson));
-// result: { valid: boolean, errors: { path: string, message: string }[] }
+// result: { valid, errors[], warnings[] }
+// each issue: { path, message, id, severity: "error" | "warning", docAnchor }
 if (!result.valid) console.error(result.errors);
+if (result.warnings.length) console.warn(result.warnings);
 ```
 
-Neither function throws; both return a `ValidationResult`.
+Neither function throws; both return a `ValidationResult`. `valid` is
+**errors-only** - warnings never block. Every issue carries a stable `id` and a
+`docAnchor`; the complete list of ids is the
+[rule catalog](lesson-format.md#rule-catalog). For an offline author workflow
+that surfaces both errors and warnings, use the
+[`learn-content-engine lint` CLI](lesson-format.md#linting).
 
 Validation runs in two layers, mirroring the app's pipeline (field checks before
 cross-field checks):
@@ -52,6 +59,16 @@ These rules cannot be expressed in JSON-Schema; they mirror the app's Pydantic
 | `cloze` (`type`/`select`) requires `sentence` + `blanks` with `markers == blanks.length`; `select` also needs `distractors` | `CLOZE marker count mismatch` |
 | `cloze` (`multiselect`) requires `sentence`, non-empty `accept` + `distractors`, and the two must be **disjoint** | `must be disjoint` |
 | Every `card_ids` entry must resolve to a card in the lesson | `references unknown card` |
+
+## Layer 3 - author lints (warnings)
+
+Warnings never affect `valid` or appear in `errors`; they live in `warnings` and
+flag likely authoring mistakes: an unused card (`W-CARD-UNUSED`), an ambiguous
+`matching` (`W-MATCH-AMBIG`), duplicate word tiles without `accept_orderings`
+(`W-TILES-DUP`), a distractor equal to the answer (`W-DISTRACTOR-ANSWER`), a
+distractor image sharing the correct label (`W-PIC-DUP-LABEL`), or a hint that
+reveals the answer length (`W-HINT-LENGTH`). Full list + descriptions:
+[rule catalog](lesson-format.md#rule-catalog).
 
 ## The error model
 
