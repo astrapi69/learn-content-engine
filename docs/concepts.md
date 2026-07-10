@@ -75,8 +75,8 @@ The lesson schema is versioned (`x-schema-version`, currently `1.5`) and evolves
 newer schema**. For example, v1.5 added the inline `examples` field; a v1.4
 lesson without `examples` validates unchanged under v1.5.
 
-The schema's source of truth is the Adaptive Learner app (EXP-039). This engine
-vendors the generated types and the JSON-Schema artifact, and stays in parity
-via a documented [schema-sync procedure](architecture.md#staying-in-parity-with-the-app).
-That parity - not a dependency on the app at runtime - is what lets you treat
-this engine as the format reference.
+The schema's **canonical source is this engine** (as of v0.6.0); the app and
+content repos consume it (see
+[schema authority](architecture.md#schema-authority-this-engine)). That authority
+- not a dependency on the app at runtime - is what lets you treat this engine as
+the format reference.

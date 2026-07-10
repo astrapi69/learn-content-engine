@@ -35,26 +35,27 @@ and persistence stay in the consumer because they are environment-specific
 (browser vs. server vs. CLI); keeping them out is what makes the engine reusable
 across any host. This is the EXP-042 boundary, stated without any app internals.
 
-## Staying in parity with the app
+## Schema authority (this engine)
 
-The lesson schema's source of truth is the Adaptive Learner app's Pydantic model
-(EXP-039). This engine does not depend on the app at runtime; instead it
-**vendors** two artifacts and keeps them in parity through a documented,
-repeatable procedure:
+As of v0.6.0 the lesson schema's **canonical source is this engine** - the
+authored `schema/*.json` artifacts, which ship in the package. Consumers mirror
+them; the source-of-truth chain is **engine → app + content repos**.
 
-- the generated TypeScript types (`src/types/lesson-schema.generated.ts`), and
-- the JSON-Schema artifacts (`schema/*.json`), which ship in the package.
+- **The app** keeps its Pydantic models as an editorial tool for its own runtime
+  types, but its generated schema must be byte-identical to the engine's; its
+  parity gate now treats the engine as the reference (app conforms to engine).
+- **Content repos** mirror the engine's schema from the pinned release.
 
-Every app schema bump (`x-schema-version`) triggers an engine follow-up:
-re-vendor the generated types and the schema, and - the load-bearing reminder -
-**if the bump adds a cross-field (semantic) rule, mirror it in
-`src/validate.ts`**, since those rules live in code, not in the JSON-Schema. The
-full step-by-step lives in the README
-([Schema sync from adaptive-learner](../README.md#schema-sync-from-adaptive-learner)).
+The JSON-Schema `$id` is engine-owned
+(`https://astrapi69.github.io/learn-content-engine/schema/…`). The generated
+TypeScript types (`src/types/lesson-schema.generated.ts`) still derive from the
+schema; moving that generation into the engine is the remaining follow-up (D1b).
+Evolving the schema is a defined step here - see the README
+([Schema authority](../README.md#schema-authority)); a frozen byte baseline
+(`src/schema-baseline.test.ts`) guards against accidental content drift.
 
-Parity is verified two ways: the vendored conformance fixtures and doc examples
-(offline, in CI) and `make conformance-real` (on-demand, over the real content
-repos).
+Parity is verified two ways: the conformance fixtures and doc examples (offline,
+in CI) and `make conformance-real` (on-demand, over the real content repos).
 
 ## Roadmap
 
@@ -69,10 +70,12 @@ The engine is moving from "extracted copy" to "the format authority":
 3. **App as a consumer (done).** The app imports this library (pinned in its
    `frontend/package.json`) instead of an in-tree copy; app-vs-engine is the
    parity test.
-4. **Schema authority (open).** The lesson schema's source of truth still lives
-   in the app's Pydantic model (`adaptive_learner_content_loader.schema`), which
-   generates the schema the engine vendors. Once schema ownership moves here, the
-   sync direction flips (app consuming the engine's schema instead of feeding it).
+4. **Schema authority (done, v0.6.0).** The lesson schema is now authored in this
+   engine and carries an engine-owned `$id`; the app and content repos consume it
+   (the app's Pydantic became a conforming editorial tool, its parity gate
+   reversed to engine-as-reference). The flip was byte-equivalent - only `$id`
+   changed. Remaining follow-ups: move TypeScript-type generation into the engine
+   (D1b), and let the app generate its Pydantic from the engine schema (D3b).
 
 Each stage is independent and additive; none requires a consumer to know
 anything about the app.
