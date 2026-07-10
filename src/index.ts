@@ -23,7 +23,7 @@ export {
 
 // --- Conformance: explicit schema validation against the bundled artifact ---
 export { validateLesson, validateManifest } from "./validate.js";
-export type { ValidationIssue, ValidationResult } from "./validate.js";
+export type { ValidationIssue, ValidationResult, ValidationSeverity } from "./validate.js";
 
 export type {
   LessonSetContext,
