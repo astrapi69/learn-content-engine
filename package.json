@@ -36,9 +36,13 @@
     "./package.json": "./package.json"
   },
   "sideEffects": false,
+  "bin": {
+    "learn-content-engine": "bin/learn-content-engine.mjs"
+  },
   "files": [
     "dist",
     "schema",
+    "bin",
     "README.md",
     "LICENSE"
   ],
