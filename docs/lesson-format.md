@@ -194,6 +194,35 @@ Match left items to right items. Requires a non-empty `pairs` list of
 }
 ```
 
+**`from_cards`.** To avoid repeating a definition that already lives in the
+cards, set `"from_cards": true` and omit `pairs`: the engine builds the pairs
+from the referenced cards (left = `front`, right = `back`) at parse time. It
+requires non-empty `card_ids` and forbids an explicit `pairs` list.
+
+```json
+{
+  "id": "match-colors-from-cards",
+  "title": "Match colors (from cards)",
+  "cards": [
+    { "id": "rouge", "front": "rouge", "back": "red" },
+    { "id": "bleu", "front": "bleu", "back": "blue" }
+  ],
+  "steps": [
+    {
+      "id": "s1",
+      "type": "exercise",
+      "exercise": {
+        "id": "m1",
+        "type": "matching",
+        "prompt": "Match each color to its translation.",
+        "card_ids": ["rouge", "bleu"],
+        "from_cards": true
+      }
+    }
+  ]
+}
+```
+
 ### picture_choice
 
 Pick the correct image. Requires at least two `images` (`{src, label,
@@ -429,6 +458,8 @@ drifting.
 | `E-STEP-EXERCISE-PAYLOAD` | An exercise step has no `exercise` payload. |
 | `E-STEP-EXERCISE-BODY` | An exercise step also carries a `body`. |
 | `E-MATCH-PAIRS` | [`matching`](#matching) has empty/missing `pairs`. |
+| `E-MATCH-FROMCARDS-CARDS` | `matching` with `from_cards` has empty/missing `card_ids`. |
+| `E-MATCH-FROMCARDS-PAIRS` | `matching` with `from_cards` also lists explicit `pairs`. |
 | `E-PIC-MIN` | [`picture_choice`](#picture_choice) has fewer than 2 `images`. |
 | `E-PIC-ONE-CORRECT` | `picture_choice` does not have exactly one `is_correct: "true"`. |
 | `E-FREETEXT-ACCEPT` | [`free_text`](#free_text) has empty/missing `accept`. |

@@ -28,6 +28,7 @@ import { parse as parseYaml } from "yaml";
 
 import type {
   ContentLesson,
+  ContentLessonCard,
   ContentSetBook,
   ContentSetEntry,
   ContentSetSource,
@@ -207,15 +208,38 @@ export const singleJsonLessonAdapter: LessonSourceAdapter = (rawText, context) =
 };
 
 /**
+ * Resolve every ``from_cards`` matching exercise to concrete ``pairs``
+ * (left = card ``front``, right = card ``back``) and drop the flag, so the
+ * canonical lesson always carries explicit pairs and no renderer has to know
+ * about ``from_cards``. A referenced card that does not exist is skipped (the
+ * validator flags it as an unknown card reference).
+ */
+function resolveFromCards(lesson: ContentLesson): ContentLesson {
+  const cardById = new Map<string, ContentLessonCard>();
+  for (const card of lesson.cards ?? []) cardById.set(card.id, card);
+  for (const step of lesson.steps ?? []) {
+    const exercise = step.exercise;
+    if (!exercise || exercise.type !== "matching" || exercise.from_cards !== true) continue;
+    exercise.pairs = (exercise.card_ids ?? []).flatMap((cardId) => {
+      const card = cardById.get(cardId);
+      return card ? [{ left: card.front, right: card.back }] : [];
+    });
+    delete exercise.from_cards;
+  }
+  return lesson;
+}
+
+/**
  * Parse raw source data into a canonical {@link ContentLesson} via a source
- * adapter (default: {@link singleJsonLessonAdapter}). This is the content-engine
- * entry point; a future multi-file adapter is passed here instead, with no
- * change to the caller's fetch/storage.
+ * adapter (default: {@link singleJsonLessonAdapter}), then resolve any
+ * ``from_cards`` matching exercises. This is the content-engine entry point; a
+ * future multi-file adapter is passed here instead, with no change to the
+ * caller's fetch/storage.
  */
 export function parseLesson(
   rawText: string,
   context: LessonSetContext,
   adapter: LessonSourceAdapter = singleJsonLessonAdapter,
 ): ContentLesson {
-  return adapter(rawText, context);
+  return resolveFromCards(adapter(rawText, context));
 }

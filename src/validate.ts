@@ -102,6 +102,15 @@ const mentionsAnswerLength = (hint: string): boolean =>
   /(buchstabe|zeichen|letter|character)/i.test(hint);
 
 function checkMatching(exercise: Exercise, path: string, issues: ValidationIssue[]): void {
+  if (exercise.from_cards) {
+    if (!exercise.card_ids || exercise.card_ids.length === 0) {
+      issues.push(err("E-MATCH-FROMCARDS-CARDS", path, "MATCHING with 'from_cards' requires non-empty 'card_ids'", "matching"));
+    }
+    if (exercise.pairs && exercise.pairs.length > 0) {
+      issues.push(err("E-MATCH-FROMCARDS-PAIRS", path, "MATCHING with 'from_cards' must not also list explicit 'pairs'", "matching"));
+    }
+    return;
+  }
   const pairs = exercise.pairs;
   if (!pairs || pairs.length === 0) {
     issues.push(err("E-MATCH-PAIRS", path, "MATCHING exercise requires non-empty 'pairs'", "matching"));
