@@ -125,6 +125,10 @@ drift from the schema; the drift gate runs in `release-check` + CI.
 
 ## Changelog
 
+- **0.8.1** - Fix: the manifest schema's `schema_version` field `default` now
+  also says `1.6` (0.8.0 bumped only the `x-schema-version` stamp; the app
+  generator renders the field default from the same constant, so the byte-parity
+  gate caught the inconsistency). No other change.
 - **0.8.0** - Feature (Bucket B): native **`multiple_choice`** exercise type
   (schema **v1.6** - a new type is a minor schema bump per the ExerciseType
   policy; 1.x content stays valid). At least two `options` (`{text, correct?}`,
