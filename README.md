@@ -125,6 +125,13 @@ drift from the schema; the drift gate runs in `release-check` + CI.
 
 ## Changelog
 
+- **0.8.2** - Schema annotation: the list/map fields that are always present at
+  runtime (`Card.tags`, `Exercise.card_ids`, `Exercise.distractors`,
+  `Lesson.cards`; manifest `ContentSet.tags`/`assets`, `sets`, `metadata`) now
+  carry an explicit `"default": []` / `{}`. Validation-neutral (ajv ignores
+  `default`; TS types unchanged) - it makes the existing "absent = empty"
+  contract machine-readable so downstream code generators (the app's D3b
+  Pydantic generator) can reproduce it. 8 added lines, nothing else.
 - **0.8.1** - Fix: the manifest schema's `schema_version` field `default` now
   also says `1.6` (0.8.0 bumped only the `x-schema-version` stamp; the app
   generator renders the field default from the same constant, so the byte-parity
