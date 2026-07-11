@@ -71,13 +71,15 @@ The engine is moving from "extracted copy" to "the format authority":
    `frontend/package.json`) instead of an in-tree copy; app-vs-engine is the
    parity test.
 4. **Schema authority (done, v0.6.0).** The lesson schema is now authored in this
-   engine and carries an engine-owned `$id`; the app and content repos consume it
-   (the app's Pydantic became a conforming editorial tool, its parity gate
-   reversed to engine-as-reference). The flip was byte-equivalent - only `$id`
-   changed. TypeScript-type generation now also lives here (v0.6.1,
-   `make sync-types`, gated in CI). Remaining follow-up: let the app generate its
-   Pydantic from the engine schema (D3b). New schema features (e.g.
-   `multiple_choice`, `from_cards`) now originate here.
+   engine and carries an engine-owned `$id`; the app and content repos consume it.
+   The flip was byte-equivalent - only `$id` changed. TypeScript-type generation
+   also lives here (v0.6.1, `make sync-types`, gated in CI), and since D3b
+   (app PR #1529, engine 0.8.2) the app **generates** its structural Pydantic
+   layer from this engine's schema mirror too - only its semantic cross-field
+   validators stay hand-written, mirroring this engine's own split between the
+   authored schema and `src/validate.ts`. New schema features (e.g.
+   `multiple_choice`, `from_cards`) originate here; consumers re-pin and
+   regenerate.
 
 Each stage is independent and additive; none requires a consumer to know
 anything about the app.
