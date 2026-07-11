@@ -66,6 +66,8 @@ if (!result.valid) console.error(result.errors); // [{ path, message }, …]
 - [**Validation**](docs/validation.md) - the strict schema, the semantic rules, the error model.
 - [**Architecture**](docs/architecture.md) - the engine boundary, consumer parity, roadmap.
 - [**Contributing**](CONTRIBUTING.md) - TDD workflow, release gate, adding an exercise type.
+- [**Security policy**](SECURITY.md) - supported versions, private vulnerability reports.
+- [**Code of conduct**](CODE_OF_CONDUCT.md) - Contributor Covenant 2.1.
 
 ## Public API
 
@@ -99,6 +101,20 @@ consumer, so parse/validate/types live here once. As of **v0.6.0 this engine is
 the canonical source of the lesson schema** (schema authority moved here,
 [roadmap](docs/architecture.md#roadmap) stage 4); consumers - adaptive-learner
 and the content repos - mirror it. See [Schema authority](#schema-authority).
+
+### What this is NOT
+
+This is a **language-learning-shaped lesson engine**: the format is built
+around cards, drill-style exercise types, and a target/source language pair
+(see [concepts.md](docs/concepts.md)). It is deliberately **not**:
+
+- **a general assessment standard** - no QTI/SCORM/xAPI ambitions; the schema
+  covers exactly the exercise types its consumers render, and grows additively
+  when a consumer needs a new one.
+- **a runtime** - no rendering, grading, scheduling/SRS, persistence, or
+  networking; consumers own all of that.
+- **a content repository** - it ships the format, the validator, and the
+  author tooling, not lessons.
 
 ## Schema authority
 
