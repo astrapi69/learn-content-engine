@@ -215,18 +215,23 @@ export const singleJsonLessonAdapter: LessonSourceAdapter = (rawText, context) =
  * validator flags it as an unknown card reference).
  */
 function resolveFromCards(lesson: ContentLesson): ContentLesson {
+  if (!lesson.steps) return lesson;
   const cardById = new Map<string, ContentLessonCard>();
   for (const card of lesson.cards ?? []) cardById.set(card.id, card);
-  for (const step of lesson.steps ?? []) {
+  const steps = lesson.steps.map((step) => {
     const exercise = step.exercise;
-    if (!exercise || exercise.type !== "matching" || exercise.from_cards !== true) continue;
-    exercise.pairs = (exercise.card_ids ?? []).flatMap((cardId) => {
+    if (!exercise || exercise.type !== "matching" || exercise.from_cards !== true) return step;
+    const pairs = (exercise.card_ids ?? []).flatMap((cardId) => {
       const card = cardById.get(cardId);
       return card ? [{ left: card.front, right: card.back }] : [];
     });
-    delete exercise.from_cards;
-  }
-  return lesson;
+    // Rebuild the exercise (fresh copy) so the adapter's returned object is
+    // never mutated: set the resolved pairs, drop the now-redundant flag.
+    const resolvedExercise = { ...exercise, pairs };
+    delete resolvedExercise.from_cards;
+    return { ...step, exercise: resolvedExercise };
+  });
+  return { ...lesson, steps };
 }
 
 /**
