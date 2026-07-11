@@ -552,7 +552,7 @@ drifting.
 
 | ID | Rule |
 |---|---|
-| `W-CARD-UNUSED` | A card is defined but no exercise ever drills it (dead material). |
+| `W-CARD-UNUSED` | A card is defined but no exercise ever drills it (dead material). The [suggest-wiring CLI](#suggesting-card-wiring-for-unused-cards) can propose a wiring from exact text evidence. |
 | `W-MATCH-AMBIG` | A `matching` has duplicate `left` or `right` values (ambiguous pairing). |
 | `W-TILES-DUP` | A `word_tiles` has duplicate tiles but no `accept_orderings`. Consumers that grade by tile INDEX can grade a string-identical answer as wrong - consumers that grade the token sequence need no annotation. The warning stays until token-sequence grading is the minimum baseline across consumers (engine#19). Rule origin: an index-grading renderer in [adaptive-learner](https://github.com/astrapi69/adaptive-learner), the reference consumer (fixed there in adaptive-learner#1545). |
 | `W-DISTRACTOR-ANSWER` | A `cloze` `select` distractor equals an accepted answer. |
@@ -621,6 +621,48 @@ machine-readable output.
 > repos would revisit that policy (and silently drop alternate accepted
 > spellings, see the notes above) - that is a content-owner decision, never a
 > side effect of this command existing.
+
+## Suggesting card wiring for unused cards
+
+`W-CARD-UNUSED` tells you a card is dead material; wiring it to the right
+exercise is still a manual editing job. The CLI can PROPOSE that wiring -
+suggestions only, each with the evidence it rests on:
+
+```bash
+npx learn-content-engine suggest-wiring sets/de/mein-set/lessons/*.json
+# OK    sets/.../03.json: 1 suggestion(s), 1 card(s) for manual review
+#   suggest medical-training:ex-ms-bausteine
+#     front 'Medical Training' appears in prompt: "Was gehört zu einem guten kooperativen Medical Training?"
+#   manual  belohnung - no verbatim match in any exercise text field
+# dry run - review each suggestion, then re-run with --write --accept <suggestion-id>
+
+npx learn-content-engine suggest-wiring sets/de/mein-set/lessons/03.json \
+  --write --accept medical-training:ex-ms-bausteine
+```
+
+How it decides: detection is exactly the `W-CARD-UNUSED` rule (the two share
+one implementation); a wiring is proposed only when the card's `front` or
+`back` appears **verbatim** in a text field of exactly ONE exercise (`prompt`,
+`sentence`, option texts, `pairs`, `accept`, blank accepts, `tiles`). There is
+no fuzzy matching - no stemming, no case folding, no similarity scores. A card
+that matches nothing, or matches several exercises, is listed as "manual
+review" with the reason (and the candidate exercises) instead of a guess.
+
+Applying is per suggestion, never bulk: `--write` requires an explicit
+`--accept <suggestion-id>` (the stable `<cardId>:<exerciseId>` token from the
+dry run) for every change, and the rewired lesson must pass the bundled
+validator BEFORE the file is touched - an invalid result is reported and never
+written. An accepted id that matches no current suggestion fails the run
+loudly instead of silently no-opping. Add `--json` for machine-readable
+output.
+
+> **Scope:** this is a suggest tool, not auto-wiring - suggestions stay
+> suggestions until an author accepts them one by one. `card_ids` drives SRS
+> scheduling (a wrong wiring schedules the wrong card for review after a wrong
+> answer), so anything the exact-containment evidence cannot settle stays a
+> human decision. If the heuristic ever produces too many wrong proposals on
+> real content, the answer is to report that finding, not to loosen the
+> matching.
 
 ## Editor setup
 
