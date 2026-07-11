@@ -65,6 +65,7 @@ if (!result.valid) console.error(result.errors); // [{ path, message }, …]
 - [**Lesson format reference**](docs/lesson-format.md) - every field and exercise type, with tested examples.
 - [**Validation**](docs/validation.md) - the strict schema, the semantic rules, the error model.
 - [**Extensions**](docs/extensions.md) - opt-in `ext:` exercise types, the portability contract, the registry.
+- [**QTI interop**](docs/qti.md) - the optional QTI 2.x import/export adapter, mapping table, fidelity limits.
 - [**Architecture**](docs/architecture.md) - the engine boundary, consumer parity, roadmap.
 - [**Contributing**](CONTRIBUTING.md) - TDD workflow, release gate, adding an exercise type.
 - [**Security policy**](SECURITY.md) - supported versions, private vulnerability reports.
@@ -147,6 +148,18 @@ drift from the schema; the drift gate runs in `release-check` + CI.
 
 ## Changelog
 
+- **0.11.0** - Feature: optional **QTI 2.x interop adapter** on the subpath
+  export `learn-content-engine/qti` (`importQti`, `exportQti`, `qtiLessonAdapter`).
+  Maps the mappable subset both ways - `choiceInteraction` <-> `multiple_choice`
+  (single / multiple by cardinality), `textEntryInteraction` <-> `free_text`,
+  `matchInteraction` <-> `matching` - at the `parseLesson` boundary. Import
+  refuses unmappable items loudly (`QtiImportError` with a per-item list, no
+  silent skip) and gates the result through `validateLesson`; export covers the
+  mappable subset (`QtiExportError` otherwise). The XML parser
+  (`@rgrove/parse-xml`, zero transitive deps) is isolated to the subpath so the
+  core import stays dependency-free. xAPI stays a consumer responsibility.
+  Schema untouched by this feature (the 1.7 stamp comes from 0.10.0). See
+  [qti.md](docs/qti.md).
 - **0.10.0** - Feature: **extension exercise types** (schema **1.7**). A consumer
   can register a NON-core exercise type in the `ext:<vendor>-<name>` namespace
   without widening the core `ExerciseType` enum. A lesson declares what it needs

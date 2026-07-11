@@ -1,6 +1,6 @@
 {
   "name": "learn-content-engine",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "description": "Framework-agnostic TypeScript engine that parses lesson content from pluggable sources into a canonical lesson object.",
   "type": "module",
   "license": "MIT",
@@ -29,6 +29,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./qti": {
+      "types": "./dist/qti/index.d.ts",
+      "import": "./dist/qti/index.js"
     },
     "./schema/lesson.schema.json": "./schema/lesson.schema.json",
     "./schema/content-manifest.schema.json": "./schema/content-manifest.schema.json",
@@ -60,6 +64,7 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
+    "@rgrove/parse-xml": "^4.2.2",
     "ajv": "^8.20.0",
     "yaml": "^2.9.0"
   },

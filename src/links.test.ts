@@ -22,6 +22,7 @@ const DOC_FILES = [
   "docs/validation.md",
   "docs/architecture.md",
   "docs/extensions.md",
+  "docs/qti.md",
 ];
 
 /** GitHub-style heading slug. */

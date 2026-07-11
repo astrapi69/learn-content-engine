@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<assessmentItem xmlns="http://www.imsglobal.org/xsd/imsqti_v2p1"
+    identifier="q-match" title="Match colours" adaptive="false" timeDependent="false">
+  <responseDeclaration identifier="RESPONSE" cardinality="multiple" baseType="directedPair">
+    <correctResponse>
+      <value>L0 R0</value>
+      <value>L1 R1</value>
+    </correctResponse>
+  </responseDeclaration>
+  <itemBody>
+    <matchInteraction responseIdentifier="RESPONSE" shuffle="true" maxAssociations="0">
+      <prompt>Match each colour to its translation.</prompt>
+      <simpleMatchSet>
+        <simpleAssociableChoice identifier="L0" matchMax="1">rouge</simpleAssociableChoice>
+        <simpleAssociableChoice identifier="L1" matchMax="1">bleu</simpleAssociableChoice>
+      </simpleMatchSet>
+      <simpleMatchSet>
+        <simpleAssociableChoice identifier="R0" matchMax="1">red</simpleAssociableChoice>
+        <simpleAssociableChoice identifier="R1" matchMax="1">blue</simpleAssociableChoice>
+      </simpleMatchSet>
+    </matchInteraction>
+  </itemBody>
+</assessmentItem>

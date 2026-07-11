@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<assessmentItem xmlns="http://www.imsglobal.org/xsd/imsqti_v2p1"
+    identifier="q-greet" title="Greeting" adaptive="false" timeDependent="false">
+  <responseDeclaration identifier="RESPONSE" cardinality="single" baseType="string">
+    <correctResponse>
+      <value>bonjour</value>
+    </correctResponse>
+    <mapping defaultValue="0">
+      <mapEntry mapKey="salut" mappedValue="1"/>
+    </mapping>
+  </responseDeclaration>
+  <itemBody>
+    <p>Say hello in French.</p>
+    <textEntryInteraction responseIdentifier="RESPONSE" expectedLength="10"/>
+  </itemBody>
+</assessmentItem>
