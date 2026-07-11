@@ -160,7 +160,7 @@ function checkWordTiles(exercise: Exercise, path: string, issues: ValidationIssu
       warn(
         "W-TILES-DUP",
         path,
-        "WORD_TILES has duplicate tiles but no 'accept_orderings' - swapping identical tiles yields the same sentence yet may grade as wrong",
+        "WORD_TILES has duplicate tiles but no 'accept_orderings' - consumers grading by tile INDEX (apps before grade-by-string, adaptive-learner#1545) may grade a string-identical answer as wrong; harmless on newer consumers",
         "word_tiles",
       ),
     );
