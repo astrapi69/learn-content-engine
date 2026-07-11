@@ -28,6 +28,7 @@ import { fileURLToPath } from "node:url";
 import { Ajv2020 } from "ajv/dist/2020.js";
 import type { ErrorObject, ValidateFunction } from "ajv";
 
+import type { ExtensionRegistry } from "./extensions.js";
 import type { Exercise, Lesson, LessonStep } from "./types/lesson-schema.generated.js";
 
 /** Whether an issue blocks (``error``) or merely advises (``warning``). */
@@ -283,10 +284,58 @@ const EXERCISE_CHECKS: Record<string, (exercise: Exercise, path: string, issues:
   multiple_choice: checkMultipleChoice,
 };
 
+/** Registered-extension lookup context threaded through the semantic pass. */
+interface ExtContext {
+  /** ext type -> required major, parsed from the lesson's ``requires_extensions``. */
+  required: Map<string, number>;
+  registry: ExtensionRegistry;
+}
+
+/** An ``ext:`` extension type carries no core check; it is validated by a
+ *  registered extension after the declaration + registration contract holds. */
+const isExtType = (type: string): boolean => type.startsWith("ext:");
+
+/** Parse ``requires_extensions`` entries (``ext:<vendor>-<name>@<major>``) into
+ *  a type -> major map. Malformed entries are ignored (ajv already rejected
+ *  them structurally). */
+function requiredExtensions(lesson: Lesson): Map<string, number> {
+  const required = new Map<string, number>();
+  for (const entry of lesson.requires_extensions ?? []) {
+    const at = entry.lastIndexOf("@");
+    if (at === -1) continue;
+    const major = Number(entry.slice(at + 1));
+    if (Number.isInteger(major)) required.set(entry.slice(0, at), major);
+  }
+  return required;
+}
+
+/** Enforce the extension contract for one ``ext:`` exercise: declared in
+ *  ``requires_extensions`` (else E-EXT-UNDECLARED), registered at the pinned
+ *  major (else E-EXT-UNSUPPORTED), then delegate to the extension's validator. */
+function checkExtExercise(exercise: Exercise, path: string, ext: ExtContext, issues: ValidationIssue[]): void {
+  const type = exercise.type;
+  const requiredMajor = ext.required.get(type);
+  if (requiredMajor === undefined) {
+    issues.push(
+      err("E-EXT-UNDECLARED", path, `exercise uses extension type '${type}' but the lesson does not declare it in 'requires_extensions'`, "extensions"),
+    );
+    return;
+  }
+  const extension = ext.registry.find((candidate) => candidate.type === type && candidate.major === requiredMajor);
+  if (!extension) {
+    issues.push(
+      err("E-EXT-UNSUPPORTED", path, `no registered extension for '${type}@${requiredMajor}'; the consumer cannot render this lesson`, "extensions"),
+    );
+    return;
+  }
+  issues.push(...extension.validate(exercise));
+}
+
 function checkExercise(
   exercise: Exercise,
   path: string,
   knownCardIds: Set<string>,
+  ext: ExtContext,
   issues: ValidationIssue[],
 ): void {
   for (const cardId of exercise.card_ids ?? []) {
@@ -299,11 +348,15 @@ function checkExercise(
       warn("W-HINT-LENGTH", path, "hint reveals the answer length - redundant on consumers that display the answer length automatically, revealing on the rest", "rule-catalog"),
     );
   }
+  if (isExtType(exercise.type)) {
+    checkExtExercise(exercise, path, ext, issues);
+    return;
+  }
   const check = EXERCISE_CHECKS[exercise.type];
   if (check) check(exercise, path, issues);
 }
 
-function checkStep(step: LessonStep, path: string, knownCardIds: Set<string>, issues: ValidationIssue[]): void {
+function checkStep(step: LessonStep, path: string, knownCardIds: Set<string>, ext: ExtContext, issues: ValidationIssue[]): void {
   if (step.type === "theory") {
     if (!step.body) issues.push(err("E-STEP-THEORY-BODY", path, "THEORY step requires non-empty 'body'", "steps"));
     if (step.exercise != null) issues.push(err("E-STEP-THEORY-EXERCISE", path, "THEORY step must not carry 'exercise'", "steps"));
@@ -313,7 +366,7 @@ function checkStep(step: LessonStep, path: string, knownCardIds: Set<string>, is
   if (step.exercise == null) {
     issues.push(err("E-STEP-EXERCISE-PAYLOAD", path, "EXERCISE step requires an 'exercise' payload", "steps"));
   } else {
-    checkExercise(step.exercise, `${path}/exercise`, knownCardIds, issues);
+    checkExercise(step.exercise, `${path}/exercise`, knownCardIds, ext, issues);
   }
   if (step.body != null) {
     issues.push(err("E-STEP-EXERCISE-BODY", path, "EXERCISE step must not carry 'body' (use the exercise prompt instead)", "steps"));
@@ -335,11 +388,12 @@ function checkUnusedCards(lesson: Lesson, issues: ValidationIssue[]): void {
 
 /** Semantic + lint pass. Assumes the input is already structurally valid (so the
  *  schema-typed shape is trustworthy). Returns a mixed error/warning list. */
-function semanticIssues(lesson: Lesson): ValidationIssue[] {
+function semanticIssues(lesson: Lesson, registry: ExtensionRegistry): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
   const knownCardIds = new Set<string>((lesson.cards ?? []).map((card) => card.id));
+  const ext: ExtContext = { required: requiredExtensions(lesson), registry };
   lesson.steps.forEach((step, index) => {
-    checkStep(step, `/steps/${index}`, knownCardIds, issues);
+    checkStep(step, `/steps/${index}`, knownCardIds, ext, issues);
   });
   checkUnusedCards(lesson, issues);
   return issues;
@@ -355,12 +409,20 @@ const split = (issues: ValidationIssue[]): ValidationResult => {
  * Validate a lesson against the bundled canonical schema, the semantic
  * cross-field rules, and the author lints. Returns ``{ valid, errors, warnings
  * }``; ``valid`` is errors-only (warnings never block). Does not throw.
+ *
+ * ``options.extensions`` registers ``ext:`` exercise-type extensions. Without
+ * it, an ``ext:`` exercise that a lesson declares is refused (E-EXT-UNSUPPORTED);
+ * CORE content (no ``ext:`` types) validates identically regardless of the
+ * registry.
  */
-export function validateLesson(input: unknown): ValidationResult {
+export function validateLesson(
+  input: unknown,
+  options: { extensions?: ExtensionRegistry } = {},
+): ValidationResult {
   if (!structuralLesson(input)) {
     return { valid: false, errors: toStructuralIssues(structuralLesson.errors as ErrorObject[]), warnings: [] };
   }
-  return split(semanticIssues(input as Lesson));
+  return split(semanticIssues(input as Lesson, options.extensions ?? []));
 }
 
 /** Drop the legacy ``language`` alias into ``target_language`` on each set

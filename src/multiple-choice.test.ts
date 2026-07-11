@@ -122,13 +122,15 @@ describe("multiple_choice - validation (negative)", () => {
 });
 
 describe("multiple_choice - schema version + round-trip", () => {
-  it("bumped x-schema-version to 1.6 (new type = minor bump)", async () => {
+  it("x-schema-version is at least the 1.6 multiple_choice bump (currently 1.7)", async () => {
     const { readFileSync } = await import("node:fs");
     const { fileURLToPath } = await import("node:url");
     const schema = JSON.parse(
       readFileSync(fileURLToPath(new URL("../schema/lesson.schema.json", import.meta.url)), "utf8"),
     ) as Record<string, unknown>;
-    expect(schema["x-schema-version"]).toBe("1.6");
+    // multiple_choice shipped in 1.6; later additive bumps (e.g. 1.7 extensions)
+    // keep it valid, so pin the floor rather than the exact version.
+    expect(Number(schema["x-schema-version"])).toBeGreaterThanOrEqual(1.6);
   });
 
   it("round-trips typed onto the canonical object", () => {
