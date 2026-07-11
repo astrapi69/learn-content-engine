@@ -14,6 +14,7 @@
  * - multi-blank selects (one gap = one question does not hold there)
  */
 
+import { exitCodeFor, parseErrorLine, parseFileArgs, type FileReport } from "./file-command.js";
 import { validateLesson, type ValidationResult } from "./validate.js";
 
 /** Parsed `migrate` invocation, or a usage error. */
@@ -23,17 +24,15 @@ export type MigrateArgs =
 
 /** Parse `migrate <file...> [--write] [--json]`. Pure; no filesystem access. */
 export function parseMigrateArgs(argv: string[]): MigrateArgs {
-  if (argv[0] !== "migrate") {
-    return { error: `unknown command '${argv[0] ?? ""}' (expected: migrate <file...> [--write] [--json])` };
-  }
-  const rest = argv.slice(1);
-  const write = rest.includes("--write");
-  const json = rest.includes("--json");
-  const paths = rest.filter((arg) => arg !== "--write" && arg !== "--json");
-  if (paths.length === 0) {
-    return { error: "usage: learn-content-engine migrate <file...> [--write] [--json]" };
-  }
-  return { paths, write, json };
+  const parsed = parseFileArgs(
+    "migrate",
+    argv,
+    ["--write", "--json"],
+    "migrate <file...> [--write] [--json]",
+    "usage: learn-content-engine migrate <file...> [--write] [--json]",
+  );
+  if ("error" in parsed) return parsed;
+  return { paths: parsed.paths, write: parsed.flags.has("--write"), json: parsed.flags.has("--json") };
 }
 
 /** Outcome for one candidate exercise (cloze select/multiselect). */
@@ -181,14 +180,11 @@ export function migrateLesson(lesson: unknown): MigrateOutcome {
 }
 
 /** One file's migration outcome. `ok` means: parseable AND still schema-valid. */
-export interface MigrateReport {
-  path: string;
-  ok: boolean;
+export interface MigrateReport extends FileReport {
   converted: number;
   changes: ExerciseChange[];
   lesson?: unknown;
   validation?: ValidationResult;
-  parseError?: string;
 }
 
 /**
@@ -220,7 +216,7 @@ export function formatMigrateReports(
   reports: MigrateReport[],
   options: { json: boolean; write: boolean },
 ): { text: string; exitCode: number } {
-  const exitCode = reports.every((report) => report.ok) ? 0 : 1;
+  const exitCode = exitCodeFor(reports);
   if (options.json) {
     const serializable = reports.map((report) => {
       const { lesson, ...rest } = report;
@@ -232,7 +228,7 @@ export function formatMigrateReports(
   const lines: string[] = [];
   for (const report of reports) {
     if (report.parseError) {
-      lines.push(`ERROR ${report.path}: invalid JSON - ${report.parseError}`);
+      lines.push(parseErrorLine(report));
       continue;
     }
     if (!report.ok) {
