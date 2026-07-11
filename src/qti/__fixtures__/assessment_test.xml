@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<assessmentTest xmlns="http://www.imsglobal.org/xsd/imsqti_v2p1"
+    identifier="lesson-de" title="Deutsch Quiz">
+  <testPart identifier="part1" navigationMode="linear" submissionMode="individual">
+    <assessmentSection identifier="sec1" title="Bundeslaender" visible="true">
+      <assessmentItem identifier="q1" title="Frage 1" adaptive="false" timeDependent="false">
+        <responseDeclaration identifier="RESPONSE" cardinality="single" baseType="identifier">
+          <correctResponse>
+            <value>ChoiceA</value>
+          </correctResponse>
+        </responseDeclaration>
+        <itemBody>
+          <choiceInteraction responseIdentifier="RESPONSE" shuffle="true" maxChoices="1">
+            <prompt>Welches Bundesland grenzt an Italien?</prompt>
+            <simpleChoice identifier="ChoiceA">Kärnten</simpleChoice>
+            <simpleChoice identifier="ChoiceB">Sachsen</simpleChoice>
+          </choiceInteraction>
+        </itemBody>
+      </assessmentItem>
+      <assessmentItem identifier="q2" title="Frage 2" adaptive="false" timeDependent="false">
+        <responseDeclaration identifier="RESPONSE" cardinality="single" baseType="string">
+          <correctResponse>
+            <value>Grüße</value>
+          </correctResponse>
+        </responseDeclaration>
+        <itemBody>
+          <p>Wie sagt man "greetings" auf Deutsch?</p>
+          <textEntryInteraction responseIdentifier="RESPONSE" expectedLength="10"/>
+        </itemBody>
+      </assessmentItem>
+    </assessmentSection>
+  </testPart>
+</assessmentTest>

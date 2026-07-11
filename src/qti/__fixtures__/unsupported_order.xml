@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<assessmentItem xmlns="http://www.imsglobal.org/xsd/imsqti_v2p1"
+    identifier="q-order" title="Order the steps" adaptive="false" timeDependent="false">
+  <responseDeclaration identifier="RESPONSE" cardinality="ordered" baseType="identifier"/>
+  <itemBody>
+    <orderInteraction responseIdentifier="RESPONSE" shuffle="true">
+      <prompt>Put the steps in order.</prompt>
+      <simpleChoice identifier="A">First</simpleChoice>
+      <simpleChoice identifier="B">Second</simpleChoice>
+    </orderInteraction>
+  </itemBody>
+</assessmentItem>

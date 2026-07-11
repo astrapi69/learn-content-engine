@@ -65,6 +65,7 @@ if (!result.valid) console.error(result.errors); // [{ path, message }, …]
 - [**Lesson format reference**](docs/lesson-format.md) - every field and exercise type, with tested examples.
 - [**Validation**](docs/validation.md) - the strict schema, the semantic rules, the error model.
 - [**Architecture**](docs/architecture.md) - the engine boundary, parity with the app, roadmap.
+- [**QTI interop**](docs/qti.md) - the optional QTI 2.x import/export adapter, mapping table, fidelity limits.
 - [**Contributing**](CONTRIBUTING.md) - TDD workflow, release gate, adding an exercise type.
 
 ## Public API
@@ -128,6 +129,18 @@ drift from the schema; the drift gate runs in `release-check` + CI.
 
 ## Changelog
 
+- **0.10.0** - Feature: optional **QTI 2.x interop adapter** on the subpath
+  export `learn-content-engine/qti` (`importQti`, `exportQti`, `qtiLessonAdapter`).
+  Maps the mappable subset both ways - `choiceInteraction` <-> `multiple_choice`
+  (single / multiple by cardinality), `textEntryInteraction` <-> `free_text`,
+  `matchInteraction` <-> `matching` - at the `parseLesson` boundary. Import
+  refuses unmappable items loudly (`QtiImportError` with a per-item list, no
+  silent skip) and gates the result through `validateLesson`; export covers the
+  mappable subset (`QtiExportError` otherwise). The XML parser
+  (`@rgrove/parse-xml`, zero transitive deps) is isolated to the subpath so the
+  core import stays dependency-free. xAPI stays a consumer responsibility.
+  Schema untouched (`x-schema-version` stays `1.6`). See
+  [qti.md](docs/qti.md).
 - **0.9.0** - Feature: `learn-content-engine migrate <file...> [--write] [--json]` -
   the cloze `select`/`multiselect` -> native `multiple_choice` conversion every
   content repo scripted by hand, as a validated CLI subcommand. Dry-run by

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<assessmentItem xmlns="http://www.imsglobal.org/xsd/imsqti_v2p1"
+    identifier="q-primes" title="Prime numbers" adaptive="false" timeDependent="false">
+  <responseDeclaration identifier="RESPONSE" cardinality="multiple" baseType="identifier">
+    <correctResponse>
+      <value>ChoiceA</value>
+      <value>ChoiceC</value>
+    </correctResponse>
+  </responseDeclaration>
+  <itemBody>
+    <choiceInteraction responseIdentifier="RESPONSE" shuffle="false" maxChoices="0">
+      <prompt>Select all prime numbers.</prompt>
+      <simpleChoice identifier="ChoiceA">2</simpleChoice>
+      <simpleChoice identifier="ChoiceB">4</simpleChoice>
+      <simpleChoice identifier="ChoiceC">3</simpleChoice>
+    </choiceInteraction>
+  </itemBody>
+</assessmentItem>
