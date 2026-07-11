@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 
-import { parseLesson, type LessonSetContext } from "./content-engine.js";
+import { parseLesson, type LessonSetContext, type LessonSourceAdapter } from "./content-engine.js";
+import type { ContentLesson } from "./types/index.js";
 import { validateLesson } from "./validate.js";
 
 /**
@@ -111,6 +112,36 @@ describe("from_cards - parse resolution", () => {
     };
     const lesson = parseLesson(JSON.stringify(noCards), CTX);
     expect(lesson.id).toBe("l3");
+  });
+
+  it("does not mutate the object returned by the source adapter (purity, #24)", () => {
+    // A custom adapter may return a cached / shared object; parseLesson must not
+    // write `pairs` or delete `from_cards` on it. Mirrors migrateLesson's
+    // "input is never mutated" contract on the neighbouring path.
+    const shared = {
+      id: "l1",
+      title: "Match colours",
+      cards: [{ id: "rouge", front: "rouge", back: "red" }],
+      steps: [
+        {
+          id: "s1",
+          type: "exercise",
+          exercise: { id: "m1", type: "matching", prompt: "?", card_ids: ["rouge"], from_cards: true },
+        },
+      ],
+    };
+    const sharedAdapter: LessonSourceAdapter = () => shared as unknown as ContentLesson;
+
+    const canonical = parseLesson("{}", CTX, sharedAdapter);
+
+    // The canonical object still gets resolved pairs and no from_cards flag.
+    expect(canonical.steps[0]!.exercise!.pairs).toEqual([{ left: "rouge", right: "red" }]);
+    expect((canonical.steps[0]!.exercise as Record<string, unknown>).from_cards).toBeUndefined();
+
+    // ...but the adapter's own object is left exactly as it was.
+    const sharedExercise = shared.steps[0]!.exercise as Record<string, unknown>;
+    expect(sharedExercise.from_cards).toBe(true);
+    expect(sharedExercise.pairs).toBeUndefined();
   });
 
   it("leaves an explicit-pairs matching exercise untouched", () => {
