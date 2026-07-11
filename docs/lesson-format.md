@@ -552,7 +552,7 @@ drifting.
 |---|---|
 | `W-CARD-UNUSED` | A card is defined but no exercise ever drills it (dead material). |
 | `W-MATCH-AMBIG` | A `matching` has duplicate `left` or `right` values (ambiguous pairing). |
-| `W-TILES-DUP` | A `word_tiles` has duplicate tiles but no `accept_orderings` (swapping identical tiles yields the same sentence yet may grade as wrong). |
+| `W-TILES-DUP` | A `word_tiles` has duplicate tiles but no `accept_orderings`. Only consumers that grade by tile INDEX (apps before grade-by-string, adaptive-learner#1545) can grade a string-identical answer as wrong - newer consumers grade the token sequence and need no annotation. The warning stays until such consumers are the minimum baseline (engine#19). |
 | `W-DISTRACTOR-ANSWER` | A `cloze` `select` distractor equals an accepted answer. |
 | `W-PIC-DUP-LABEL` | A `picture_choice` distractor shares its `label` with the correct image. |
 | `W-HINT-LENGTH` | A hint reveals the answer length (e.g. "four letters") - redundant with the app's automatic length display. |
