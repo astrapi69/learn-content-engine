@@ -70,10 +70,12 @@ inherited by the set's lessons unless a lesson declares its own.
 
 ## Schema-version policy (additive)
 
-The lesson schema is versioned (`x-schema-version`, currently `1.5`) and evolves
+The lesson schema is versioned (`x-schema-version`, currently `1.6`) and evolves
 **additively**: new fields are optional, so **older content stays valid under a
 newer schema**. For example, v1.5 added the inline `examples` field; a v1.4
-lesson without `examples` validates unchanged under v1.5.
+lesson without `examples` validates unchanged under v1.5. Likewise v1.6 added
+the native `multiple_choice` exercise type and matching `from_cards` - both
+optional, so v1.5 content validates unchanged under v1.6.
 
 The schema's **canonical source is this engine** (as of v0.6.0); the app and
 content repos consume it (see
