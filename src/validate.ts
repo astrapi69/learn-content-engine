@@ -4,12 +4,13 @@
  * ``parse`` stays permissive (JSON.parse + spread); validation is an EXPLICIT,
  * opt-in step the consumer runs when it wants the format contract enforced.
  *
- * Layers, mirroring the app's Pydantic pipeline (field validation before the
- * model_validators), plus a non-blocking author-lint layer on top:
+ * Layers (field validation before the cross-field validators, matching the
+ * pipeline of adaptive-learner, the reference consumer), plus a non-blocking
+ * author-lint layer on top:
  *   1. STRUCTURAL - ajv against the bundled ``schema/lesson.schema.json``
  *      (draft 2020-12, STRICT: ``additionalProperties: false`` everywhere).
  *   2. SEMANTIC (errors) - cross-field rules the JSON-Schema cannot express,
- *      mirroring the app's ``model_validator`` methods (per-type required
+ *      mirroring the reference consumer's validators (per-type required
  *      fields, cloze marker/blank count, multiselect disjointness, picture
  *      "exactly one correct", referential integrity).
  *   3. AUTHOR LINTS (warnings) - never block (``valid`` stays errors-only), but
@@ -160,7 +161,7 @@ function checkWordTiles(exercise: Exercise, path: string, issues: ValidationIssu
       warn(
         "W-TILES-DUP",
         path,
-        "WORD_TILES has duplicate tiles but no 'accept_orderings' - consumers grading by tile INDEX (apps before grade-by-string, adaptive-learner#1545) may grade a string-identical answer as wrong; harmless on newer consumers",
+        "WORD_TILES has duplicate tiles but no 'accept_orderings' - consumers that grade word tiles by tile index may grade a string-identical answer as wrong; consumers grading the token sequence need no annotation",
         "word_tiles",
       ),
     );
@@ -295,7 +296,7 @@ function checkExercise(
   }
   if (exercise.hint && mentionsAnswerLength(exercise.hint)) {
     issues.push(
-      warn("W-HINT-LENGTH", path, "hint reveals the answer length - redundant with the app's automatic length display", "rule-catalog"),
+      warn("W-HINT-LENGTH", path, "hint reveals the answer length - redundant on consumers that display the answer length automatically, revealing on the rest", "rule-catalog"),
     );
   }
   const check = EXERCISE_CHECKS[exercise.type];
@@ -363,9 +364,9 @@ export function validateLesson(input: unknown): ValidationResult {
 }
 
 /** Drop the legacy ``language`` alias into ``target_language`` on each set
- *  BEFORE schema validation - mirrors the app's ``_accept_language_alias``
- *  (mode="before"), so a pre-v1.2 manifest validates instead of tripping the
- *  strict ``additionalProperties`` / missing-``target_language`` rules. */
+ *  BEFORE schema validation (the pre-v1.2 alias rule, see
+ *  ``docs/concepts.md``), so a legacy manifest validates instead of tripping
+ *  the strict ``additionalProperties`` / missing-``target_language`` rules. */
 function normalizeManifestAliases(input: unknown): unknown {
   if (typeof input !== "object" || input === null) return input;
   const manifest = input as { sets?: unknown };

@@ -1,13 +1,13 @@
 /**
  * learn-content-engine — framework-agnostic content parse/transform engine.
  *
- * Public API: the source→canonical boundary (EXP-042). A **source adapter**
+ * Public API: the source→canonical boundary. A **source adapter**
  * turns raw content (today: a single-JSON lesson) into the canonical internal
  * lesson object ({@link ContentLesson}); the manifest transform projects a raw
  * ``manifest.yaml`` set into a canonical {@link ContentSetEntry}.
  *
- * The library is framework-agnostic: no fetch, no database, no UI. The host
- * app supplies the raw bytes + set context and keeps network/persistence.
+ * The library is framework-agnostic: no fetch, no database, no UI. The
+ * consumer supplies the raw bytes + set context and keeps network/persistence.
  */
 
 // --- Engine: parse / transform + adapter surface ---------------------------

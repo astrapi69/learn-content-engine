@@ -131,6 +131,26 @@ describe("analysis warnings", () => {
     expect(hasWarning(handled, "W-TILES-DUP")).toBe(false);
   });
 
+  it("W-TILES-DUP message is engine-neutral: rule + index-grading consequence, no consumer tickets", () => {
+    const result = validateLesson(
+      lesson([ex({ id: "e1", type: "word_tiles", prompt: "?", tiles: ["und", "kurz", "und", "oft"] })]),
+    );
+    const message = byId(result.warnings, "W-TILES-DUP")?.message ?? "";
+    expect(message).toContain("accept_orderings");
+    expect(message).toContain("tile index");
+    // engine-neutral: no consumer names, no consumer-internal ticket references
+    expect(message).not.toMatch(/adaptive-learner|#\d+|\bapp\b/i);
+  });
+
+  it("W-HINT-LENGTH message is engine-neutral (no consumer internals)", () => {
+    const result = validateLesson(
+      lesson([ex({ id: "e1", type: "free_text", prompt: "?", accept: ["tree"], hint: "It is 4 letters long." })]),
+    );
+    const message = byId(result.warnings, "W-HINT-LENGTH")?.message ?? "";
+    expect(message).toContain("answer length");
+    expect(message).not.toMatch(/adaptive-learner|#\d+|\bapp\b/i);
+  });
+
   it("W-DISTRACTOR-ANSWER when a select cloze distractor equals the answer", () => {
     const result = validateLesson(
       lesson([

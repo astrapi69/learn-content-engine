@@ -10,9 +10,9 @@ It takes raw content (a **single-JSON** lesson plus a `manifest.yaml`) and a set
 context, and produces canonical lesson / set-entry objects. It contains **no**
 network, storage, or UI code - you supply the bytes and keep fetch +
 persistence. The bundled, strict JSON-Schema makes it a self-contained **format
-reference**: you can author and validate lessons without the app that originated
-the format ([Adaptive Learner](https://github.com/astrapi69/adaptive-learner),
-EXP-042). Tracks the lesson schema at **v1.6**.
+reference**: you can author and validate lessons without the application the
+format originated in ([Adaptive Learner](https://github.com/astrapi69/adaptive-learner)).
+Tracks the lesson schema at **v1.6**.
 
 ## Install
 
@@ -64,8 +64,10 @@ if (!result.valid) console.error(result.errors); // [{ path, message }, …]
 - [**Concepts**](docs/concepts.md) - the pipeline, context inheritance, the legacy alias, schema policy.
 - [**Lesson format reference**](docs/lesson-format.md) - every field and exercise type, with tested examples.
 - [**Validation**](docs/validation.md) - the strict schema, the semantic rules, the error model.
-- [**Architecture**](docs/architecture.md) - the engine boundary, parity with the app, roadmap.
+- [**Architecture**](docs/architecture.md) - the engine boundary, consumer parity, roadmap.
 - [**Contributing**](CONTRIBUTING.md) - TDD workflow, release gate, adding an exercise type.
+- [**Security policy**](SECURITY.md) - supported versions, private vulnerability reports.
+- [**Code of conduct**](CODE_OF_CONDUCT.md) - Contributor Covenant 2.1.
 
 ## Public API
 
@@ -90,15 +92,29 @@ directly: `import schema from "learn-content-engine/schema/lesson.schema.json"`.
 
 ## Scope
 
-Per the EXP-042 boundary, this package contains **only** parse / transform /
+By design, this package contains **only** parse / transform /
 validate / types + the single-JSON source adapter - **no** fetch, storage, or
-UI; those stay in the host. See [architecture.md](docs/architecture.md). The
+UI; those stay in the consumer. See [architecture.md](docs/architecture.md). The
 [adaptive-learner](https://github.com/astrapi69/adaptive-learner) app **consumes
-this library** (pinned in its `frontend/package.json`), so parse/validate/types
-live here once. As of **v0.6.0 this engine is the canonical source of the lesson
-schema** (schema authority moved here, [roadmap](docs/architecture.md#roadmap)
-stage 4); the app and content repos consume it. See
-[Schema authority](#schema-authority).
+this library** (pinned in its `frontend/package.json`) as the reference
+consumer, so parse/validate/types live here once. As of **v0.6.0 this engine is
+the canonical source of the lesson schema** (schema authority moved here,
+[roadmap](docs/architecture.md#roadmap) stage 4); consumers - adaptive-learner
+and the content repos - mirror it. See [Schema authority](#schema-authority).
+
+### What this is NOT
+
+This is a **language-learning-shaped lesson engine**: the format is built
+around cards, drill-style exercise types, and a target/source language pair
+(see [concepts.md](docs/concepts.md)). It is deliberately **not**:
+
+- **a general assessment standard** - no QTI/SCORM/xAPI ambitions; the schema
+  covers exactly the exercise types its consumers render, and grows additively
+  when a consumer needs a new one.
+- **a runtime** - no rendering, grading, scheduling/SRS, persistence, or
+  networking; consumers own all of that.
+- **a content repository** - it ships the format, the validator, and the
+  author tooling, not lessons.
 
 ## Schema authority
 
@@ -107,11 +123,11 @@ The **canonical source** of the lesson schema is this engine's
 `content-manifest.schema.json`, `quality-rules.json`). It is an **authored**
 artifact here; consumers mirror the schema shipped in each pinned engine release:
 
-- **The app** ([adaptive-learner](https://github.com/astrapi69/adaptive-learner))
-  keeps its Pydantic models as an *editorial tool* for its own runtime types, but
-  its generated schema must be **byte-identical** to the engine's - its parity
-  gate now treats the engine as the reference (the app conforms to the engine,
-  not the reverse).
+- **[adaptive-learner](https://github.com/astrapi69/adaptive-learner)** (the
+  reference consumer) keeps its Pydantic models as an *editorial tool* for its
+  own runtime types, but its generated schema must be **byte-identical** to the
+  engine's - its parity gate treats the engine as the reference (the consumer
+  conforms to the engine, not the reverse).
 - **Content repos** mirror the schema from the pinned engine release via their
   drift tool (`schema/engine-version.txt`).
 
