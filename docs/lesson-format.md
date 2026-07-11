@@ -602,6 +602,13 @@ Every rewritten lesson is checked with the bundled validator BEFORE writing;
 an invalid result is reported and never written. Add `--json` for
 machine-readable output.
 
+> **Scope:** this is deliberate per-file author tooling, not a bulk-migration
+> mandate. The coexistence policy stands - existing cloze select/multiselect
+> content stays valid and stays as it is. A sweeping conversion of existing
+> repos would revisit that policy (and silently drop alternate accepted
+> spellings, see the notes above) - that is a content-owner decision, never a
+> side effect of this command existing.
+
 ## Editor setup
 
 Bind the bundled schema in your editor for autocomplete and inline errors while
