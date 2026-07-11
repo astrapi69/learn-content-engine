@@ -77,8 +77,8 @@ lesson without `examples` validates unchanged under v1.5. Likewise v1.6 added
 the native `multiple_choice` exercise type and matching `from_cards` - both
 optional, so v1.5 content validates unchanged under v1.6.
 
-The schema's **canonical source is this engine** (as of v0.6.0); the app and
-content repos consume it (see
+The schema's **canonical source is this engine** (as of v0.6.0); consumers
+(adaptive-learner, the content repos) consume it (see
 [schema authority](architecture.md#schema-authority-this-engine)). That authority
-- not a dependency on the app at runtime - is what lets you treat this engine as
-the format reference.
+- not a runtime dependency on any particular consumer - is what lets you treat
+this engine as the format reference.

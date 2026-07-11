@@ -552,10 +552,10 @@ drifting.
 |---|---|
 | `W-CARD-UNUSED` | A card is defined but no exercise ever drills it (dead material). |
 | `W-MATCH-AMBIG` | A `matching` has duplicate `left` or `right` values (ambiguous pairing). |
-| `W-TILES-DUP` | A `word_tiles` has duplicate tiles but no `accept_orderings`. Only consumers that grade by tile INDEX (apps before grade-by-string, adaptive-learner#1545) can grade a string-identical answer as wrong - newer consumers grade the token sequence and need no annotation. The warning stays until such consumers are the minimum baseline (engine#19). |
+| `W-TILES-DUP` | A `word_tiles` has duplicate tiles but no `accept_orderings`. Consumers that grade by tile INDEX can grade a string-identical answer as wrong - consumers that grade the token sequence need no annotation. The warning stays until token-sequence grading is the minimum baseline across consumers (engine#19). Rule origin: an index-grading renderer in [adaptive-learner](https://github.com/astrapi69/adaptive-learner), the reference consumer (fixed there in adaptive-learner#1545). |
 | `W-DISTRACTOR-ANSWER` | A `cloze` `select` distractor equals an accepted answer. |
 | `W-PIC-DUP-LABEL` | A `picture_choice` distractor shares its `label` with the correct image. |
-| `W-HINT-LENGTH` | A hint reveals the answer length (e.g. "four letters") - redundant with the app's automatic length display. |
+| `W-HINT-LENGTH` | A hint reveals the answer length (e.g. "four letters"). Consumers that display an answer-length indicator make such a hint redundant; on other consumers it gives part of the answer away. |
 
 ## Linting
 
