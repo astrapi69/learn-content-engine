@@ -373,16 +373,23 @@ function checkStep(step: LessonStep, path: string, knownCardIds: Set<string>, ex
   }
 }
 
-/** Warn about cards that no exercise ever drills (dead learning material). */
-function checkUnusedCards(lesson: Lesson, issues: ValidationIssue[]): void {
+/**
+ * Ids of cards no exercise's `card_ids` references - the detection core of the
+ * W-CARD-UNUSED lint, shared with the suggest-wiring CLI (#20). Returns ids in
+ * card-definition order; a lesson without cards yields an empty list.
+ */
+export function unusedCardIds(lesson: Lesson): string[] {
   const used = new Set<string>();
   for (const step of lesson.steps) {
     for (const cardId of step.exercise?.card_ids ?? []) used.add(cardId);
   }
-  for (const card of lesson.cards ?? []) {
-    if (!used.has(card.id)) {
-      issues.push(warn("W-CARD-UNUSED", "/cards", `card '${card.id}' is defined but never referenced by an exercise`, "cards"));
-    }
+  return (lesson.cards ?? []).map((card) => card.id).filter((cardId) => !used.has(cardId));
+}
+
+/** Warn about cards that no exercise ever drills (dead learning material). */
+function checkUnusedCards(lesson: Lesson, issues: ValidationIssue[]): void {
+  for (const cardId of unusedCardIds(lesson)) {
+    issues.push(warn("W-CARD-UNUSED", "/cards", `card '${cardId}' is defined but never referenced by an exercise`, "cards"));
   }
 }
 

@@ -148,6 +148,17 @@ drift from the schema; the drift gate runs in `release-check` + CI.
 
 ## Changelog
 
+- **0.12.0** - Feature: `learn-content-engine suggest-wiring <file...> [--json]
+  [--write --accept <id>...]` - a suggest mode for `W-CARD-UNUSED` (#20).
+  Detection shares the lint's unused-card core; a wiring is proposed only when
+  the card's `front`/`back` appears verbatim in a text field of exactly one
+  exercise, printed with its evidence (field + quote). No fuzzy matching: zero
+  or ambiguous matches land in "manual review" instead of a guess. Dry-run by
+  default; `--write` applies only explicitly `--accept`ed suggestions (no bulk
+  apply - `card_ids` drives SRS scheduling) and the rewired lesson must pass
+  the bundled validator before the file is touched. Schema untouched
+  (`x-schema-version` stays `1.7`). See
+  [lesson-format.md](docs/lesson-format.md#suggesting-card-wiring-for-unused-cards).
 - **0.11.1** - Fix: `schema/lesson.schema.json` is canonically serialized again
   (`json.dumps(..., indent=2, sort_keys=True)`); the 1.7 blocks from 0.10.0 had
   been inserted hand-formatted. Semantically identical (parsed-equality

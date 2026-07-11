@@ -1,14 +1,20 @@
 #!/usr/bin/env node
 // Thin CLI shim: read argv + files, delegate to the tested cores in dist/,
 // print, and set the exit code. All logic worth testing lives in src/cli.ts
-// (lint) and src/migrate.ts (migrate); this file only wires filesystem I/O to
-// them. Subcommands live in a table so adding one is a new entry, not another
-// copy of the read/format/exit block. An unknown command falls back to `lint`,
-// whose parser reports it (parity with the pre-table behaviour).
+// (lint), src/migrate.ts (migrate) and src/suggest-wiring.ts (suggest-wiring);
+// this file only wires filesystem I/O to them. Subcommands live in a table so
+// adding one is a new entry, not another copy of the read/format/exit block.
+// An unknown command falls back to `lint`, whose parser reports it (parity
+// with the pre-table behaviour).
 import { readFileSync, writeFileSync } from "node:fs";
 
 import { parseLintArgs, lintContent, formatReports } from "../dist/cli.js";
 import { parseMigrateArgs, migrateContent, formatMigrateReports } from "../dist/migrate.js";
+import {
+  parseSuggestWiringArgs,
+  suggestWiringContent,
+  formatSuggestWiringReports,
+} from "../dist/suggest-wiring.js";
 
 const COMMANDS = {
   lint: {
@@ -33,6 +39,23 @@ const COMMANDS = {
     },
     format: (reports, args) => formatMigrateReports(reports, { json: args.json, write: args.write }),
   },
+  "suggest-wiring": {
+    parseArgs: parseSuggestWiringArgs,
+    run: (rawJson, path, args) => suggestWiringContent(rawJson, path, args.accept),
+    readError: (path, message) => ({ path, ok: false, suggestions: [], manualReview: [], accepted: [], parseError: message }),
+    // Dry-run by default; the core sets `lesson` ONLY when explicitly accepted
+    // suggestions were applied AND the rewired lesson passed validateLesson.
+    afterRun: (reports, args) => {
+      if (!args.write) return;
+      for (const report of reports) {
+        if (report.ok && report.accepted.length > 0 && report.lesson) {
+          writeFileSync(report.path, JSON.stringify(report.lesson, null, 2) + "\n");
+        }
+      }
+    },
+    format: (reports, args) =>
+      formatSuggestWiringReports(reports, { json: args.json, write: args.write, accept: args.accept }),
+  },
 };
 
 const argv = process.argv.slice(2);
@@ -46,7 +69,7 @@ if ("error" in parsed) {
 
 const reports = parsed.paths.map((path) => {
   try {
-    return command.run(readFileSync(path, "utf8"), path);
+    return command.run(readFileSync(path, "utf8"), path, parsed);
   } catch (error) {
     return command.readError(path, `cannot read file - ${String(error)}`);
   }
