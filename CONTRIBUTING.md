@@ -46,9 +46,9 @@ The `schema/*.json` artifacts are the **authored canonical source** (this engine
 holds schema authority as of v0.6.0); edit them deliberately - the frozen byte
 baseline (`src/schema-baseline.test.ts`) guards against accidental content drift,
 and consumers re-pin. See [Schema authority](README.md#schema-authority).
-`src/types/lesson-schema.generated.ts` is still **generated** from the schema
-(its header says `DO NOT EDIT`); do not hand-edit it - moving that generation
-into the engine is a planned follow-up.
+`src/types/lesson-schema.generated.ts` is **generated** from the schema
+(its header says `DO NOT EDIT`); do not hand-edit it - regenerate with
+`make sync-types`; the drift check runs in `release-check` + CI.
 
 ## Commits
 
@@ -95,10 +95,10 @@ a **new `ExerciseType` now starts here**:
 3. Add a valid fixture under `src/__fixtures__/conformance/` and a tested
    example in [`docs/lesson-format.md`](docs/lesson-format.md) - the coverage
    assertion in `src/docs-examples.test.ts` expects one example per type/mode.
-4. Bump the library version (additive -> minor) and update the changelog; the
-   app + content repos then re-pin and mirror.
+4. Bump the library version (additive -> minor) and update the changelog;
+   consumers (adaptive-learner, the content repos) then re-pin and mirror.
 
-Consumers (app renderer/grader) still need the type wired on their side. A worked
+Consumers still need the type wired on their side (renderer + grader). A worked
 design of such a change (the `multiple_choice` type, `word_tiles`
 grade-by-string, `from_cards`) is in
 [docs/proposals/author-ergonomics-app-track.md](docs/proposals/author-ergonomics-app-track.md).

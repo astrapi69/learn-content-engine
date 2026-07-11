@@ -10,9 +10,9 @@ It takes raw content (a **single-JSON** lesson plus a `manifest.yaml`) and a set
 context, and produces canonical lesson / set-entry objects. It contains **no**
 network, storage, or UI code - you supply the bytes and keep fetch +
 persistence. The bundled, strict JSON-Schema makes it a self-contained **format
-reference**: you can author and validate lessons without the app that originated
-the format ([Adaptive Learner](https://github.com/astrapi69/adaptive-learner),
-EXP-042). Tracks the lesson schema at **v1.6**.
+reference**: you can author and validate lessons without the application the
+format originated in ([Adaptive Learner](https://github.com/astrapi69/adaptive-learner)).
+Tracks the lesson schema at **v1.7**.
 
 ## Install
 
@@ -64,9 +64,12 @@ if (!result.valid) console.error(result.errors); // [{ path, message }, …]
 - [**Concepts**](docs/concepts.md) - the pipeline, context inheritance, the legacy alias, schema policy.
 - [**Lesson format reference**](docs/lesson-format.md) - every field and exercise type, with tested examples.
 - [**Validation**](docs/validation.md) - the strict schema, the semantic rules, the error model.
-- [**Architecture**](docs/architecture.md) - the engine boundary, parity with the app, roadmap.
+- [**Extensions**](docs/extensions.md) - opt-in `ext:` exercise types, the portability contract, the registry.
 - [**QTI interop**](docs/qti.md) - the optional QTI 2.x import/export adapter, mapping table, fidelity limits.
+- [**Architecture**](docs/architecture.md) - the engine boundary, consumer parity, roadmap.
 - [**Contributing**](CONTRIBUTING.md) - TDD workflow, release gate, adding an exercise type.
+- [**Security policy**](SECURITY.md) - supported versions, private vulnerability reports.
+- [**Code of conduct**](CODE_OF_CONDUCT.md) - Contributor Covenant 2.1.
 
 ## Public API
 
@@ -91,15 +94,31 @@ directly: `import schema from "learn-content-engine/schema/lesson.schema.json"`.
 
 ## Scope
 
-Per the EXP-042 boundary, this package contains **only** parse / transform /
+By design, this package contains **only** parse / transform /
 validate / types + the single-JSON source adapter - **no** fetch, storage, or
-UI; those stay in the host. See [architecture.md](docs/architecture.md). The
+UI; those stay in the consumer. See [architecture.md](docs/architecture.md). The
 [adaptive-learner](https://github.com/astrapi69/adaptive-learner) app **consumes
-this library** (pinned in its `frontend/package.json`), so parse/validate/types
-live here once. As of **v0.6.0 this engine is the canonical source of the lesson
-schema** (schema authority moved here, [roadmap](docs/architecture.md#roadmap)
-stage 4); the app and content repos consume it. See
-[Schema authority](#schema-authority).
+this library** (pinned in its `frontend/package.json`) as the reference
+consumer, so parse/validate/types live here once. As of **v0.6.0 this engine is
+the canonical source of the lesson schema** (schema authority moved here,
+[roadmap](docs/architecture.md#roadmap) stage 4); consumers - adaptive-learner
+and the content repos - mirror it. See [Schema authority](#schema-authority).
+
+### What this is NOT
+
+This is a **language-learning-shaped lesson engine**: the format is built
+around cards, drill-style exercise types, and a target/source language pair
+(see [concepts.md](docs/concepts.md)). It is deliberately **not**:
+
+- **a general assessment standard** - the CORE schema covers the exercise types
+  its consumers render and grows additively when a consumer needs a new core
+  type. A consumer needing a bespoke type can add one via the opt-in
+  [extension tier](docs/extensions.md) (`ext:` types) without touching the core
+  enum; the core stays the portable authority.
+- **a runtime** - no rendering, grading, scheduling/SRS, persistence, or
+  networking; consumers own all of that.
+- **a content repository** - it ships the format, the validator, and the
+  author tooling, not lessons.
 
 ## Schema authority
 
@@ -108,11 +127,11 @@ The **canonical source** of the lesson schema is this engine's
 `content-manifest.schema.json`, `quality-rules.json`). It is an **authored**
 artifact here; consumers mirror the schema shipped in each pinned engine release:
 
-- **The app** ([adaptive-learner](https://github.com/astrapi69/adaptive-learner))
-  keeps its Pydantic models as an *editorial tool* for its own runtime types, but
-  its generated schema must be **byte-identical** to the engine's - its parity
-  gate now treats the engine as the reference (the app conforms to the engine,
-  not the reverse).
+- **[adaptive-learner](https://github.com/astrapi69/adaptive-learner)** (the
+  reference consumer) keeps its Pydantic models as an *editorial tool* for its
+  own runtime types, but its generated schema must be **byte-identical** to the
+  engine's - its parity gate treats the engine as the reference (the consumer
+  conforms to the engine, not the reverse).
 - **Content repos** mirror the schema from the pinned engine release via their
   drift tool (`schema/engine-version.txt`).
 
@@ -129,7 +148,7 @@ drift from the schema; the drift gate runs in `release-check` + CI.
 
 ## Changelog
 
-- **0.10.0** - Feature: optional **QTI 2.x interop adapter** on the subpath
+- **0.11.0** - Feature: optional **QTI 2.x interop adapter** on the subpath
   export `learn-content-engine/qti` (`importQti`, `exportQti`, `qtiLessonAdapter`).
   Maps the mappable subset both ways - `choiceInteraction` <-> `multiple_choice`
   (single / multiple by cardinality), `textEntryInteraction` <-> `free_text`,
@@ -139,8 +158,21 @@ drift from the schema; the drift gate runs in `release-check` + CI.
   mappable subset (`QtiExportError` otherwise). The XML parser
   (`@rgrove/parse-xml`, zero transitive deps) is isolated to the subpath so the
   core import stays dependency-free. xAPI stays a consumer responsibility.
-  Schema untouched (`x-schema-version` stays `1.6`). See
+  Schema untouched by this feature (the 1.7 stamp comes from 0.10.0). See
   [qti.md](docs/qti.md).
+- **0.10.0** - Feature: **extension exercise types** (schema **1.7**). A consumer
+  can register a NON-core exercise type in the `ext:<vendor>-<name>` namespace
+  without widening the core `ExerciseType` enum. A lesson declares what it needs
+  in the new top-level `requires_extensions` (each `@<major>`), carries the
+  extension's data in an opaque `ext_payload`, and a consumer that has not
+  registered a declared extension refuses it loudly (`E-EXT-UNSUPPORTED`;
+  `E-EXT-UNDECLARED` when an `ext:` type is used undeclared). `validateLesson` /
+  `parseLesson` gain an additive `{ extensions }` option - core content
+  validates and parses byte-identically without it. New public types
+  `ExerciseExtension` / `ExtensionRegistry`; a reference extension
+  `ext:ref-ordering` (`src/examples/`) proves the seam end-to-end. Additive
+  schema bump (`x-schema-version` 1.6 -> 1.7); pre-1.7 content unchanged. See
+  [extensions.md](docs/extensions.md).
 - **0.9.0** - Feature: `learn-content-engine migrate <file...> [--write] [--json]` -
   the cloze `select`/`multiselect` -> native `multiple_choice` conversion every
   content repo scripted by hand, as a validated CLI subcommand. Dry-run by

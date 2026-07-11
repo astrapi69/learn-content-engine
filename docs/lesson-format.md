@@ -545,6 +545,8 @@ drifting.
 | `E-MC-MIN-CORRECT` | `multiple_choice` with `multiple` has no option marked `correct`. |
 | `E-MC-DUP-OPTION` | `multiple_choice` option texts are not unique. |
 | `E-CARD-REF` | An exercise `card_ids` entry does not resolve to a [card](#cards). |
+| `E-EXT-UNDECLARED` | An exercise uses an [`ext:` type](#extensions) the lesson does not list in `requires_extensions`. |
+| `E-EXT-UNSUPPORTED` | A declared [extension](#extensions) (at its pinned major) is not registered - the consumer cannot render the lesson. |
 
 ### Warnings (advise, never block)
 
@@ -552,10 +554,10 @@ drifting.
 |---|---|
 | `W-CARD-UNUSED` | A card is defined but no exercise ever drills it (dead material). |
 | `W-MATCH-AMBIG` | A `matching` has duplicate `left` or `right` values (ambiguous pairing). |
-| `W-TILES-DUP` | A `word_tiles` has duplicate tiles but no `accept_orderings`. Only consumers that grade by tile INDEX (apps before grade-by-string, adaptive-learner#1545) can grade a string-identical answer as wrong - newer consumers grade the token sequence and need no annotation. The warning stays until such consumers are the minimum baseline (engine#19). |
+| `W-TILES-DUP` | A `word_tiles` has duplicate tiles but no `accept_orderings`. Consumers that grade by tile INDEX can grade a string-identical answer as wrong - consumers that grade the token sequence need no annotation. The warning stays until token-sequence grading is the minimum baseline across consumers (engine#19). Rule origin: an index-grading renderer in [adaptive-learner](https://github.com/astrapi69/adaptive-learner), the reference consumer (fixed there in adaptive-learner#1545). |
 | `W-DISTRACTOR-ANSWER` | A `cloze` `select` distractor equals an accepted answer. |
 | `W-PIC-DUP-LABEL` | A `picture_choice` distractor shares its `label` with the correct image. |
-| `W-HINT-LENGTH` | A hint reveals the answer length (e.g. "four letters") - redundant with the app's automatic length display. |
+| `W-HINT-LENGTH` | A hint reveals the answer length (e.g. "four letters"). Consumers that display an answer-length indicator make such a hint redundant; on other consumers it gives part of the answer away. |
 
 ## Linting
 
@@ -573,6 +575,17 @@ npx learn-content-engine lint sets/en/fr-a1/lessons/*.json
 
 Exit code is 1 when any file has errors (warnings alone exit 0). Add `--json`
 for machine-readable output (editor integration).
+
+## Extensions
+
+Besides the core exercise types above, a consumer can register **extension
+types** in the `ext:<vendor>-<name>` namespace (schema 1.7). An extension
+exercise carries an opaque `ext_payload` and MUST be declared in the lesson's
+top-level `requires_extensions` (each pinned `@<major>`); a consumer that has
+not registered a declared extension refuses the lesson loudly
+(`E-EXT-UNSUPPORTED`). Core content never touches this path and validates
+unchanged. Full contract, the `ExerciseExtension` interface, and the reference
+extension: [extensions.md](extensions.md).
 
 ## Migrating cloze select/multiselect to multiple_choice
 

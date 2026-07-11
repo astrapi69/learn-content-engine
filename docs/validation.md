@@ -20,8 +20,7 @@ Neither function throws; both return a `ValidationResult`. `valid` is
 that surfaces both errors and warnings, use the
 [`learn-content-engine lint` CLI](lesson-format.md#linting).
 
-Validation runs in two layers, mirroring the app's pipeline (field checks before
-cross-field checks):
+Validation runs in two layers (field checks before cross-field checks):
 
 ## Layer 1 - structural (ajv, strict)
 
@@ -36,18 +35,20 @@ The schema is **strict**: `additionalProperties: false` everywhere, so **unknown
 fields are rejected**.
 
 > **Why strict?** This engine is a format *reference*: content authored against
-> it must load in any consumer, including the Adaptive Learner app, whose schema
-> is itself strict. Tolerating unknown fields here would let content pass the
-> engine yet fail the app - the opposite of a reliable reference. Strict
-> rejection keeps parity: if it validates here, it is shape-valid there.
+> it must load in any consumer - for example
+> [adaptive-learner](https://github.com/astrapi69/adaptive-learner), the
+> reference consumer, whose schema is itself strict. Tolerating unknown fields
+> here would let content pass the engine yet fail a strict consumer - the
+> opposite of a reliable reference. Strict rejection keeps parity: if it
+> validates here, it is shape-valid there.
 
 If any structural error is found, validation stops and returns those errors
 (the semantic layer assumes a well-formed shape).
 
 ## Layer 2 - semantic (cross-field rules)
 
-These rules cannot be expressed in JSON-Schema; they mirror the app's Pydantic
-`model_validator`s one-for-one:
+These rules cannot be expressed in JSON-Schema; they mirror the reference
+consumer's (adaptive-learner) Pydantic `model_validator`s one-for-one:
 
 | Rule | Message contains |
 |---|---|
@@ -118,7 +119,8 @@ An unknown field (strict rejection):
 ## Manifests
 
 `validateManifest` normalizes the legacy `language` alias to `target_language`
-before structural checking (parity with the app), then applies the strict
+before structural checking (the pre-v1.2 alias, see
+[concepts.md](concepts.md#the-legacy-language-alias)), then applies the strict
 manifest schema. A set missing a required field (`id`, `title`,
 `target_language`, `level`, `version`, `lesson_count`) is rejected; a set with
 neither `language` nor `target_language` fails on the missing `target_language`.
@@ -129,10 +131,10 @@ Besides the two JSON-Schemas the package ships
 [`schema/quality-rules.json`](../schema/quality-rules.json) - the shared
 quality minimums (`minExercisesPerLesson`, `minExerciseTypes`,
 `minFreeTextAccepts`, `minMatchingPairs`, `minTheorySteps`). Like the two
-schemas, its canonical home is this engine (since the v0.6.0 authority flip;
-D3b completed the direction for the app side). The engine does **not**
-evaluate these rules itself (there is no `validateQuality` API); the artifact
-exists so the app and content-repo validators can mirror the numbers from the
+schemas, its canonical home is this engine (since the v0.6.0 authority flip).
+The engine does **not** evaluate these rules itself (there is no
+`validateQuality` API); the artifact exists so consumer validators
+(adaptive-learner, the content repos) can mirror the numbers from the
 pinned engine release instead of owning a repo-local copy - the same
 engine → consumers channel as the schemas. Consume it via
 `import qualityRules from "learn-content-engine/schema/quality-rules.json"`

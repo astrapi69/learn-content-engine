@@ -1,17 +1,17 @@
 /**
- * Canonical content types — the consumer-facing surface (``Content*``) for the
- * App-authoritative lesson schema (EXP-039).
+ * Canonical content types - the consumer-facing surface (``Content*``) for the
+ * canonical lesson schema.
  *
- * Extracted from the Adaptive Learner app (`storage/types/content/content.ts`,
- * EXP-042) into this standalone engine. Only the types the content-engine
- * transform needs are kept here — the set-entry projection shape
+ * Extracted from the Adaptive Learner app (`storage/types/content/content.ts`)
+ * into this standalone engine. Only the types the content-engine
+ * transform needs are kept here - the set-entry projection shape
  * ({@link ContentSetEntry}) and the canonical lesson shape
- * ({@link ContentLesson}). App-specific surfaces (the storage namespace, AI
- * validation, user-set import, lesson progress) stay in the app.
+ * ({@link ContentLesson}). Consumer-specific surfaces (storage namespaces, AI
+ * validation, user-set import, lesson progress) stay in the consumer.
  *
- * SINGLE SOURCE OF TRUTH for the field SHAPES: the Pydantic models in
- * ``adaptive_learner_content_loader.schema`` → ``schema/lesson.schema.json`` →
- * ``lesson-schema.generated.ts``. The ``Content*`` names below are thin aliases
+ * SINGLE SOURCE OF TRUTH for the field SHAPES: the authored
+ * ``schema/lesson.schema.json`` → ``lesson-schema.generated.ts``.
+ * The ``Content*`` names below are thin aliases
  * of those generated types, so there is no parallel hand-maintained mirror that
  * can drift.
  */

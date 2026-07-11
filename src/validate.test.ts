@@ -9,9 +9,9 @@ import { validateLesson, validateManifest, type ValidationResult } from "./valid
 /**
  * validate() negative + positive suite (TEIL B). Written RED-first: the
  * rejection behaviour IS part of the format contract. The engine's schema
- * artifact is strict (additionalProperties:false, parity with the app), so
- * unknown fields are rejected, and the semantic cross-field rules mirror the
- * app's Pydantic model_validators.
+ * artifact is strict (additionalProperties:false, parity with adaptive-learner,
+ * the reference consumer), so unknown fields are rejected, and the semantic
+ * cross-field rules mirror that consumer's Pydantic model_validators.
  */
 
 type JsonValue = string | number | boolean | null | JsonValue[] | JsonObject;
@@ -256,7 +256,7 @@ describe("validateLesson — negative: rejection is part of the format", () => {
     expect(mentions(result, "unknown card")).toBe(true);
   });
 
-  it("STRICT: rejects an unknown extra field (parity with the app schema)", () => {
+  it("STRICT: rejects an unknown extra field (parity with the reference consumer's schema)", () => {
     const lesson = clone(conf("free_text"));
     lesson.surprise_field = true;
     const result = validateLesson(lesson);
@@ -313,7 +313,7 @@ describe("validateManifest — negative + legacy-alias parity", () => {
     expect(mentions(result, "target_language")).toBe(true);
   });
 
-  it("accepts the legacy 'language' alias as target_language (parity with the app)", () => {
+  it("accepts the legacy 'language' alias as target_language (pre-v1.2 manifests)", () => {
     const manifest = {
       schema_version: "1.2",
       name: "Legacy",

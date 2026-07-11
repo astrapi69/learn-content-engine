@@ -5,7 +5,7 @@ import { describe, it, expect } from "vitest";
 
 /**
  * Byte baseline for the schema-authority flip (Roadmap stage 4). The canonical
- * schema moved from the app (vendored) to this engine (authored). The flip is
+ * schema moved from adaptive-learner (vendored) to this engine (authored). The flip is
  * byte-equivalent: ONLY the `$id` changes (and nothing else - same types,
  * fields, enums, constraints, and the same `x-schema-version`). This test
  * freezes the pre-flip bytes and proves exactly that, so any accidental content
@@ -17,7 +17,7 @@ const NEW_ID_BASE = "https://astrapi69.github.io/learn-content-engine/schema";
 /** The current, deliberately-set schema version. Bumping it is a conscious
  *  release decision (new exercise type = minor); update it together with the
  *  frozen baseline in the same commit. */
-const EXPECTED_SCHEMA_VERSION = "1.6";
+const EXPECTED_SCHEMA_VERSION = "1.7";
 
 const readText = (relativePath: string): string =>
   readFileSync(fileURLToPath(new URL(relativePath, import.meta.url)), "utf8");

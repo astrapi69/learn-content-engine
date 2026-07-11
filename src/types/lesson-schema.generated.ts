@@ -128,6 +128,10 @@ export type Url = string;
  */
 export type SourceLanguage = string | null;
 /**
+ * Extensions this lesson needs, each ``ext:<vendor>-<name>@<major>`` (e.g. ``ext:acme-ordering@1``). A consumer that has not registered a declared extension refuses the lesson loudly (E-EXT-UNSUPPORTED) rather than mis-rendering. Absent / empty on core lessons; additive, so pre-1.7 content validates unchanged.
+ */
+export type RequiresExtensions = string[];
+/**
  * THEORY: Markdown content. Rendered by the same react-markdown pipeline the help system uses.
  */
 export type Body = string | null;
@@ -268,9 +272,20 @@ export type Sentence = string | null;
  */
 export type Tiles = string[] | null;
 /**
- * Which exercise renderer handles this step.
+ * Closed enum of exercise types the loader knows about.
+ *
+ * EXP-001 + EXP-006: the four base types ship in Phase 43-45.
+ * Phase 52D / v1.35.0 added CLOZE (fill-in-the-blank with
+ * ``___`` markers) — see the schema_version bump in
+ * ``models.py``. Adding a sixth type (ordering, drag-image-
+ * pair, etc.) requires a minor schema_version bump and a new
+ * enum value plus its renderer.
  */
 export type ExerciseType = "matching" | "picture_choice" | "free_text" | "word_tiles" | "cloze" | "multiple_choice";
+/**
+ * Extension exercise type in the ``ext:<vendor>-<name>`` namespace (e.g. ``ext:acme-ordering``). Structurally opaque here: an exercise carrying it must be declared in the lesson's ``requires_extensions`` and is validated by a registered extension, never by the core schema. Core content never uses this branch, so pre-1.7 content validates unchanged.
+ */
+export type ExtExerciseType = string;
 /**
  * Slug-safe id, unique within the lesson.
  */
@@ -335,6 +350,7 @@ export interface Lesson {
   id: Id1;
   resources?: Resources;
   source_language?: SourceLanguage;
+  requires_extensions?: RequiresExtensions;
   steps: Steps;
   target_language?: TargetLanguage;
   title: Title3;
@@ -489,7 +505,16 @@ export interface Exercise {
   prompt: Prompt;
   sentence?: Sentence;
   tiles?: Tiles;
-  type: ExerciseType;
+  /**
+   * Opaque per-exercise payload for an ``ext:`` extension type. The core engine does not interpret it; the registered extension validator does. Absent on core exercises.
+   */
+  ext_payload?: {
+    [k: string]: unknown;
+  };
+  /**
+   * Which exercise renderer handles this step. A core ExerciseType value, or an ``ext:<vendor>-<name>`` extension type (ExtExerciseType) that the lesson declares in ``requires_extensions``.
+   */
+  type: ExerciseType | ExtExerciseType;
 }
 /**
  * One blank inside a cloze exercise's ``sentence`` (Phase 52D /

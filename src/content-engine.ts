@@ -1,5 +1,5 @@
 /**
- * Content-Engine (EXP-042) — the source→canonical boundary.
+ * Content-Engine - the source→canonical boundary.
  *
  * Extracted verbatim from the Adaptive Learner app
  * (`frontend/src/lib/content/engine/content-engine.ts`) into this standalone,
@@ -7,7 +7,7 @@
  * import was repointed at the library's own `./types`.
  *
  * The **canonical internal format** is the single-JSON lesson object
- * ({@link ContentLesson}, schema_version 1.5, EXP-039). A **source adapter**
+ * ({@link ContentLesson}). A **source adapter**
  * turns raw source data into that canonical object; today exactly one adapter
  * exists (single-JSON). The boundary is drawn so that a future, newly-defined
  * multi-file source format COULD plug in here as an additional adapter without
@@ -19,13 +19,14 @@
  * everything here is what a standalone content-engine package contains; network
  * and persistence stay in the caller (the host app).
  *
- * The concept names mirror the backend `content_engine` module 1:1
+ * The concept names mirror adaptive-learner's backend `content_engine` module 1:1
  * (`content engine`, `single-json` source adapter, `canonical Lesson`) so a
  * later cross-language parity golden can pin both sides to the same form.
  */
 
 import { parse as parseYaml } from "yaml";
 
+import type { ExtensionRegistry } from "./extensions.js";
 import type {
   ContentLesson,
   ContentLessonCard,
@@ -240,11 +241,20 @@ function resolveFromCards(lesson: ContentLesson): ContentLesson {
  * ``from_cards`` matching exercises. This is the content-engine entry point; a
  * future multi-file adapter is passed here instead, with no change to the
  * caller's fetch/storage.
+ *
+ * ``options.extensions`` applies each registered extension's optional parse-time
+ * ``resolve`` hook after the core ``from_cards`` resolution. Without extensions
+ * the result is identical to core parsing (the loop is a no-op).
  */
 export function parseLesson(
   rawText: string,
   context: LessonSetContext,
   adapter: LessonSourceAdapter = singleJsonLessonAdapter,
+  options: { extensions?: ExtensionRegistry } = {},
 ): ContentLesson {
-  return resolveFromCards(adapter(rawText, context));
+  let lesson = resolveFromCards(adapter(rawText, context));
+  for (const extension of options.extensions ?? []) {
+    if (extension.resolve) lesson = extension.resolve(lesson);
+  }
+  return lesson;
 }
