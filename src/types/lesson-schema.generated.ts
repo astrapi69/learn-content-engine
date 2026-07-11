@@ -100,6 +100,10 @@ export type EstimatedMinutes = number;
  */
 export type Id1 = string;
 /**
+ * Extensions this lesson needs, each ``ext:<vendor>-<name>@<major>`` (e.g. ``ext:acme-ordering@1``). A consumer that has not registered a declared extension refuses the lesson loudly (E-EXT-UNSUPPORTED) rather than mis-rendering. Absent / empty on core lessons; additive, so pre-1.7 content validates unchanged.
+ */
+export type RequiresExtensions = string[];
+/**
  * EXP-029 / MED-05 (additive). Optional lesson-specific supplementary media (videos / podcasts / articles), surfaced in the 'Vertiefe das Thema' section after the lesson summary.
  */
 export type Resources = LessonResource[] | null;
@@ -127,10 +131,6 @@ export type Url = string;
  * Optional BCP-47 code of the language the learner already speaks (the language the card ``back`` / notes / theory are written in). Absent on pre-v1.2 lessons.
  */
 export type SourceLanguage = string | null;
-/**
- * Extensions this lesson needs, each ``ext:<vendor>-<name>@<major>`` (e.g. ``ext:acme-ordering@1``). A consumer that has not registered a declared extension refuses the lesson loudly (E-EXT-UNSUPPORTED) rather than mis-rendering. Absent / empty on core lessons; additive, so pre-1.7 content validates unchanged.
- */
-export type RequiresExtensions = string[];
 /**
  * THEORY: Markdown content. Rendered by the same react-markdown pipeline the help system uses.
  */
@@ -348,9 +348,9 @@ export interface Lesson {
   domain?: Domain;
   estimated_minutes?: EstimatedMinutes;
   id: Id1;
+  requires_extensions?: RequiresExtensions;
   resources?: Resources;
   source_language?: SourceLanguage;
-  requires_extensions?: RequiresExtensions;
   steps: Steps;
   target_language?: TargetLanguage;
   title: Title3;
@@ -495,6 +495,12 @@ export interface Exercise {
   direction?: Direction;
   distractors?: Distractors;
   examples?: Examples1;
+  /**
+   * Opaque per-exercise payload for an ``ext:`` extension type. The core engine does not interpret it; the registered extension validator does. Absent on core exercises.
+   */
+  ext_payload?: {
+    [k: string]: unknown;
+  };
   from_cards?: FromCards;
   hint?: Hint2;
   id: Id2;
@@ -505,12 +511,6 @@ export interface Exercise {
   prompt: Prompt;
   sentence?: Sentence;
   tiles?: Tiles;
-  /**
-   * Opaque per-exercise payload for an ``ext:`` extension type. The core engine does not interpret it; the registered extension validator does. Absent on core exercises.
-   */
-  ext_payload?: {
-    [k: string]: unknown;
-  };
   /**
    * Which exercise renderer handles this step. A core ExerciseType value, or an ``ext:<vendor>-<name>`` extension type (ExtExerciseType) that the lesson declares in ``requires_extensions``.
    */

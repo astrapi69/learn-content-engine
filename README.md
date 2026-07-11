@@ -148,6 +148,12 @@ drift from the schema; the drift gate runs in `release-check` + CI.
 
 ## Changelog
 
+- **0.11.1** - Fix: `schema/lesson.schema.json` is canonically serialized again
+  (`json.dumps(..., indent=2, sort_keys=True)`); the 1.7 blocks from 0.10.0 had
+  been inserted hand-formatted. Semantically identical (parsed-equality
+  proven), but consumers that RE-EMIT the schema canonically (the app's
+  sync-schema pipeline and its byte-parity gate) need the canonical bytes.
+  Types regenerated from the sorted artifact; no rule/type change.
 - **0.11.0** - Feature: optional **QTI 2.x interop adapter** on the subpath
   export `learn-content-engine/qti` (`importQti`, `exportQti`, `qtiLessonAdapter`).
   Maps the mappable subset both ways - `choiceInteraction` <-> `multiple_choice`
