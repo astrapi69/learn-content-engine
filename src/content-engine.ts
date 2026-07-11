@@ -26,6 +26,7 @@
 
 import { parse as parseYaml } from "yaml";
 
+import type { ExtensionRegistry } from "./extensions.js";
 import type {
   ContentLesson,
   ContentLessonCard,
@@ -240,11 +241,20 @@ function resolveFromCards(lesson: ContentLesson): ContentLesson {
  * ``from_cards`` matching exercises. This is the content-engine entry point; a
  * future multi-file adapter is passed here instead, with no change to the
  * caller's fetch/storage.
+ *
+ * ``options.extensions`` applies each registered extension's optional parse-time
+ * ``resolve`` hook after the core ``from_cards`` resolution. Without extensions
+ * the result is identical to core parsing (the loop is a no-op).
  */
 export function parseLesson(
   rawText: string,
   context: LessonSetContext,
   adapter: LessonSourceAdapter = singleJsonLessonAdapter,
+  options: { extensions?: ExtensionRegistry } = {},
 ): ContentLesson {
-  return resolveFromCards(adapter(rawText, context));
+  let lesson = resolveFromCards(adapter(rawText, context));
+  for (const extension of options.extensions ?? []) {
+    if (extension.resolve) lesson = extension.resolve(lesson);
+  }
+  return lesson;
 }

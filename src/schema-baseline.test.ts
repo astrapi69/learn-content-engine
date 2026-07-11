@@ -17,7 +17,7 @@ const NEW_ID_BASE = "https://astrapi69.github.io/learn-content-engine/schema";
 /** The current, deliberately-set schema version. Bumping it is a conscious
  *  release decision (new exercise type = minor); update it together with the
  *  frozen baseline in the same commit. */
-const EXPECTED_SCHEMA_VERSION = "1.6";
+const EXPECTED_SCHEMA_VERSION = "1.7";
 
 const readText = (relativePath: string): string =>
   readFileSync(fileURLToPath(new URL(relativePath, import.meta.url)), "utf8");

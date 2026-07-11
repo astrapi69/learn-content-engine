@@ -25,6 +25,9 @@ export {
 export { validateLesson, validateManifest } from "./validate.js";
 export type { ValidationIssue, ValidationResult, ValidationSeverity } from "./validate.js";
 
+// --- Extension exercise types (schema 1.7): the registry contract ------------
+export type { ExerciseExtension, ExtensionRegistry } from "./extensions.js";
+
 export type {
   LessonSetContext,
   LessonSourceAdapter,

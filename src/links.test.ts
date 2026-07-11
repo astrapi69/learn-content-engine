@@ -21,6 +21,7 @@ const DOC_FILES = [
   "docs/lesson-format.md",
   "docs/validation.md",
   "docs/architecture.md",
+  "docs/extensions.md",
 ];
 
 /** GitHub-style heading slug. */
