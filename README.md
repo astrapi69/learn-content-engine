@@ -128,6 +128,14 @@ drift from the schema; the drift gate runs in `release-check` + CI.
 
 ## Changelog
 
+- **0.9.0** - Feature: `learn-content-engine migrate <file...> [--write] [--json]` -
+  the cloze `select`/`multiselect` -> native `multiple_choice` conversion every
+  content repo scripted by hand, as a validated CLI subcommand. Dry-run by
+  default; the rewritten lesson must pass the bundled validator before
+  `--write` touches the file; multi-blank selects and `cloze_mode: "type"` are
+  never converted (no clean MC equivalent). Schema untouched
+  (`x-schema-version` stays `1.6`). See
+  [lesson-format.md](docs/lesson-format.md#migrating-cloze-selectmultiselect-to-multiple_choice).
 - **0.8.2** - Schema annotation: the list/map fields that are always present at
   runtime (`Card.tags`, `Exercise.card_ids`, `Exercise.distractors`,
   `Lesson.cards`; manifest `ContentSet.tags`/`assets`, `sets`, `metadata`) now

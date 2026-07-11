@@ -13,7 +13,7 @@ export type LintArgs = { paths: string[]; json: boolean } | { error: string };
 /** Parse `lint <file...> [--json]`. Pure; no filesystem access. */
 export function parseLintArgs(argv: string[]): LintArgs {
   if (argv[0] !== "lint") {
-    return { error: `unknown command '${argv[0] ?? ""}' (expected: lint <file...> [--json])` };
+    return { error: `unknown command '${argv[0] ?? ""}' (expected: lint <file...> [--json] | migrate <file...> [--write] [--json])` };
   }
   const rest = argv.slice(1);
   const json = rest.includes("--json");

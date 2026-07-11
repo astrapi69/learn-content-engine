@@ -574,6 +574,34 @@ npx learn-content-engine lint sets/en/fr-a1/lessons/*.json
 Exit code is 1 when any file has errors (warnings alone exit 0). Add `--json`
 for machine-readable output (editor integration).
 
+## Migrating cloze select/multiselect to multiple_choice
+
+Since 0.8.0 multiple choice has a [native type](#multiple_choice); the legacy
+`cloze` `select`/`multiselect` vehicle stays valid (coexistence). If you WANT
+to convert existing content, the CLI does the mechanical rewrite for you -
+validated, dry-run by default:
+
+```bash
+npx learn-content-engine migrate sets/de/mein-set/lessons/*.json
+# OK    sets/.../04.json: would convert 2 exercise(s)
+#   converted mc-frage-1
+#   skipped   luecke-2 - select with 2 blanks - only single-blank selects map onto one multiple_choice question
+# dry run - pass --write to apply
+
+npx learn-content-engine migrate sets/de/mein-set/lessons/*.json --write
+```
+
+What it does per exercise: `select` becomes a single-answer `multiple_choice`
+(first `accept` of the single blank -> the `correct: true` option, distractors
+-> the other options), `multiselect` becomes `multiple: true` (every `accept`
+entry correct). The `sentence` is merged into the `prompt` so the gap context
+survives; alternate accepts are dropped and distractors equal to a correct
+text are deduped - both reported as notes. `cloze_mode: "type"` and
+multi-blank selects are never touched (they have no clean MC equivalent).
+Every rewritten lesson is checked with the bundled validator BEFORE writing;
+an invalid result is reported and never written. Add `--json` for
+machine-readable output.
+
 ## Editor setup
 
 Bind the bundled schema in your editor for autocomplete and inline errors while
