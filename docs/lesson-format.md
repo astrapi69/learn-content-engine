@@ -477,7 +477,7 @@ top-level field: `name`. Each set requires `id`, `title`, `target_language`
 
 ```json
 {
-  "schema_version": "1.5",
+  "schema_version": "1.6",
   "name": "My French Content",
   "description": "A small repo of French lessons.",
   "sets": [

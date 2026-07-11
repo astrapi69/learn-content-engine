@@ -1,5 +1,8 @@
 # learn-content-engine
 
+[![npm version](https://img.shields.io/npm/v/learn-content-engine)](https://www.npmjs.com/package/learn-content-engine)
+[![CI](https://github.com/astrapi69/learn-content-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/astrapi69/learn-content-engine/actions/workflows/ci.yml)
+
 Framework-agnostic TypeScript engine that parses **and validates** lesson
 content from pluggable sources into a canonical lesson object.
 
@@ -9,7 +12,7 @@ network, storage, or UI code - you supply the bytes and keep fetch +
 persistence. The bundled, strict JSON-Schema makes it a self-contained **format
 reference**: you can author and validate lessons without the app that originated
 the format ([Adaptive Learner](https://github.com/astrapi69/adaptive-learner),
-EXP-042). Tracks the lesson schema at **v1.5**.
+EXP-042). Tracks the lesson schema at **v1.6**.
 
 ## Install
 
