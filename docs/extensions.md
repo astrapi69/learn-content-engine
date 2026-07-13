@@ -228,7 +228,79 @@ index plus the typed correction against EVERY `accept` entry (trim +
 case-fold; a production consumer would reuse its free-text matcher for typo
 tolerance) and surfaces `accept[0]` after a wrong attempt.
 
-Both example extensions exist as a DECISION BASIS for adoption
+## Example extension: `ext:ref-reading-comprehension`
+
+`src/examples/ext-ref-reading-comprehension/` works out the shared-passage
+case (engine#43): a passage (stimulus) bound to N sub-questions. This is the
+one shape the flat core schema cannot express - `LessonStep.exercise` is
+singular, there is no passage-with-questions grouping - so instead of a
+core-schema change it is modelled as a SINGLE ext exercise whose `ext_payload`
+carries the passage plus the questions. Sub-questions reuse the core question
+shapes (`multiple_choice` / `free_text`); a consumer renders each with its
+existing renderer. The payload is deliberately a first cut: the `@major` pin
+lets it evolve (more sub-question types, scoring variants) without migrating
+core content - exactly why the shared-passage case is an extension, not a core
+type.
+
+Payload rules (engine half `refReadingComprehensionExtension`):
+
+| Id | Rule |
+|---|---|
+| `E-EXT-REFRC-SHAPE` | `ext_payload` must carry `passage` (string) and `questions` (`[{prompt, type, options?/accept?}]`). |
+| `E-EXT-REFRC-PASSAGE` | `passage` is non-empty. |
+| `E-EXT-REFRC-QUESTIONS` | At least 1 question. |
+| `E-EXT-REFRC-PROMPT` | Every question has a non-empty prompt. |
+| `E-EXT-REFRC-QTYPE` | Every question type is `multiple_choice` or `free_text`. |
+| `E-EXT-REFRC-MC` | A `multiple_choice` question has at least 2 options and at least 1 correct. |
+| `E-EXT-REFRC-FT` | A `free_text` question has a non-empty `accept` list. |
+
+A reference lesson on an existing topic (dog training), validated by the doc
+gate:
+
+```json
+{
+  "id": "hunde-textverstaendnis",
+  "title": "Hundetraining: Text verstehen",
+  "requires_extensions": ["ext:ref-reading-comprehension@1"],
+  "steps": [
+    {
+      "id": "s1",
+      "type": "exercise",
+      "exercise": {
+        "id": "e1",
+        "type": "ext:ref-reading-comprehension",
+        "prompt": "Lies den Text und beantworte die Fragen.",
+        "ext_payload": {
+          "passage": "Rex lief in den Garten und bellte den Briefträger an. Danach kam er brav zurück, als sein Halter 'Hier' rief.",
+          "questions": [
+            {
+              "prompt": "Wohin lief Rex?",
+              "type": "multiple_choice",
+              "options": [
+                { "text": "In den Garten", "correct": true },
+                { "text": "Auf die Straße" },
+                { "text": "Ins Haus" }
+              ]
+            },
+            {
+              "prompt": "Auf welches Hoerzeichen kam Rex zurueck?",
+              "type": "free_text",
+              "accept": ["Hier", "hier"]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
+```
+
+The consumer half (`renderRefReadingComprehension` +
+`gradeRefReadingComprehension`) renders the passage over the numbered
+questions and grades per question (multiple_choice by exact option, free_text
+tolerantly).
+
+The example extensions exist as a DECISION BASIS for adoption
 (adaptive-learner#1579) - nothing in the app or the content repos references
 them until that decision is made. A production adoption would pick its own
 vendor namespace (the `ref` vendor marks engine-repo demonstrations).
