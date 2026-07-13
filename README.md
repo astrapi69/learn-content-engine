@@ -132,9 +132,9 @@ the same validator locally that CI enforces):
 - [**adaptive-learner-content-test**](https://github.com/astrapi69/adaptive-learner-content-test) -
   the conformance target: real reference sets the engine's
   `make conformance-real` runs against, plus the full author-tooling setup.
-- [**adaptive-learner-content**](https://github.com/astrapi69/adaptive-learner-content)
-  and [**alc-die-waehrung-des-geistes**](https://github.com/astrapi69/alc-die-waehrung-des-geistes) -
-  production content repos (language sets and a book-based knowledge set).
+- [**adaptive-learner-content**](https://github.com/astrapi69/adaptive-learner-content) -
+  the production content repo (language and knowledge sets, 35 sets and
+  counting).
 
 ## Schema authority
 
