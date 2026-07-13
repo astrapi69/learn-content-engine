@@ -35,6 +35,26 @@ and persistence stay in the consumer because they are environment-specific
 (browser vs. server vs. CLI); keeping them out is what makes the engine reusable
 across any host. The boundary is stated without any consumer internals.
 
+## The author CLI (lint / migrate / suggest-wiring)
+
+The CLI subcommands share one architecture, split along the same boundary as
+the library itself:
+
+- **A filesystem-free core per command** (`src/cli.ts`, `src/migrate.ts`,
+  `src/suggest-wiring.ts`, shared plumbing in `src/file-command.ts`): pure
+  functions from raw JSON text to a typed report - fully unit-tested, no I/O.
+  Rule *definitions* stay where they live (the validator: `suggest-wiring`
+  reuses the `W-CARD-UNUSED` core instead of re-deriving it); the command core
+  only *applies* them and shapes the report.
+- **One thin shim** (`bin/learn-content-engine.mjs`) that owns all file I/O
+  and dispatches through a command table - adding a subcommand is a table
+  entry, not another copy of the read/format/exit block.
+- **A governance ladder** that gets stricter as commands get more powerful:
+  `lint` only reports; `migrate` is dry-run by default and writes only what
+  re-passes `validateLesson`; `suggest-wiring` additionally requires an
+  explicit `--accept <id>` per suggestion - there is no bulk apply, because
+  `card_ids` drives consumer-side SRS scheduling.
+
 ## Schema authority (this engine)
 
 As of v0.6.0 the lesson schema's **canonical source is this engine** - the

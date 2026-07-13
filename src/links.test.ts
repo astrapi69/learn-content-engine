@@ -15,6 +15,7 @@ const repoRoot = fileURLToPath(new URL("..", import.meta.url));
 
 const DOC_FILES = [
   "README.md",
+  "CHANGELOG.md",
   "CONTRIBUTING.md",
   "docs/getting-started.md",
   "docs/concepts.md",
