@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 import {
+  canonicalCorrection,
   refErrorCorrectionExtension,
   renderRefErrorCorrection,
   gradeRefErrorCorrection,
@@ -34,7 +35,7 @@ const lessonWith = (exercise: Exercise) => ({
 const DATIVE_SLIP = {
   tokens: ["Der", "Hund", "folgt", "das", "Kommando"],
   error_index: 3,
-  correction: "dem",
+  accept: ["dem", "einem"],
 };
 
 describe("ext:ref-error-correction end-to-end", () => {
@@ -79,15 +80,23 @@ describe("ext:ref-error-correction end-to-end", () => {
     expect(fractional.errors.some((issue) => issue.id === "E-EXT-REFERRCORR-INDEX")).toBe(true);
   });
 
-  it("requires a non-empty correction that actually differs from the marked token", () => {
-    const emptyCorrection = validateLesson(
-      lessonWith(errorCorrectionExercise({ ...DATIVE_SLIP, correction: "" })),
+  it("requires a non-empty accept list of non-empty corrections", () => {
+    const emptyList = validateLesson(
+      lessonWith(errorCorrectionExercise({ ...DATIVE_SLIP, accept: [] })),
       { extensions: [refErrorCorrectionExtension] },
     );
-    expect(emptyCorrection.errors.some((issue) => issue.id === "E-EXT-REFERRCORR-CORRECTION")).toBe(true);
+    expect(emptyList.errors.some((issue) => issue.id === "E-EXT-REFERRCORR-CORRECTION")).toBe(true);
 
+    const blankEntry = validateLesson(
+      lessonWith(errorCorrectionExercise({ ...DATIVE_SLIP, accept: ["dem", " "] })),
+      { extensions: [refErrorCorrectionExtension] },
+    );
+    expect(blankEntry.errors.some((issue) => issue.id === "E-EXT-REFERRCORR-CORRECTION")).toBe(true);
+  });
+
+  it("rejects an accept entry equal to the marked token (no error to fix)", () => {
     const noop = validateLesson(
-      lessonWith(errorCorrectionExercise({ ...DATIVE_SLIP, correction: "das" })),
+      lessonWith(errorCorrectionExercise({ ...DATIVE_SLIP, accept: ["dem", "das"] })),
       { extensions: [refErrorCorrectionExtension] },
     );
     expect(noop.errors.some((issue) => issue.id === "E-EXT-REFERRCORR-NOOP")).toBe(true);
@@ -95,13 +104,13 @@ describe("ext:ref-error-correction end-to-end", () => {
 
   it("boundary: the first and the last token are valid error positions", () => {
     const firstToken = validateLesson(
-      lessonWith(errorCorrectionExercise({ ...DATIVE_SLIP, error_index: 0, correction: "Die" })),
+      lessonWith(errorCorrectionExercise({ ...DATIVE_SLIP, error_index: 0, accept: ["Die"] })),
       { extensions: [refErrorCorrectionExtension] },
     );
     expect(firstToken.valid).toBe(true);
 
     const lastToken = validateLesson(
-      lessonWith(errorCorrectionExercise({ ...DATIVE_SLIP, error_index: 4, correction: "Signal" })),
+      lessonWith(errorCorrectionExercise({ ...DATIVE_SLIP, error_index: 4, accept: ["Signal"] })),
       { extensions: [refErrorCorrectionExtension] },
     );
     expect(lastToken.valid).toBe(true);
@@ -114,11 +123,18 @@ describe("ext:ref-error-correction end-to-end", () => {
     );
   });
 
-  it("grades (consumer half): right token + right correction, tolerant of case and padding", () => {
+  it("grades (consumer half): right token + ANY accepted correction, tolerant of case and padding", () => {
     const exercise = errorCorrectionExercise(DATIVE_SLIP);
     expect(gradeRefErrorCorrection(exercise, 3, "dem")).toBe(true);
+    expect(gradeRefErrorCorrection(exercise, 3, "einem")).toBe(true); // second accept entry
     expect(gradeRefErrorCorrection(exercise, 3, "  Dem ")).toBe(true);
     expect(gradeRefErrorCorrection(exercise, 3, "den")).toBe(false);
     expect(gradeRefErrorCorrection(exercise, 2, "dem")).toBe(false);
+  });
+
+  it("exposes the canonical correction (accept[0]) for the solution display", () => {
+    const exercise = errorCorrectionExercise(DATIVE_SLIP);
+    expect(canonicalCorrection(exercise)).toBe("dem");
+    expect(canonicalCorrection(errorCorrectionExercise({ tokens: ["a", "b"] }))).toBeNull();
   });
 });

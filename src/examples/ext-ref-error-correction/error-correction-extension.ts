@@ -12,6 +12,14 @@
  *    correction through its free-text matcher for typo tolerance; the demo
  *    grader keeps it at trim + case-fold.
  *
+ * Accepted corrections are an ``accept`` ARRAY, mirroring the core
+ * ``free_text`` contract: real sentences often allow more than one defensible
+ * fix for the same wrong token ("folgt das Kommando" -> "dem" / "einem"), and
+ * a single authored string would reproduce the too-narrow-accept-list class
+ * of false negatives (adaptive-learner#1580). ``accept[0]`` is the canonical
+ * correction a consumer surfaces after a wrong attempt
+ * ({@link canonicalCorrection}).
+ *
  * This lives under ``src/examples`` and is excluded from the published build
  * (tsconfig.build) - it is a demonstration, not part of the package API. A
  * production adoption would ship under its own vendor namespace, not ``ref``.
@@ -29,8 +37,9 @@ interface ErrorCorrectionPayload {
   tokens: string[];
   /** Which token is wrong (0-based, inside the token range). */
   error_index: number;
-  /** The corrected token; must differ from the marked one. */
-  correction: string;
+  /** The accepted corrections; ``accept[0]`` is canonical (shown after a
+   *  wrong attempt), every entry must differ from the marked token. */
+  accept: string[];
 }
 
 function issue(id: string, message: string): ValidationIssue {
@@ -40,13 +49,14 @@ function issue(id: string, message: string): ValidationIssue {
 /** Read the payload as an ErrorCorrectionPayload, or null when it is not shaped right. */
 function asErrorCorrectionPayload(exercise: Exercise): ErrorCorrectionPayload | null {
   const payload = exercise.ext_payload as
-    | { tokens?: unknown; error_index?: unknown; correction?: unknown }
+    | { tokens?: unknown; error_index?: unknown; accept?: unknown }
     | undefined;
   if (!payload) return null;
-  const { tokens, error_index, correction } = payload;
+  const { tokens, error_index, accept } = payload;
   if (!Array.isArray(tokens) || !tokens.every((token) => typeof token === "string")) return null;
-  if (typeof error_index !== "number" || typeof correction !== "string") return null;
-  return { tokens: tokens as string[], error_index, correction };
+  if (typeof error_index !== "number") return null;
+  if (!Array.isArray(accept) || !accept.every((entry) => typeof entry === "string")) return null;
+  return { tokens: tokens as string[], error_index, accept: accept as string[] };
 }
 
 /** ENGINE half: validate one ``ext:ref-error-correction`` exercise's payload. */
@@ -59,7 +69,7 @@ export const refErrorCorrectionExtension: ExerciseExtension = {
       return [
         issue(
           "E-EXT-REFERRCORR-SHAPE",
-          "ext:ref-error-correction requires 'ext_payload' with tokens (string array), error_index (number), correction (string)",
+          "ext:ref-error-correction requires 'ext_payload' with tokens (string array), error_index (number), accept (string array)",
         ),
       ];
     }
@@ -70,24 +80,29 @@ export const refErrorCorrectionExtension: ExerciseExtension = {
     if (payload.tokens.some((token) => token.trim() === "")) {
       issues.push(issue("E-EXT-REFERRCORR-EMPTY", "ext:ref-error-correction tokens must be non-empty"));
     }
-    if (
-      !Number.isInteger(payload.error_index) ||
-      payload.error_index < 0 ||
-      payload.error_index >= payload.tokens.length
-    ) {
+    const indexInRange =
+      Number.isInteger(payload.error_index) &&
+      payload.error_index >= 0 &&
+      payload.error_index < payload.tokens.length;
+    if (!indexInRange) {
       issues.push(
         issue("E-EXT-REFERRCORR-INDEX", "ext:ref-error-correction error_index must be an integer inside the token range"),
       );
-    } else if (payload.correction !== "" && payload.correction === payload.tokens[payload.error_index]) {
+    }
+    if (payload.accept.length === 0 || payload.accept.some((entry) => entry.trim() === "")) {
+      issues.push(
+        issue(
+          "E-EXT-REFERRCORR-CORRECTION",
+          "ext:ref-error-correction accept needs at least 1 non-empty correction",
+        ),
+      );
+    } else if (indexInRange && payload.accept.includes(payload.tokens[payload.error_index]!)) {
       issues.push(
         issue(
           "E-EXT-REFERRCORR-NOOP",
-          "ext:ref-error-correction correction must differ from the marked token (otherwise there is no error)",
+          "ext:ref-error-correction accept entries must differ from the marked token (otherwise there is no error)",
         ),
       );
-    }
-    if (payload.correction.trim() === "") {
-      issues.push(issue("E-EXT-REFERRCORR-CORRECTION", "ext:ref-error-correction correction must be non-empty"));
     }
     return issues;
   },
@@ -105,10 +120,18 @@ export function renderRefErrorCorrection(exercise: Exercise): string {
   return [exercise.prompt, ...numbered].join("\n");
 }
 
+/** The canonical correction (``accept[0]``) a consumer surfaces after a wrong
+ *  attempt - the same first-entry-is-canonical contract as core
+ *  ``free_text``. Null when the payload is malformed. */
+export function canonicalCorrection(exercise: Exercise): string | null {
+  const payload = asErrorCorrectionPayload(exercise);
+  return payload ? (payload.accept[0] ?? null) : null;
+}
+
 /**
  * CONSUMER half: grade a learner's attempt - the tapped token index plus the
  * typed correction. Correct iff the index hits ``error_index`` and the typed
- * correction equals the authored one after trim + case-fold. A production
+ * correction equals ANY accepted one after trim + case-fold. A production
  * consumer would reuse its free-text matcher here for typo tolerance.
  */
 export function gradeRefErrorCorrection(
@@ -119,5 +142,8 @@ export function gradeRefErrorCorrection(
   const payload = asErrorCorrectionPayload(exercise);
   if (!payload) return false;
   if (pickedIndex !== payload.error_index) return false;
-  return typedCorrection.trim().toLocaleLowerCase() === payload.correction.trim().toLocaleLowerCase();
+  const normalizedInput = typedCorrection.trim().toLocaleLowerCase();
+  return payload.accept.some(
+    (entry) => entry.trim().toLocaleLowerCase() === normalizedInput,
+  );
 }
