@@ -97,6 +97,34 @@ and the `multiple` flag. `cards` come back as `[]`.
 | `shuffle`, timing, scoring, `responseProcessing` | Not preserved (import ignores; export emits neutral defaults). |
 | Unsupported interaction types | Import throws `QtiImportError` with the full per-item list. |
 
+## Scope and non-goals
+
+The adapter maps the three exercise types with a faithful QTI 2.x interaction
+(`multiple_choice`, `free_text`, `matching`) and refuses the rest loudly. That
+subset is deliberate, and expanding it is intentionally NOT on the roadmap
+unless a concrete QTI consumer needs it. The reasoning:
+
+- **The remaining core types have QTI equivalents, but with fidelity cost.**
+  `word_tiles` maps to `orderInteraction` (losing `accept_orderings` - QTI has
+  one correct order); `cloze` maps to inline `textEntryInteraction` /
+  `inlineChoiceInteraction` / `choiceInteraction` by mode; `picture_choice`
+  maps to `choiceInteraction` with image objects, but only usefully if the
+  importing system can resolve the asset paths (the engine bundles no assets).
+  `word_tiles -> orderInteraction` is the one clean, low-cost addition if
+  completeness is wanted for its own sake.
+- **QTI 2.x is not the lever for the teacher / LMS use case.** Native question
+  import varies by LMS and is often partial or plugin-based; Moodle's native
+  format is Moodle XML, not QTI 2.x. A Moodle-XML (or Canvas) exporter would be
+  a consumer-specific tool, not a framework-agnostic engine adapter - the same
+  boundary that keeps xAPI and persistence in the consumer (see below). If that
+  path is ever wanted, it belongs in consumer tooling.
+- **Extension (`ext:`) types never map.** Their payload is opaque to the core;
+  QTI export refuses them by the same contract that refuses them everywhere.
+
+So the QTI adapter is a standards-interop bridge for the mappable subset, not a
+complete LMS export. Teacher-facing export (Moodle XML, printable PDF, an
+authoring UI) is consumer tooling by design.
+
 ## Activity tracking (xAPI)
 
 Recording learner activity (xAPI / Experience API statements) is **not** part of
