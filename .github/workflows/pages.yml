@@ -1,0 +1,60 @@
+name: pages
+
+# Publishes the GitHub Pages site: the TypeDoc API reference under /api and
+# the schema artifacts under /schema, so the schema $id URLs
+# (https://astrapi69.github.io/learn-content-engine/schema/*.json) resolve.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build API docs (TypeDoc)
+        run: npm run docs:api
+
+      - name: Assemble site (landing page + API docs + schema at its $id path)
+        run: |
+          mkdir -p _site/schema
+          cp -r docs-api _site/api
+          cp schema/*.json _site/schema/
+          cp .github/pages/index.html _site/index.html
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

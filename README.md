@@ -67,6 +67,7 @@ if (!result.valid) console.error(result.errors); // [{ path, message }, …]
 - [**Extensions**](docs/extensions.md) - opt-in `ext:` exercise types, the portability contract, the registry.
 - [**QTI interop**](docs/qti.md) - the optional QTI 2.x import/export adapter, mapping table, fidelity limits.
 - [**Architecture**](docs/architecture.md) - the engine boundary, consumer parity, roadmap.
+- [**API reference**](https://astrapi69.github.io/learn-content-engine/api/) - generated TypeDoc for the core and `/qti` entry points.
 - [**Contributing**](CONTRIBUTING.md) - TDD workflow, release gate, adding an exercise type.
 - [**Security policy**](SECURITY.md) - supported versions, private vulnerability reports.
 - [**Code of conduct**](CODE_OF_CONDUCT.md) - Contributor Covenant 2.1.

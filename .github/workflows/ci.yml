@@ -34,3 +34,6 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: API docs drift gate (TypeDoc build stays green, warnings are errors)
+        run: npm run docs:api:check
