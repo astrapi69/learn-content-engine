@@ -66,7 +66,7 @@ versions - do not let that recur):
 
 1. **Bump** `version` in `package.json` (semver: additive feature -> minor,
    docs/fix -> patch; skip only for changes that alter nothing shipped).
-2. **Changelog** - add the entry to the README `## Changelog` section.
+2. **Changelog** - add a dated section to [`CHANGELOG.md`](CHANGELOG.md) (Keep-a-Changelog style; the README only links there).
 3. **`make release-check`** - must be green (lint + typecheck + test + build).
 4. **Commit + push** the bump + changelog to `main`.
 5. **Tag** `vX.Y.Z` on that commit (annotated) and push it:
