@@ -164,18 +164,23 @@ renders the bucket names over the item pool and grades a learner assignment
 `src/examples/ext-ref-error-correction/` works out the second adoption
 candidate from the external review (adaptive-learner#1579): "one token in this
 sentence is wrong - mark it and correct it". The payload carries the tokenized
-sentence, the wrong token's index, and the correction.
+sentence, the wrong token's index, and the accepted corrections as an
+`accept` ARRAY - mirroring the core `free_text` contract, because real
+sentences often allow more than one defensible fix for the same wrong token
+and a single authored string would reproduce the too-narrow-accept-list class
+of false negatives (adaptive-learner#1580). `accept[0]` is the canonical
+correction a consumer surfaces after a wrong attempt.
 
 Payload rules (engine half `refErrorCorrectionExtension`):
 
 | Id | Rule |
 |---|---|
-| `E-EXT-REFERRCORR-SHAPE` | `ext_payload` must carry `tokens` (string array), `error_index` (number), `correction` (string). |
+| `E-EXT-REFERRCORR-SHAPE` | `ext_payload` must carry `tokens` (string array), `error_index` (number), `accept` (string array). |
 | `E-EXT-REFERRCORR-TOKENS` | At least 2 tokens. |
 | `E-EXT-REFERRCORR-EMPTY` | Tokens are non-empty strings. |
 | `E-EXT-REFERRCORR-INDEX` | `error_index` is an integer inside the token range. |
-| `E-EXT-REFERRCORR-CORRECTION` | `correction` is non-empty. |
-| `E-EXT-REFERRCORR-NOOP` | `correction` differs from the marked token (otherwise there is no error). |
+| `E-EXT-REFERRCORR-CORRECTION` | `accept` carries at least 1 non-empty correction; `accept[0]` is canonical. |
+| `E-EXT-REFERRCORR-NOOP` | No `accept` entry equals the marked token (otherwise there is no error). |
 
 A reference lesson on the same topic, validated by the doc gate:
 
@@ -195,7 +200,7 @@ A reference lesson on the same topic, validated by the doc gate:
         "ext_payload": {
           "tokens": ["Der", "Hund", "folgt", "das", "Kommando"],
           "error_index": 3,
-          "correction": "dem"
+          "accept": ["dem", "einem"]
         }
       }
     },
@@ -209,7 +214,7 @@ A reference lesson on the same topic, validated by the doc gate:
         "ext_payload": {
           "tokens": ["Die", "Leine", "haengt", "locker", "durch", "wenn", "der", "Hund", "brav", "lauft"],
           "error_index": 9,
-          "correction": "laeuft"
+          "accept": ["laeuft"]
         }
       }
     }
@@ -217,10 +222,11 @@ A reference lesson on the same topic, validated by the doc gate:
 }
 ```
 
-The consumer half (`renderRefErrorCorrection` + `gradeRefErrorCorrection`)
-renders a numbered token row and grades the tapped index plus the typed
-correction (trim + case-fold; a production consumer would reuse its free-text
-matcher for typo tolerance).
+The consumer half (`renderRefErrorCorrection` + `gradeRefErrorCorrection` +
+`canonicalCorrection`) renders a numbered token row and grades the tapped
+index plus the typed correction against EVERY `accept` entry (trim +
+case-fold; a production consumer would reuse its free-text matcher for typo
+tolerance) and surfaces `accept[0]` after a wrong attempt.
 
 Both example extensions exist as a DECISION BASIS for adoption
 (adaptive-learner#1579) - nothing in the app or the content repos references
