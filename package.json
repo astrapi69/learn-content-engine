@@ -55,6 +55,8 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "docs:api": "typedoc",
+    "docs:api:check": "typedoc --emit none",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -74,6 +76,7 @@
     "@vitest/coverage-v8": "^2.1.9",
     "eslint": "^9.13.0",
     "json-schema-to-typescript": "^15.0.4",
+    "typedoc": "^0.28.20",
     "typescript": "^6.0.0",
     "typescript-eslint": "^8.63.0",
     "vitest": "^2.1.0"

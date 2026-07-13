@@ -1,5 +1,5 @@
 /**
- * Canonical {@link ContentLesson} -> QTI 2.x export, for the mappable subset
+ * Canonical {@link Lesson} -> QTI 2.x export, for the mappable subset
  * only (``multiple_choice`` -> ``choiceInteraction``, ``free_text`` ->
  * ``textEntryInteraction``, ``matching`` -> ``matchInteraction``). The lesson is
  * serialised as a single ``assessmentTest`` with inline ``assessmentItem``s (one
@@ -132,7 +132,7 @@ function itemFor(exercise: Exercise): string {
 }
 
 /**
- * Serialise a {@link ContentLesson} to a QTI 2.x ``assessmentTest`` document.
+ * Serialise a {@link Lesson} to a QTI 2.x ``assessmentTest`` document.
  * Throws {@link QtiExportError} listing any exercise whose type is outside the
  * mappable subset. Theory steps are dropped (documented fidelity limit).
  */
