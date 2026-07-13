@@ -300,10 +300,99 @@ The consumer half (`renderRefReadingComprehension` +
 questions and grades per question (multiple_choice by exact option, free_text
 tolerantly).
 
-The example extensions exist as a DECISION BASIS for adoption
-(adaptive-learner#1579) - nothing in the app or the content repos references
-them until that decision is made. A production adoption would pick its own
-vendor namespace (the `ref` vendor marks engine-repo demonstrations).
+## Example extension: `ext:ref-graded-quiz`
+
+`src/examples/ext-ref-graded-quiz/` works out the school-test case (engine#46):
+a self-contained scored question set. Each question carries `points`,
+multi-select questions may award `partial_credit` (proportional), and an
+optional `pass_threshold` (percent) decides pass/fail. Questions reuse the core
+`multiple_choice` / `free_text` shapes.
+
+This demonstrates that the points / partial-credit / pass-threshold concern
+fits the extension tier WITHOUT a core-schema change - "points on an exercise"
+is a cross-cutting concern, not an interaction type, so it is a bounded
+graded-quiz payload rather than a core `points` field on every exercise (which
+would be a full core ripple). The payload carries only the grading METADATA;
+the grading POLICY (how partial credit is computed, how pass/fail is decided)
+lives in the consumer half.
+
+Payload rules (engine half `refGradedQuizExtension`):
+
+| Id | Rule |
+|---|---|
+| `E-EXT-REFGQ-SHAPE` | `ext_payload` must carry `questions` (`[{prompt, type, points, options?/accept?, partial_credit?}]`) and an optional numeric `pass_threshold`. |
+| `E-EXT-REFGQ-QUESTIONS` | At least 1 question. |
+| `E-EXT-REFGQ-PROMPT` | Every question has a non-empty prompt. |
+| `E-EXT-REFGQ-QTYPE` | Every question type is `multiple_choice` or `free_text`. |
+| `E-EXT-REFGQ-MC` | A `multiple_choice` question has at least 2 options and at least 1 correct. |
+| `E-EXT-REFGQ-FT` | A `free_text` question has a non-empty `accept` list. |
+| `E-EXT-REFGQ-POINTS` | Every question has positive `points`. |
+| `E-EXT-REFGQ-THRESHOLD` | `pass_threshold`, when present, is a percentage in 0..100. |
+
+A reference lesson (a short graded quiz), validated by the doc gate:
+
+```json
+{
+  "id": "hunde-quiz-benotet",
+  "title": "Hundetraining: benoteter Test",
+  "requires_extensions": ["ext:ref-graded-quiz@1"],
+  "steps": [
+    {
+      "id": "s1",
+      "type": "exercise",
+      "exercise": {
+        "id": "e1",
+        "type": "ext:ref-graded-quiz",
+        "prompt": "Beantworte alle Fragen. Bestanden ab 60%.",
+        "ext_payload": {
+          "pass_threshold": 60,
+          "questions": [
+            {
+              "prompt": "Welches Hoerzeichen ruft den Hund zurueck?",
+              "type": "multiple_choice",
+              "options": [
+                { "text": "Hier", "correct": true },
+                { "text": "Sitz" },
+                { "text": "Platz" }
+              ],
+              "points": 2
+            },
+            {
+              "prompt": "Wie heisst das Sichtzeichen fuer 'Platz'?",
+              "type": "free_text",
+              "accept": ["flache Hand senken", "flache Hand"],
+              "points": 3
+            },
+            {
+              "prompt": "Welche gehoeren zu den Grundkommandos?",
+              "type": "multiple_choice",
+              "options": [
+                { "text": "Sitz", "correct": true },
+                { "text": "Platz", "correct": true },
+                { "text": "Rolle" }
+              ],
+              "points": 4,
+              "partial_credit": true
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
+```
+
+The consumer half (`renderRefGradedQuiz` + `gradeRefGradedQuiz`) renders the
+questions with their point values and the pass threshold, and grades per
+question: exact-set `multiple_choice`, proportional `partial_credit`
+(`max(0, correct - wrong) / total_correct`), tolerant `free_text`, then decides
+pass/fail against the threshold.
+
+The example extensions exist as a DECISION BASIS for adoption - nothing in the
+app or the content repos references them until that decision is made
+(adaptive-learner#1579 tracked the exercise-type adoptions; engine#46 tracks
+the school-test direction). A production adoption would pick its own vendor
+namespace (the `ref` vendor marks engine-repo demonstrations).
 
 ## What extensions do NOT change
 
