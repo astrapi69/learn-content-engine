@@ -63,6 +63,7 @@ if (!result.valid) console.error(result.errors); // [{ path, message }, …]
 - [**Getting started**](docs/getting-started.md) - install, the 5-minute pipeline example.
 - [**Concepts**](docs/concepts.md) - the pipeline, context inheritance, the legacy alias, schema policy.
 - [**Lesson format reference**](docs/lesson-format.md) - every field and exercise type, with tested examples.
+- [**Authoring patterns**](docs/authoring-patterns.md) - expressing common exercise ideas (true/false, conjugation, synonyms, collocations, word order) with the existing types.
 - [**Validation**](docs/validation.md) - the strict schema, the semantic rules, the error model.
 - [**Extensions**](docs/extensions.md) - opt-in `ext:` exercise types, the portability contract, the registry.
 - [**QTI interop**](docs/qti.md) - the optional QTI 2.x import/export adapter, mapping table, fidelity limits.
