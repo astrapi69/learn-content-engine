@@ -20,6 +20,7 @@ const DOC_FILES = [
   "docs/getting-started.md",
   "docs/concepts.md",
   "docs/lesson-format.md",
+  "docs/authoring-patterns.md",
   "docs/validation.md",
   "docs/architecture.md",
   "docs/extensions.md",

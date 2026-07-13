@@ -91,3 +91,19 @@ describe("docs/lesson-format.md — minimum coverage of the type catalog", () =>
     expect(manifestCount).toBeGreaterThanOrEqual(1);
   });
 });
+
+describe("docs/authoring-patterns.md — every recipe validates", () => {
+  const recipes = extractJsonExamples("../docs/authoring-patterns.md");
+
+  it("documents several recipes", () => {
+    expect(recipes.length).toBeGreaterThanOrEqual(6);
+  });
+
+  for (const recipe of recipes) {
+    it(`recipe #${recipe.index} validates`, () => {
+      const result = validateLesson(recipe.value);
+      expect(result.errors).toEqual([]);
+      expect(result.valid).toBe(true);
+    });
+  }
+});
