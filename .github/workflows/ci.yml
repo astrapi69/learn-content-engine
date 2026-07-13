@@ -35,5 +35,8 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Bundle-size gate (core and qti measured separately, parse-xml must not leak into core)
+        run: node scripts/check-bundle-size.mjs
+
       - name: API docs drift gate (TypeDoc build stays green, warnings are errors)
         run: npm run docs:api:check
