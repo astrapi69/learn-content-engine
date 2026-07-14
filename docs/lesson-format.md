@@ -527,6 +527,7 @@ drifting.
 | `E-MATCH-PAIRS` | [`matching`](#matching) has empty/missing `pairs`. |
 | `E-MATCH-FROMCARDS-CARDS` | `matching` with `from_cards` has empty/missing `card_ids`. |
 | `E-MATCH-FROMCARDS-PAIRS` | `matching` with `from_cards` also lists explicit `pairs`. |
+| `E-MATCH-DUP-LEFT` | A `matching` repeats a `left` term (compared case-insensitive and whitespace-trimmed), which makes the pairing unsolvable - one left maps to two different rights. The message names the term and its positions. The fix is the author's: rename one term to something distinct (no safe automatic rename exists). |
 | `E-PIC-MIN` | [`picture_choice`](#picture_choice) has fewer than 2 `images`. |
 | `E-PIC-ONE-CORRECT` | `picture_choice` does not have exactly one `is_correct: "true"`. |
 | `E-FREETEXT-ACCEPT` | [`free_text`](#free_text) has empty/missing `accept`. |
@@ -553,7 +554,7 @@ drifting.
 | ID | Rule |
 |---|---|
 | `W-CARD-UNUSED` | A card is defined but no exercise ever drills it (dead material). Reported once per lesson, listing every unused card id, so a card-rich set (cards as a knowledge base, exercises a curated subset) stays readable instead of emitting a line per card. The [suggest-wiring CLI](#suggesting-card-wiring-for-unused-cards) can propose a wiring from exact text evidence. |
-| `W-MATCH-AMBIG` | A `matching` has duplicate `left` or `right` values (ambiguous pairing). |
+| `W-MATCH-AMBIG` | A `matching` has duplicate `right` values (ambiguous pairing). Duplicate `left` values are the hard `E-MATCH-DUP-LEFT` error instead. |
 | `W-TILES-DUP` | A `word_tiles` has duplicate tiles but no `accept_orderings`. Consumers that grade by tile INDEX can grade a string-identical answer as wrong; consumers that grade the token sequence need no annotation. A standing portability advisory: the engine is consumer-agnostic and makes no assumption about how a given consumer grades word tiles (engine#19). Rule origin: an index-grading renderer in [adaptive-learner](https://github.com/astrapi69/adaptive-learner), the reference consumer, which now grades by token sequence (adaptive-learner#1545, shipped in v2.2.0) - so the annotation no longer matters for that consumer, but the advisory still guards any index-grading one. |
 | `W-DISTRACTOR-ANSWER` | A `cloze` `select` distractor equals an accepted answer. |
 | `W-PIC-DUP-LABEL` | A `picture_choice` distractor shares its `label` with the correct image. |

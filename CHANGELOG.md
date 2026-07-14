@@ -5,6 +5,22 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [0.12.2] - 2026-07-14
+
+Change: new hard rule `E-MATCH-DUP-LEFT` - a `matching` exercise's `left` terms
+must be unique within the exercise (compared case-insensitive and
+whitespace-trimmed). A repeated left maps to two different rights, which is
+objectively unsolvable for the learner; the message names the term and its
+positions. The content fix is the author's - there is no safe automatic rename.
+The existing `W-MATCH-AMBIG` warning now covers duplicate `right` values only
+(left duplicates are the hard error). Origin: three independent occurrences of
+the same author mistake (alc-die-waehrung-des-geistes#27). A dry run over all
+four content repos (562 lessons) found zero affected lessons, so the rule ships
+as a hard error with no migration. Validator-only; `x-schema-version` stays
+`1.7` (no schema field added). This tightens validation, so consumers with
+duplicate-left content (not present in the audited repos) would newly fail -
+bump treated as a patch since no audited content is affected. Closes #54.
+
 ## [0.12.1] - 2026-07-14
 
 Change: `W-CARD-UNUSED` is now emitted **once per lesson**, listing every

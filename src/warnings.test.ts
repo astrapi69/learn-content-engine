@@ -102,21 +102,7 @@ describe("analysis warnings", () => {
     for (const id of ["o1", "o2", "o3"]) expect(message).toContain(id);
   });
 
-  it("W-MATCH-AMBIG on a duplicated left or right value", () => {
-    const dupLeft = validateLesson(
-      lesson([
-        ex({
-          id: "e1",
-          type: "matching",
-          prompt: "?",
-          pairs: [
-            { left: "a", right: "1" },
-            { left: "a", right: "2" },
-          ],
-        }),
-      ]),
-    );
-    expect(hasWarning(dupLeft, "W-MATCH-AMBIG")).toBe(true);
+  it("W-MATCH-AMBIG warns on a duplicated RIGHT value (ambiguous, never blocks)", () => {
     const dupRight = validateLesson(
       lesson([
         ex({
@@ -131,6 +117,69 @@ describe("analysis warnings", () => {
       ]),
     );
     expect(hasWarning(dupRight, "W-MATCH-AMBIG")).toBe(true);
+    expect(dupRight.valid).toBe(true);
+  });
+
+  const matchLefts = (a: string, b: string): ValidationResult =>
+    validateLesson(
+      lesson([
+        ex({
+          id: "e1",
+          type: "matching",
+          prompt: "?",
+          pairs: [
+            { left: a, right: "1" },
+            { left: "Ohne Grenzen", right: "2" },
+            { left: b, right: "3" },
+          ],
+        }),
+      ]),
+    );
+
+  it("E-MATCH-DUP-LEFT: a repeated left term is a HARD error, naming the term and positions", () => {
+    const exact = matchLefts("Empathie", "Empathie");
+    expect(exact.valid).toBe(false);
+    const issue = byId(exact.errors, "E-MATCH-DUP-LEFT");
+    expect(issue).toBeDefined();
+    expect(issue?.message).toContain("Empathie");
+    expect(issue?.message).toContain("1");
+    expect(issue?.message).toContain("3");
+    // the hard error replaces the softer warning for the left case (no double report)
+    expect(hasWarning(exact, "W-MATCH-AMBIG")).toBe(false);
+  });
+
+  it("E-MATCH-DUP-LEFT: comparison is case-insensitive and whitespace-trimmed", () => {
+    expect(byId(matchLefts("Empathie", "empathie").errors, "E-MATCH-DUP-LEFT")).toBeDefined();
+    expect(byId(matchLefts("Empathie", " Empathie ").errors, "E-MATCH-DUP-LEFT")).toBeDefined();
+  });
+
+  it("E-MATCH-DUP-LEFT: unique left terms produce no error", () => {
+    const unique = matchLefts("Empathie", "Gelebtes Mitgefühl");
+    expect(byId(unique.errors, "E-MATCH-DUP-LEFT")).toBeUndefined();
+    expect(unique.valid).toBe(true);
+  });
+
+  it("E-MATCH-DUP-LEFT: the three alc#27 fixtures would have failed before the fix", () => {
+    // Reconstructed from alc-die-waehrung-des-geistes#27 (the "alt (doppelt)" column):
+    // the same left term appeared twice for two different definitions.
+    for (const term of ["Empathie", "Präsenz", "Integration"]) {
+      const result = validateLesson(
+        lesson([
+          ex({
+            id: "e-bilder",
+            type: "matching",
+            prompt: "Ordne jeder Aussage den Begriff zu.",
+            pairs: [
+              { left: term, right: "Definition A" },
+              { left: "Ohne Grenzen", right: "Definition B" },
+              { left: term, right: "Definition C" },
+            ],
+          }),
+        ]),
+      );
+      expect(result.valid).toBe(false);
+      expect(byId(result.errors, "E-MATCH-DUP-LEFT")?.message).toContain(term);
+    }
   });
 
   it("W-TILES-DUP on duplicate tiles without accept_orderings", () => {
