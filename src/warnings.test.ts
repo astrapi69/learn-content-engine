@@ -80,6 +80,28 @@ describe("analysis warnings", () => {
     expect(byId(result.warnings, "W-CARD-UNUSED")?.message).toContain("orphan");
   });
 
+  it("W-CARD-UNUSED aggregates a lesson's unused cards into ONE warning", () => {
+    const result = validateLesson(
+      lesson(
+        [ex({ id: "e1", type: "free_text", prompt: "?", card_ids: ["c1"], accept: ["a"] })],
+        [
+          { id: "c1", front: "x", back: "y" },
+          { id: "o1", front: "a", back: "b" },
+          { id: "o2", front: "c", back: "d" },
+          { id: "o3", front: "e", back: "f" },
+        ],
+      ),
+    );
+    // One aggregated warning per lesson, not one per orphan card: a card-rich
+    // set (cards as knowledge base, exercises a curated subset) must not bury
+    // the rare real author mistake under dozens of lines (alert fatigue).
+    const cardWarnings = result.warnings.filter((warning) => warning.id === "W-CARD-UNUSED");
+    expect(cardWarnings).toHaveLength(1);
+    const message = cardWarnings[0]!.message;
+    expect(message).toContain("3");
+    for (const id of ["o1", "o2", "o3"]) expect(message).toContain(id);
+  });
+
   it("W-MATCH-AMBIG on a duplicated left or right value", () => {
     const dupLeft = validateLesson(
       lesson([

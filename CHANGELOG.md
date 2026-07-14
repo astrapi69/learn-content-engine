@@ -5,6 +5,19 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [0.12.1] - 2026-07-14
+
+Change: `W-CARD-UNUSED` is now emitted **once per lesson**, listing every
+unused card id, instead of one warning per orphan card (#49). A card-rich set
+(cards as a broad knowledge base, exercises a curated subset) is a common,
+valid shape - the official content repo carries ~17% unreferenced cards
+uniformly across every set - so a line per card buried the rare real author
+mistake under noise (alert fatigue). Detection is unchanged: the
+`unusedCardIds` core the suggest-wiring CLI shares still returns the full
+per-id list; only the lint's emission aggregates. Non-breaking - warnings
+stay non-blocking and `validateLesson`'s result shape is unchanged
+(`x-schema-version` stays `1.7`).
+
 ## [0.12.0] - 2026-07-11
 
 Feature: `learn-content-engine suggest-wiring <file...> [--json]

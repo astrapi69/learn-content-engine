@@ -552,7 +552,7 @@ drifting.
 
 | ID | Rule |
 |---|---|
-| `W-CARD-UNUSED` | A card is defined but no exercise ever drills it (dead material). The [suggest-wiring CLI](#suggesting-card-wiring-for-unused-cards) can propose a wiring from exact text evidence. |
+| `W-CARD-UNUSED` | A card is defined but no exercise ever drills it (dead material). Reported once per lesson, listing every unused card id, so a card-rich set (cards as a knowledge base, exercises a curated subset) stays readable instead of emitting a line per card. The [suggest-wiring CLI](#suggesting-card-wiring-for-unused-cards) can propose a wiring from exact text evidence. |
 | `W-MATCH-AMBIG` | A `matching` has duplicate `left` or `right` values (ambiguous pairing). |
 | `W-TILES-DUP` | A `word_tiles` has duplicate tiles but no `accept_orderings`. Consumers that grade by tile INDEX can grade a string-identical answer as wrong - consumers that grade the token sequence need no annotation. The warning stays until token-sequence grading is the minimum baseline across consumers (engine#19). Rule origin: an index-grading renderer in [adaptive-learner](https://github.com/astrapi69/adaptive-learner), the reference consumer (fixed there in adaptive-learner#1545). |
 | `W-DISTRACTOR-ANSWER` | A `cloze` `select` distractor equals an accepted answer. |
