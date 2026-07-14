@@ -386,11 +386,24 @@ export function unusedCardIds(lesson: Lesson): string[] {
   return (lesson.cards ?? []).map((card) => card.id).filter((cardId) => !used.has(cardId));
 }
 
-/** Warn about cards that no exercise ever drills (dead learning material). */
+/** Warn about cards that no exercise ever drills (dead learning material).
+ *  Aggregated to ONE warning per lesson listing every unused id: a card-rich
+ *  set (cards as a broad knowledge base, exercises a curated subset) is a
+ *  common, valid shape, so a line per orphan card would bury the rare real
+ *  author mistake under noise (alert fatigue). The suggest-wiring CLI keeps
+ *  consuming the per-id `unusedCardIds` list for its proposals. */
 function checkUnusedCards(lesson: Lesson, issues: ValidationIssue[]): void {
-  for (const cardId of unusedCardIds(lesson)) {
-    issues.push(warn("W-CARD-UNUSED", "/cards", `card '${cardId}' is defined but never referenced by an exercise`, "cards"));
-  }
+  const unused = unusedCardIds(lesson);
+  if (unused.length === 0) return;
+  const noun = unused.length === 1 ? "card is" : "cards are";
+  issues.push(
+    warn(
+      "W-CARD-UNUSED",
+      "/cards",
+      `${unused.length} ${noun} defined but never referenced by an exercise: ${unused.join(", ")}`,
+      "cards",
+    ),
+  );
 }
 
 /** Semantic + lint pass. Assumes the input is already structurally valid (so the
