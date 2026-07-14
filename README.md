@@ -110,7 +110,12 @@ and the content repos - mirror it. See [Schema authority](#schema-authority).
 
 This is a **language-learning-shaped lesson engine**: the format is built
 around cards, drill-style exercise types, and a target/source language pair
-(see [concepts.md](docs/concepts.md)). It is deliberately **not**:
+(see [concepts.md](docs/concepts.md)). The shape carries more than languages,
+though - a free-form `domain` field (`language`, `programming`, `psychology`,
+...) lets the same format hold knowledge-domain sets (tech courses,
+driving-test prep, dog training in the example repos); there,
+`target_language` is simply the language the content is written in. It is
+deliberately **not**:
 
 - **a general assessment standard** - the CORE schema covers the exercise types
   its consumers render and grows additively when a consumer needs a new core

@@ -13,7 +13,7 @@ tags: [architecture, schema-design, typescript, content-engineering]
 
 ## The content-schema dilemma
 
-`learn-content-engine` is a framework-agnostic TypeScript library that parses and validates language-learning content. It turns raw sources — lesson JSON plus a `manifest.yaml` — into a canonical internal shape, and it is the single source of truth for the lesson schema, currently version 1.7.
+`learn-content-engine` is a framework-agnostic TypeScript library that parses and validates learning content — language courses foremost, though a free-form `domain` field lets the same shape carry other knowledge domains (tech courses, driving-test prep, psychology). It turns raw sources — lesson JSON plus a `manifest.yaml` — into a canonical internal shape, and it is the single source of truth for the lesson schema, currently version 1.7.
 
 The core is deliberately small. No rendering, no persistence, no networking; its only runtime dependency is a YAML parser. What it offers is pure validation and transformation. That minimalism is the point — and it forces one hard question: *how do you evolve a content schema without breaking every consumer that depends on it?*
 
