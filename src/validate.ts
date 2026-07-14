@@ -118,9 +118,35 @@ function checkMatching(exercise: Exercise, path: string, issues: ValidationIssue
     issues.push(err("E-MATCH-PAIRS", path, "MATCHING exercise requires non-empty 'pairs'", "matching"));
     return;
   }
-  if (hasDuplicate(pairs.map((pair) => pair.left)) || hasDuplicate(pairs.map((pair) => pair.right))) {
+  // E-MATCH-DUP-LEFT: each left term must be unique within the exercise
+  // (case-insensitive, whitespace-trimmed). A repeated left maps to two
+  // different rights, which is objectively unsolvable for the learner. The
+  // content fix is the author's - there is no safe automatic rename. Origin:
+  // alc-die-waehrung-des-geistes#27 (three independent occurrences).
+  const leftGroups = new Map<string, { term: string; positions: number[] }>();
+  pairs.forEach((pair, index) => {
+    const key = pair.left.trim().toLowerCase();
+    const group = leftGroups.get(key);
+    if (group) group.positions.push(index + 1);
+    else leftGroups.set(key, { term: pair.left, positions: [index + 1] });
+  });
+  for (const { term, positions } of leftGroups.values()) {
+    if (positions.length > 1) {
+      issues.push(
+        err(
+          "E-MATCH-DUP-LEFT",
+          path,
+          `MATCHING left value '${term}' is repeated at positions ${positions.join(", ")}; each left term must be unique (case-insensitive) so the pairing is solvable`,
+          "matching",
+        ),
+      );
+    }
+  }
+  // A duplicate 'right' is ambiguous but not necessarily unsolvable, so it stays
+  // a warning; 'left' duplicates are the hard E-MATCH-DUP-LEFT above.
+  if (hasDuplicate(pairs.map((pair) => pair.right))) {
     issues.push(
-      warn("W-MATCH-AMBIG", path, "MATCHING has duplicate 'left' or 'right' values (ambiguous pairing)", "matching"),
+      warn("W-MATCH-AMBIG", path, "MATCHING has duplicate 'right' values (ambiguous pairing)", "matching"),
     );
   }
 }
