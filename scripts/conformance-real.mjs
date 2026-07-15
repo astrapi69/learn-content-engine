@@ -33,6 +33,7 @@ import {
 const REPOS = [
   { name: "adaptive-learner-content", url: "https://github.com/astrapi69/adaptive-learner-content.git" },
   { name: "adaptive-learner-content-test", url: "https://github.com/astrapi69/adaptive-learner-content-test.git" },
+  { name: "adaptive-learner-content-template", url: "https://github.com/astrapi69/adaptive-learner-content-template.git" },
   { name: "alc-psychology", url: "https://github.com/astrapi69/alc-psychology.git" },
   { name: "alc-programming", url: "https://github.com/astrapi69/alc-programming.git" },
   { name: "alc-technology", url: "https://github.com/astrapi69/alc-technology.git" },
