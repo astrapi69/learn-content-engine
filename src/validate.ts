@@ -76,8 +76,17 @@ const loadSchema = (fileName: string): object =>
 // strict:false so ajv tolerates the schema's ``x-schema-version`` annotation
 // keyword; allErrors so a single call surfaces every problem at once.
 const ajv = new Ajv2020({ allErrors: true, strict: false });
-const structuralLesson: ValidateFunction = ajv.compile(loadSchema("lesson.schema.json"));
-const structuralManifest: ValidateFunction = ajv.compile(loadSchema("content-manifest.schema.json"));
+
+// Compiled lazily on the FIRST validate call, never at import time: loadSchema
+// reads from node:fs, which does not exist in a browser. A browser consumer
+// that only parses must be able to import the entry (a dev bundler executes it
+// eagerly, unlike a tree-shaken production build) - engine#59.
+let structuralLessonCache: ValidateFunction | null = null;
+let structuralManifestCache: ValidateFunction | null = null;
+const structuralLesson = (): ValidateFunction =>
+  (structuralLessonCache ??= ajv.compile(loadSchema("lesson.schema.json")));
+const structuralManifest = (): ValidateFunction =>
+  (structuralManifestCache ??= ajv.compile(loadSchema("content-manifest.schema.json")));
 
 /** Map ajv's error objects to error issues, naming the offending key for
  *  ``additionalProperties`` rejections so the message is actionable. */
@@ -465,8 +474,9 @@ export function validateLesson(
   input: unknown,
   options: { extensions?: ExtensionRegistry } = {},
 ): ValidationResult {
-  if (!structuralLesson(input)) {
-    return { valid: false, errors: toStructuralIssues(structuralLesson.errors as ErrorObject[]), warnings: [] };
+  const structural = structuralLesson();
+  if (!structural(input)) {
+    return { valid: false, errors: toStructuralIssues(structural.errors as ErrorObject[]), warnings: [] };
   }
   return split(semanticIssues(input as Lesson, options.extensions ?? []));
 }
@@ -497,8 +507,9 @@ function normalizeManifestAliases(input: unknown): unknown {
  */
 export function validateManifest(input: unknown): ValidationResult {
   const normalized = normalizeManifestAliases(input);
-  if (!structuralManifest(normalized)) {
-    return { valid: false, errors: toStructuralIssues(structuralManifest.errors as ErrorObject[]), warnings: [] };
+  const structural = structuralManifest();
+  if (!structural(normalized)) {
+    return { valid: false, errors: toStructuralIssues(structural.errors as ErrorObject[]), warnings: [] };
   }
   return { valid: true, errors: [], warnings: [] };
 }
