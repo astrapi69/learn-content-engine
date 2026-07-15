@@ -5,6 +5,18 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [0.12.3] - 2026-07-15
+
+Fix: importing the package entry no longer touches the filesystem (#59). The
+ajv validators for `lesson.schema.json` and `content-manifest.schema.json`
+were compiled eagerly at module load via `readFileSync`, so a browser
+consumer whose bundler executes the entry eagerly (e.g. vite dev
+pre-bundling, no tree-shaking) crashed on import even when it only used the
+parse APIs; production builds were merely masked by tree-shaking. The
+compiled validators are now created lazily on the first
+`validateLesson` / `validateManifest` call (memoized). No API change;
+Node behaviour is identical.
+
 ## [0.12.2] - 2026-07-14
 
 Change: new hard rule `E-MATCH-DUP-LEFT` - a `matching` exercise's `left` terms
