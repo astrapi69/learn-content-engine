@@ -40,7 +40,7 @@ Trace what a single core type touches:
 
 - **Schema.** `lesson.schema.json` gains an enum value and a payload definition (an additive minor bump, 1.7 to 1.8).
 - **Types.** `generate-lesson-types.mjs` regenerates the interfaces; every consumer picks up the new shape.
-- **Mirrors.** Three content repositories mirror the schema (plus the app's own generated copy), and byte-parity gates keep them honest.
+- **Mirrors.** Ten content repositories mirror the schema - the official repo, the test/starter repo, the template, and seven `alc-*` domain repos (plus the app's own generated copy) - and byte-parity gates keep them honest.
 - **Dispatcher & renderer.** The app's exercise dispatcher needs a new branch and a new renderer component.
 - **i18n.** Eleven language catalogs need instruction keys, feedback, and error strings.
 - **Validation.** `validate.ts` needs rules for the new shape: well-formedness, cross-field integrity.

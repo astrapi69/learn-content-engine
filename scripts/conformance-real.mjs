@@ -1,6 +1,7 @@
-// Real-content conformance run (TEIL C). Clones both public content repos
-// read-only (depth 1) and drives EVERY set + lesson through the full engine
-// pipeline: manifest -> canonical set entries -> per-set lesson context ->
+// Real-content conformance run (TEIL C). Clones every public content repo
+// (official, test/starter, and the alc-* domain repos) read-only (depth 1)
+// and drives EVERY set + lesson through the full engine pipeline:
+// manifest -> canonical set entries -> per-set lesson context ->
 // canonical lessons, then validates each against the bundled schema.
 //
 // Success criterion: 100% of lessons parse without error. validate() failures
@@ -32,6 +33,13 @@ import {
 const REPOS = [
   { name: "adaptive-learner-content", url: "https://github.com/astrapi69/adaptive-learner-content.git" },
   { name: "adaptive-learner-content-test", url: "https://github.com/astrapi69/adaptive-learner-content-test.git" },
+  { name: "alc-psychology", url: "https://github.com/astrapi69/alc-psychology.git" },
+  { name: "alc-programming", url: "https://github.com/astrapi69/alc-programming.git" },
+  { name: "alc-technology", url: "https://github.com/astrapi69/alc-technology.git" },
+  { name: "alc-ai", url: "https://github.com/astrapi69/alc-ai.git" },
+  { name: "alc-traffic-knowledge", url: "https://github.com/astrapi69/alc-traffic-knowledge.git" },
+  { name: "alc-dog-training", url: "https://github.com/astrapi69/alc-dog-training.git" },
+  { name: "alc-die-waehrung-des-geistes", url: "https://github.com/astrapi69/alc-die-waehrung-des-geistes.git" },
 ];
 
 const localParent = process.env.CONFORMANCE_LOCAL;

@@ -56,7 +56,7 @@ sync-types-check: ## Exit non-zero if the generated lesson types drift from the 
 
 # ─── Conformance (on-demand, needs network) ──────────────────────────
 
-conformance-real: build ## Clone both content repos (read-only) and run every set + lesson through the full engine pipeline
+conformance-real: build ## Clone all public content repos (read-only) and run every set + lesson through the full engine pipeline
 	node scripts/conformance-real.mjs
 
 # ─── Package ─────────────────────────────────────────────────────────
