@@ -113,7 +113,7 @@ around cards, drill-style exercise types, and a target/source language pair
 (see [concepts.md](docs/concepts.md)). The shape carries more than languages,
 though - a free-form `domain` field (`language`, `programming`, `psychology`,
 ...) lets the same format hold knowledge-domain sets (tech courses,
-driving-test prep, dog training in the example repos); there,
+driving-test prep, dog training in the dedicated domain repos below); there,
 `target_language` is simply the language the content is written in. It is
 deliberately **not**:
 
@@ -137,11 +137,20 @@ the same validator locally that CI enforces):
   fork-and-go scaffold with one example set, the validator wiring, CI gates
   and docs; the fastest way to see the engine used end to end.
 - [**adaptive-learner-content-test**](https://github.com/astrapi69/adaptive-learner-content-test) -
-  the conformance target: real reference sets the engine's
-  `make conformance-real` runs against, plus the full author-tooling setup.
+  the test/starter repo and a conformance target of the engine's
+  `make conformance-real`, plus the full author-tooling setup.
 - [**adaptive-learner-content**](https://github.com/astrapi69/adaptive-learner-content) -
-  the production content repo (language and knowledge sets, 35 sets and
-  counting).
+  the production content repo: the language sets plus the app tutorial
+  (28 sets and counting).
+- **the `alc-*` domain repos** - one repo per knowledge domain, all created
+  from the template and registered in the app's repo registry:
+  [psychology](https://github.com/astrapi69/alc-psychology),
+  [programming](https://github.com/astrapi69/alc-programming),
+  [technology](https://github.com/astrapi69/alc-technology),
+  [ai](https://github.com/astrapi69/alc-ai),
+  [traffic-knowledge](https://github.com/astrapi69/alc-traffic-knowledge),
+  [dog-training](https://github.com/astrapi69/alc-dog-training) and
+  [die-waehrung-des-geistes](https://github.com/astrapi69/alc-die-waehrung-des-geistes).
 
 ## Schema authority
 
