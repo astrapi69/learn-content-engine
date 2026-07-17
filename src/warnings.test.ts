@@ -256,6 +256,40 @@ describe("analysis warnings", () => {
     expect(hasWarning(result, "W-PIC-DUP-LABEL")).toBe(true);
   });
 
+  it("W-PIC-DATA-URI when an image src is an inline data URI", () => {
+    const result = validateLesson(
+      lesson([
+        ex({
+          id: "e1",
+          type: "picture_choice",
+          prompt: "?",
+          images: [
+            { src: `data:image/png;base64,${"A".repeat(800)}`, label: "Cat", is_correct: "true" },
+            { src: "b.png", label: "Dog" },
+          ],
+        }),
+      ]),
+    );
+    expect(hasWarning(result, "W-PIC-DATA-URI")).toBe(true);
+  });
+
+  it("no W-PIC-DATA-URI for repo-path srcs", () => {
+    const result = validateLesson(
+      lesson([
+        ex({
+          id: "e1",
+          type: "picture_choice",
+          prompt: "?",
+          images: [
+            { src: "assets/img/cat.png", label: "Cat", is_correct: "true" },
+            { src: "assets/img/dog.png", label: "Dog" },
+          ],
+        }),
+      ]),
+    );
+    expect(hasWarning(result, "W-PIC-DATA-URI")).toBe(false);
+  });
+
   it("W-HINT-LENGTH when a hint mentions the answer length", () => {
     const german = validateLesson(
       lesson([

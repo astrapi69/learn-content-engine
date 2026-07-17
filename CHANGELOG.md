@@ -5,6 +5,18 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [0.13.0] - 2026-07-17
+
+Feature (schema 1.8, additive): `picture_choice` image `src` now takes one of
+two explicit formats - the original relative `assets/` path (unchanged
+500-char cap) OR an inline base64 data URI (`data:image/...;base64,...`) with
+its own 250000-char cap, sized for the reference consumer's 150-KiB upload
+compression (adaptive-learner#1763). The path intent stays documented and
+enforced instead of being silently widened; existing content validates
+unchanged. New author lint `W-PIC-DATA-URI` (advisory, never blocks) flags
+inline data URIs so repo content keeps preferring `assets/` paths over
+git-bloating blobs. Decision record: #66 (option B - both formats explicit).
+
 ## [0.12.3] - 2026-07-15
 
 Fix: importing the package entry no longer touches the filesystem (#59). The

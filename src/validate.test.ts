@@ -216,6 +216,50 @@ describe("validateLesson — negative: rejection is part of the format", () => {
     expect(mentions(result, "exactly one")).toBe(true);
   });
 
+  // picture_choice ``src`` formats (schema 1.8): a repo path (<= 500 chars,
+  // the original contract) OR an inline base64 data URI with its own,
+  // larger cap. The cap covers the reference consumer's 150-KiB upload
+  // compression limit (153600 bytes -> 204800 base64 chars + header).
+  describe("picture_choice src formats (schema 1.8)", () => {
+    const dataUriSrc = (base64Length: number): string => `data:image/jpeg;base64,${"A".repeat(base64Length)}`;
+
+    it("accepts a base64 data-URI src longer than the 500-char path cap", () => {
+      const lesson = clone(conf("picture_choice"));
+      (exerciseOf(lesson).images as JsonObject[])[0]!.src = dataUriSrc(10_000);
+      const result = validateLesson(lesson);
+      expect(result.valid).toBe(true);
+    });
+
+    it("accepts a data-URI src at the reference consumer's compression ceiling", () => {
+      const lesson = clone(conf("picture_choice"));
+      (exerciseOf(lesson).images as JsonObject[])[0]!.src = dataUriSrc(204_800);
+      const result = validateLesson(lesson);
+      expect(result.valid).toBe(true);
+    });
+
+    it("rejects a data-URI src beyond the 250000-char cap", () => {
+      const lesson = clone(conf("picture_choice"));
+      (exerciseOf(lesson).images as JsonObject[])[0]!.src = dataUriSrc(250_001);
+      const result = validateLesson(lesson);
+      expect(result.valid).toBe(false);
+    });
+
+    it("still rejects a non-data-URI src longer than 500 chars", () => {
+      const lesson = clone(conf("picture_choice"));
+      (exerciseOf(lesson).images as JsonObject[])[0]!.src = `assets/img/${"x".repeat(600)}.png`;
+      const result = validateLesson(lesson);
+      expect(result.valid).toBe(false);
+    });
+
+    it("accepts a path src at exactly 500 chars (unchanged boundary)", () => {
+      const lesson = clone(conf("picture_choice"));
+      const pathPrefix = "assets/img/";
+      (exerciseOf(lesson).images as JsonObject[])[0]!.src = pathPrefix + "x".repeat(500 - pathPrefix.length);
+      const result = validateLesson(lesson);
+      expect(result.valid).toBe(true);
+    });
+  });
+
   it("rejects a theory step without a body", () => {
     const lesson = clone(conf("field-variants"));
     delete firstStep(lesson).body;
