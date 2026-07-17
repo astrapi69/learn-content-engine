@@ -227,9 +227,14 @@ requires non-empty `card_ids` and forbids an explicit `pairs` list.
 ### picture_choice
 
 Pick the correct image. Requires at least two `images` (`{src, label,
-is_correct?}`), exactly one marked `"is_correct": "true"`. `src` is a relative
-path inside the set's `assets/`. Do **not** use this for text-only multiple
-choice - use `cloze` `select` mode for that.
+is_correct?}`), exactly one marked `"is_correct": "true"`. `src` takes one of
+two explicit formats (schema v1.8): a relative path inside the set's
+`assets/` (up to 500 chars, the right choice for repo content) or an inline
+base64 data URI (`data:image/...;base64,...`, own 250000-char cap - sized for
+the reference consumer's 150-KiB upload compression). Repo content should
+stay on the `assets/` path; the `W-PIC-DATA-URI` author lint flags inline
+data URIs. Do **not** use this for text-only multiple choice - use `cloze`
+`select` mode for that.
 
 ```json
 {
@@ -558,6 +563,7 @@ drifting.
 | `W-TILES-DUP` | A `word_tiles` has duplicate tiles but no `accept_orderings`. Consumers that grade by tile INDEX can grade a string-identical answer as wrong; consumers that grade the token sequence need no annotation. A standing portability advisory: the engine is consumer-agnostic and makes no assumption about how a given consumer grades word tiles (engine#19). Rule origin: an index-grading renderer in [adaptive-learner](https://github.com/astrapi69/adaptive-learner), the reference consumer, which now grades by token sequence (adaptive-learner#1545, shipped in v2.2.0) - so the annotation no longer matters for that consumer, but the advisory still guards any index-grading one. |
 | `W-DISTRACTOR-ANSWER` | A `cloze` `select` distractor equals an accepted answer. |
 | `W-PIC-DUP-LABEL` | A `picture_choice` distractor shares its `label` with the correct image. |
+| `W-PIC-DATA-URI` | A `picture_choice` image `src` is an inline `data:` URI (schema v1.8 allows it for consumer-local content, e.g. uploaded images). Repo content should prefer a relative `assets/` path - inline data URIs bloat the lesson JSON and the git history. Advisory only, never blocks. |
 | `W-HINT-LENGTH` | A hint reveals the answer length (e.g. "four letters"). Consumers that display an answer-length indicator make such a hint redundant; on other consumers it gives part of the answer away. |
 
 ## Linting

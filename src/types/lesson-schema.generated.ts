@@ -228,7 +228,7 @@ export type IsCorrect = string | null;
  */
 export type Label = string;
 /**
- * Relative path inside the set's ``assets/`` directory ('assets/img/cat.png'). Resolved by the asset loader.
+ * Image reference in one of two explicit formats (schema v1.8): a relative path inside the set's ``assets/`` directory ('assets/img/cat.png', <= 500 chars, resolved by the asset loader) OR an inline base64 data URI ('data:image/...;base64,...', its own 250000-char cap - sized for the reference consumer's 150-KiB upload compression: 153600 bytes -> 204800 base64 chars plus header). Repo content should prefer the assets/ path; the ``W-PIC-DATA-URI`` author lint flags inline data URIs.
  */
 export type Src = string;
 /**

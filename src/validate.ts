@@ -178,6 +178,16 @@ function checkPictureChoice(exercise: Exercise, path: string, issues: Validation
       warn("W-PIC-DUP-LABEL", path, "PICTURE_CHOICE distractor shares a 'label' with the correct image", "picture_choice"),
     );
   }
+  if (images.some((image) => image.src.startsWith("data:"))) {
+    issues.push(
+      warn(
+        "W-PIC-DATA-URI",
+        path,
+        "PICTURE_CHOICE image uses an inline data URI; repo content should prefer a relative assets/ path (data URIs bloat the lesson JSON and the git history)",
+        "picture_choice",
+      ),
+    );
+  }
 }
 
 function checkFreeText(exercise: Exercise, path: string, issues: ValidationIssue[]): void {
