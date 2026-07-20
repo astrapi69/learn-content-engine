@@ -18,6 +18,19 @@ extension half. **No schema change and no `schema_version` bump**: a new
 open object), so existing content validates byte-identically. The example
 lives under `src/examples/` and is excluded from the published build.
 
+Tooling fix (#70): the real-content conformance harness called `validateLesson`
+without a registry, so every lesson declaring `requires_extensions` was
+reported as `E-EXT-UNSUPPORTED` forever - a harness artefact, not a content
+finding, sitting in a list whose own header says "diagnose per case". New
+internal helper `declaredExtensionRegistry` synthesises a permissive registry
+from the lesson's OWN declarations, which is the only registry the engine can
+honestly build: it drives foreign content and cannot know what any given
+consumer adopted, and an adoption allowlist here would point the dependency
+Consumer -> Engine. `E-EXT-UNDECLARED` and the schema-level checks are
+unaffected (verified against the built artifacts). `make conformance-real` now
+reports 0 discrepancies across 10 repos / 553 lessons. The doc gate's
+duplicated copy of this logic was folded into the same helper.
+
 ## [0.13.0] - 2026-07-17
 
 Feature (schema 1.8, additive): `picture_choice` image `src` now takes one of

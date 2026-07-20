@@ -29,6 +29,7 @@ import {
   validateLesson,
   validateManifest,
 } from "../dist/index.js";
+import { declaredExtensionRegistry } from "../dist/declared-extensions.js";
 
 const REPOS = [
   { name: "adaptive-learner-content", url: "https://github.com/astrapi69/adaptive-learner-content.git" },
@@ -117,7 +118,16 @@ function run() {
             continue;
           }
           countExercises(lesson, exerciseTally);
-          const check = validateLesson(JSON.parse(rawLesson));
+          // Validate against the registry the lesson DECLARES for itself. The
+          // engine drives foreign content here and cannot know which
+          // extensions a given consumer adopted, so a bare call would report
+          // every ext: lesson as E-EXT-UNSUPPORTED forever - a harness
+          // artefact that would dilute this very discrepancy list (engine#70).
+          // E-EXT-UNDECLARED and the schema-level checks are unaffected.
+          const parsedLesson = JSON.parse(rawLesson);
+          const check = validateLesson(parsedLesson, {
+            extensions: declaredExtensionRegistry(parsedLesson),
+          });
           if (!check.valid) {
             totals.invalid += 1;
             const rel = lessonPath.slice(repoDir.length + 1);

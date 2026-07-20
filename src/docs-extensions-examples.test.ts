@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 
 import { describe, it, expect } from "vitest";
 
-import type { ExerciseExtension } from "./extensions.js";
+import { declaredExtensionRegistry } from "./declared-extensions.js";
 import { validateLesson } from "./validate.js";
 
 /**
@@ -42,20 +42,6 @@ const declaredExtensions = (value: unknown): string[] => {
   return Array.isArray(declared) ? declared.filter((entry): entry is string => typeof entry === "string") : [];
 };
 
-/** A permissive registry built from the example's OWN declarations - enough
- *  to prove internal consistency without inventing payload rules the doc
- *  never promised. */
-function registryFor(value: unknown): ExerciseExtension[] {
-  return declaredExtensions(value).map((entry) => {
-    const atIndex = entry.lastIndexOf("@");
-    return {
-      type: entry.slice(0, atIndex),
-      major: Number(entry.slice(atIndex + 1)),
-      validate: () => [],
-    };
-  });
-}
-
 const examples = extractJsonExamples(EXTENSIONS_DOC);
 const lessonExamples = examples.filter((example) => isLesson(example.value));
 const extensionLessons = lessonExamples.filter((example) => declaredExtensions(example.value).length > 0);
@@ -67,7 +53,7 @@ describe("docs/extensions.md - every lesson example validates with its declared 
 
   for (const example of lessonExamples) {
     it(`example #${example.index} validates with the synthesised registry`, () => {
-      const result = validateLesson(example.value, { extensions: registryFor(example.value) });
+      const result = validateLesson(example.value, { extensions: declaredExtensionRegistry(example.value) });
       expect(result.errors).toEqual([]);
       expect(result.valid).toBe(true);
     });
