@@ -388,6 +388,63 @@ question: exact-set `multiple_choice`, proportional `partial_credit`
 (`max(0, correct - wrong) / total_correct`), tolerant `free_text`, then decides
 pass/fail against the threshold.
 
+## Example extension: `ext:ref-dictation`
+
+`src/examples/ext-ref-dictation/` works out the audio-dictation case
+(engine#68): a clip is played, the learner types what they hear. The flat core
+schema has no audio-stimulus exercise type and `free_text` carries no media, so
+instead of a core-schema change it is modelled as a SINGLE ext exercise whose
+`ext_payload` carries the audio reference plus the accepted transcriptions.
+
+The payload is deliberately SELF-CONTAINED: no card reference, no lookup into
+another part of the lesson - everything the consumer needs sits in
+`ext_payload`. The engine validates only the SHAPE of `audio` (a non-empty
+string) and knows nothing about how the clip is stored, uploaded, resolved or
+played; an audio player is a consumer capability, which is exactly why this is
+an extension and not a core `audio` field rippling through every exercise type.
+
+Payload rules (engine half `refDictationExtension`):
+
+| Id | Rule |
+|---|---|
+| `E-EXT-REFDICT-SHAPE` | `ext_payload` must carry `audio` (string) and `accept` (`string[]`). |
+| `E-EXT-REFDICT-AUDIO` | `audio` is non-empty. |
+| `E-EXT-REFDICT-ACCEPT` | `accept` has at least 1 non-empty entry. |
+
+A reference lesson on an existing topic (dog training), validated by the doc
+gate:
+
+```json
+{
+  "id": "hunde-diktat",
+  "title": "Hundetraining: Diktat",
+  "requires_extensions": ["ext:ref-dictation@1"],
+  "steps": [
+    {
+      "id": "s1",
+      "type": "exercise",
+      "exercise": {
+        "id": "e1",
+        "type": "ext:ref-dictation",
+        "prompt": "Hoere zu und schreibe den Satz auf.",
+        "ext_payload": {
+          "audio": "assets/audio/hunde-diktat-s1.mp3",
+          "accept": [
+            "Der Hund kommt auf das Hoerzeichen 'Hier'.",
+            "Der Hund kommt auf das Hoerzeichen Hier."
+          ]
+        }
+      }
+    }
+  ]
+}
+```
+
+The consumer half (`renderRefDictation` + `gradeRefDictation`) renders the
+prompt over the audio reference (a real consumer mounts its player there) and
+grades the typed transcription against EVERY `accept` entry (trim + case-fold;
+a production consumer would reuse its free-text matcher for typo tolerance).
+
 The example extensions exist as a DECISION BASIS for adoption - nothing in the
 app or the content repos references them until that decision is made
 (adaptive-learner#1579 tracked the exercise-type adoptions; engine#46 tracks

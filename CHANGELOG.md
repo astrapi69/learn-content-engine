@@ -5,6 +5,19 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [0.13.1] - 2026-07-20
+
+Docs/examples: sixth reference extension `ext:ref-dictation` (#68) - an audio
+stimulus bound to a typed transcription. The payload is self-contained
+(`audio` reference + `accept` transcriptions, no card lookup); the engine
+validates only that `audio` is a non-empty string and leaves storage, upload,
+resolution and playback to the consumer. New payload rules
+`E-EXT-REFDICT-SHAPE`, `E-EXT-REFDICT-AUDIO`, `E-EXT-REFDICT-ACCEPT` on the
+extension half. **No schema change and no `schema_version` bump**: a new
+`ext:` type never touches `lesson.schema.json` (`ext_payload` is already an
+open object), so existing content validates byte-identically. The example
+lives under `src/examples/` and is excluded from the published build.
+
 ## [0.13.0] - 2026-07-17
 
 Feature (schema 1.8, additive): `picture_choice` image `src` now takes one of
