@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import { findInvisibleChars } from "./invisible-chars.js";
+import { describeInvisibleChars, findInvisibleChars } from "./invisible-chars.js";
 import { validateLesson } from "./validate.js";
 
 /**
@@ -210,6 +210,32 @@ describe("W-INVISIBLE-CHAR: control characters", () => {
   it("flags a C1 control character", () => {
     const lesson = lessonWith({ title: `Les${control(0x9b)}son` });
     expect(messageFor(lesson)).toContain("U+009B");
+  });
+
+  it("flags the bidi isolates, which modern editors emit instead of the embeddings", () => {
+    for (const codepoint of [0x2066, 0x2067, 0x2068, 0x2069]) {
+      const lesson = lessonWith({ title: `A${String.fromCharCode(codepoint)}B` });
+      expect(warningsFor(lesson), `U+${codepoint.toString(16)}`).toHaveLength(1);
+    }
+  });
+
+  it("flags the invisible math operators a formula editor pastes", () => {
+    for (const codepoint of [0x2061, 0x2062, 0x2063, 0x2064]) {
+      const lesson = lessonWith({ title: `A${String.fromCharCode(codepoint)}B` });
+      expect(warningsFor(lesson), `U+${codepoint.toString(16)}`).toHaveLength(1);
+    }
+  });
+
+  it("sorts reported codepoints numerically, not as text", () => {
+    // Once a codepoint needs five hex digits the two orders disagree:
+    // "U+10000" precedes "U+FEFF" as text and follows it as a number.
+    const described = describeInvisibleChars([
+      { path: "/a", codepoint: "U+10000", name: "SUPPLEMENTARY" },
+      { path: "/a", codepoint: "U+FEFF", name: "BYTE ORDER MARK" },
+      { path: "/a", codepoint: "U+00AD", name: "SOFT HYPHEN" },
+    ])!;
+    const order = ["U+00AD", "U+FEFF", "U+10000"].map((label) => described.indexOf(label));
+    expect(order).toEqual([...order].sort((left, right) => left - right));
   });
 
   it("survives a circular reference instead of blowing the stack", () => {
