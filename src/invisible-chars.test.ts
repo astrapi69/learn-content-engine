@@ -180,3 +180,48 @@ describe("W-INVISIBLE-CHAR", () => {
     expect(result.errors).toEqual([]);
   });
 });
+
+/**
+ * Control characters were the gap in the first cut. They are escaped in the
+ * JSON source (````), so ``JSON.parse`` hands back a real control
+ * character that every structural check accepts. Verified before writing
+ * this: such a lesson validated clean and produced no warning at all.
+ *
+ * The boundary that matters more is the opposite one. Tab, newline and
+ * carriage return are ordinary text, and theory bodies are full of newlines,
+ * so flagging them would fire on nearly every knowledge lesson in the
+ * ecosystem.
+ */
+describe("W-INVISIBLE-CHAR: control characters", () => {
+  const control = (codepoint: number): string => String.fromCharCode(codepoint);
+
+  it("flags a C0 control character that survived the JSON escape", () => {
+    const lesson = lessonWith({ title: `Les${control(0x07)}son` });
+    expect(messageFor(lesson)).toContain("U+0007");
+    expect(messageFor(lesson)).toContain("CONTROL CHARACTER");
+  });
+
+  it("flags DELETE", () => {
+    const lesson = lessonWith({ title: `Les${control(0x7f)}son` });
+    expect(messageFor(lesson)).toContain("U+007F");
+  });
+
+  it("flags a C1 control character", () => {
+    const lesson = lessonWith({ title: `Les${control(0x9b)}son` });
+    expect(messageFor(lesson)).toContain("U+009B");
+  });
+
+  it("boundary: tab, newline and carriage return are ordinary text", () => {
+    const lesson = lessonWith({
+      steps: [
+        { id: "s0", type: "theory", body: "Zeile eins\nZeile zwei\r\nSpalte\teins" },
+        {
+          id: "s1",
+          type: "exercise",
+          exercise: { id: "e1", type: "free_text", prompt: "P", accept: ["b"] },
+        },
+      ],
+    });
+    expect(warningsFor(lesson)).toEqual([]);
+  });
+});
