@@ -1,7 +1,7 @@
 # Extensions
 
 Extension exercise types let a consumer add a NON-core exercise type in the
-`ext:<vendor>-<name>` namespace (schema 1.7) **without** widening the core
+`ext:<vendor>-<name>` namespace (since schema 1.7) **without** widening the core
 `ExerciseType` enum. The core enum stays the single, portable authority; every
 extension is opt-in and honestly declared, so core content keeps its guarantee
 that "validates here => loads in any consumer".

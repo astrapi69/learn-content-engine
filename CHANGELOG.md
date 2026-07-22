@@ -45,7 +45,7 @@ without the engine knowing its shape.
 Deliberately NOT flagged: `U+00A0` NO-BREAK SPACE and `U+202F` NARROW NO-BREAK
 SPACE. Both render as whitespace and are legitimate typography, notably in the
 French content this ecosystem carries. Measured on 528 real lessons across
-eight content repositories: 4 findings, all genuine soft hyphens sitting
+seven content repositories: 4 findings, all genuine soft hyphens sitting
 mid-word in pasted prose, 0 false positives.
 
 Warning tier, never blocks. Additive: no schema change, no `schema_version`

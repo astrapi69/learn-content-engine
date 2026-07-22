@@ -587,7 +587,7 @@ for machine-readable output (editor integration).
 ## Extensions
 
 Besides the core exercise types above, a consumer can register **extension
-types** in the `ext:<vendor>-<name>` namespace (schema 1.7). An extension
+types** in the `ext:<vendor>-<name>` namespace (since schema 1.7). An extension
 exercise carries an opaque `ext_payload` and MUST be declared in the lesson's
 top-level `requires_extensions` (each pinned `@<major>`); a consumer that has
 not registered a declared extension refuses the lesson loudly
