@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 
+import { findInvisibleChars } from "./invisible-chars.js";
 import { validateLesson } from "./validate.js";
 
 /**
@@ -209,6 +210,23 @@ describe("W-INVISIBLE-CHAR: control characters", () => {
   it("flags a C1 control character", () => {
     const lesson = lessonWith({ title: `Les${control(0x9b)}son` });
     expect(messageFor(lesson)).toContain("U+009B");
+  });
+
+  it("survives a circular reference instead of blowing the stack", () => {
+    // validateLesson takes `unknown`, so a caller can hand it a hand-built
+    // object rather than JSON.parse output. Before the guard this threw
+    // RangeError: Maximum call stack size exceeded, verified.
+    const cyclic: Record<string, unknown> = { title: "Les​son" };
+    cyclic.self = cyclic;
+    expect(() => findInvisibleChars(cyclic)).not.toThrow();
+    expect(findInvisibleChars(cyclic)).toHaveLength(1);
+  });
+
+  it("visits a repeated (but acyclic) object on each path it appears at", () => {
+    // Sharing is not a cycle: the same node reachable twice must still be
+    // reported twice, or a shared card would be silently skipped.
+    const shared = { note: "cof​fee" };
+    expect(findInvisibleChars({ a: shared, b: shared })).toHaveLength(2);
   });
 
   it("boundary: tab, newline and carriage return are ordinary text", () => {

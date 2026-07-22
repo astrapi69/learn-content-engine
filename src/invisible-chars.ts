@@ -61,13 +61,17 @@ const INVISIBLE_RANGES: readonly InvisibleRange[] = [
 ];
 
 const asEscape = (codepoint: number): string =>
-  `\\u${codepoint.toString(16).padStart(4, "0")}`;
+  `\\u{${codepoint.toString(16).padStart(4, "0")}}`;
 
 /**
- * One character class covering every range. Almost all content is clean, so a
- * single regex test rejects a string in one pass instead of a per-character
- * map lookup; only a string that actually matches is walked to locate the
- * offenders.
+ * One character class covering every range, matched globally so the offenders
+ * can be pulled straight out of a string instead of walking it character by
+ * character. A pasted chapter is long and almost entirely clean, so skipping
+ * the visible text matters.
+ *
+ * The ``u`` flag is not decoration: without it a pattern is matched in UTF-16
+ * code units, so any future codepoint above the BMP would be compared against
+ * half a surrogate pair. ``\u{...}`` syntax requires the flag in turn.
  */
 const INVISIBLE_PATTERN = new RegExp(
   `[${INVISIBLE_RANGES.map((range) =>
@@ -75,6 +79,7 @@ const INVISIBLE_PATTERN = new RegExp(
       ? asEscape(range.from)
       : `${asEscape(range.from)}-${asEscape(range.to)}`,
   ).join("")}]`,
+  "gu",
 );
 
 /** The Unicode name for a codepoint, or null when it is ordinary text. */
@@ -99,12 +104,13 @@ export interface InvisibleCharFinding {
 const toCodepointLabel = (codepoint: number): string =>
   `U+${codepoint.toString(16).toUpperCase().padStart(4, "0")}`;
 
-/** Collect every invisible character in one string value. */
+/** Collect every invisible character in one string value. Only the matches are
+ *  visited; the surrounding text is never inspected. */
 function findingsInString(value: string, path: string): InvisibleCharFinding[] {
-  if (!INVISIBLE_PATTERN.test(value)) return [];
   const findings: InvisibleCharFinding[] = [];
-  for (const character of value) {
-    const codepoint = character.codePointAt(0)!;
+  for (const match of value.matchAll(INVISIBLE_PATTERN)) {
+    const codepoint = match[0].codePointAt(0);
+    if (codepoint === undefined) continue;
     const name = nameOf(codepoint);
     if (name) findings.push({ path, codepoint: toCodepointLabel(codepoint), name });
   }
@@ -117,17 +123,27 @@ function findingsInString(value: string, path: string): InvisibleCharFinding[] {
  * what lets this cover ``ext_payload`` (whose shape the engine does not know)
  * and any field a later schema version adds.
  */
-export function findInvisibleChars(value: unknown, path = ""): InvisibleCharFinding[] {
+export function findInvisibleChars(
+  value: unknown,
+  path = "",
+  ancestors: ReadonlySet<object> = new Set(),
+): InvisibleCharFinding[] {
   if (typeof value === "string") return findingsInString(value, path);
+  if (typeof value !== "object" || value === null) return [];
+  // A lesson from JSON.parse cannot be cyclic, but this API takes `unknown`,
+  // so a hand-built object can be. Unguarded that is a stack overflow rather
+  // than a diagnosis. Tracking the ANCESTORS rather than everything seen keeps
+  // a shared (but acyclic) node reported at each path it appears at.
+  if (ancestors.has(value)) return [];
+  const nested = new Set(ancestors).add(value);
   if (Array.isArray(value)) {
-    return value.flatMap((entry, index) => findInvisibleChars(entry, `${path}/${index}`));
-  }
-  if (typeof value === "object" && value !== null) {
-    return Object.entries(value).flatMap(([key, entry]) =>
-      findInvisibleChars(entry, `${path}/${key}`),
+    return value.flatMap((entry, index) =>
+      findInvisibleChars(entry, `${path}/${index}`, nested),
     );
   }
-  return [];
+  return Object.entries(value).flatMap(([key, entry]) =>
+    findInvisibleChars(entry, `${path}/${key}`, nested),
+  );
 }
 
 /** How many distinct paths to name before trailing off. Enough to start
@@ -144,8 +160,11 @@ export function describeInvisibleChars(findings: readonly InvisibleCharFinding[]
   if (findings.length === 0) return null;
   const byCodepoint = new Map<string, string>();
   for (const finding of findings) byCodepoint.set(finding.codepoint, finding.name);
+  // Sort by numeric value, not by the label: once a codepoint needs five hex
+  // digits, "U+10000" sorts before "U+FEFF" lexicographically and after it
+  // numerically, and the numeric order is the one a reader expects.
   const kinds = [...byCodepoint]
-    .sort(([left], [right]) => left.localeCompare(right))
+    .sort(([left], [right]) => Number.parseInt(left.slice(2), 16) - Number.parseInt(right.slice(2), 16))
     .map(([codepoint, name]) => `${codepoint} ${name}`)
     .join(", ");
   const paths = [...new Set(findings.map((finding) => finding.path))];
