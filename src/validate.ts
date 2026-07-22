@@ -29,6 +29,7 @@ import { Ajv2020 } from "ajv/dist/2020.js";
 import type { ErrorObject, ValidateFunction } from "ajv";
 
 import type { ExtensionRegistry } from "./extensions.js";
+import { describeInvisibleChars, findInvisibleChars } from "./invisible-chars.js";
 import type { Exercise, Lesson, LessonStep } from "./types/lesson-schema.generated.js";
 
 /** Whether an issue blocks (``error``) or merely advises (``warning``). */
@@ -451,6 +452,17 @@ function checkUnusedCards(lesson: Lesson, issues: ValidationIssue[]): void {
   );
 }
 
+/** Warn about invisible Unicode characters anywhere in the lesson's text
+ *  (#75). Aggregated to ONE warning per lesson listing every distinct
+ *  codepoint and where it sits: pasted text can carry dozens, and a warning
+ *  per occurrence is the alert fatigue W-CARD-UNUSED was aggregated away from
+ *  (#49). Never an error - the content is structurally valid, it just carries
+ *  characters the author cannot see. */
+function checkInvisibleChars(lesson: Lesson, issues: ValidationIssue[]): void {
+  const description = describeInvisibleChars(findInvisibleChars(lesson));
+  if (description) issues.push(warn("W-INVISIBLE-CHAR", "", description, "author-lints"));
+}
+
 /** Semantic + lint pass. Assumes the input is already structurally valid (so the
  *  schema-typed shape is trustworthy). Returns a mixed error/warning list. */
 function semanticIssues(lesson: Lesson, registry: ExtensionRegistry): ValidationIssue[] {
@@ -461,6 +473,7 @@ function semanticIssues(lesson: Lesson, registry: ExtensionRegistry): Validation
     checkStep(step, `/steps/${index}`, knownCardIds, ext, issues);
   });
   checkUnusedCards(lesson, issues);
+  checkInvisibleChars(lesson, issues);
   return issues;
 }
 

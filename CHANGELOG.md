@@ -5,6 +5,29 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [0.13.2] - 2026-07-22
+
+New author lint `W-INVISIBLE-CHAR` (#75): warns when a lesson's text carries
+characters that render as nothing - zero-width spaces, byte-order marks,
+directional marks, soft hyphens. They are legal JSON and survive every
+structural check, and no one spots them by reading the file; they arrive by
+pasting from a PDF or a web page, which is exactly what the reference app's
+book-text wizard asks the author to do. The warning names each codepoint
+(`U+200B ZERO WIDTH SPACE`), its Unicode name, the occurrence count and the
+paths, aggregated once per lesson (the `W-CARD-UNUSED` precedent from #49).
+Every string is walked, including `ext_payload`, so extension text is covered
+without the engine knowing its shape.
+
+Deliberately NOT flagged: `U+00A0` NO-BREAK SPACE and `U+202F` NARROW NO-BREAK
+SPACE. Both render as whitespace and are legitimate typography, notably in the
+French content this ecosystem carries. Measured on 528 real lessons across
+eight content repositories: 4 findings, all genuine soft hyphens sitting
+mid-word in pasted prose, 0 false positives.
+
+Warning tier, never blocks. Additive: no schema change, no `schema_version`
+bump. Content repos pick it up through their existing `make lint` /
+`make lint-warnings` without changing anything.
+
 ## [0.13.1] - 2026-07-20
 
 Docs/examples: sixth reference extension `ext:ref-dictation` (#68) - an audio
