@@ -4,6 +4,13 @@ Formatting rules for every article under `docs/blog/`. They apply from the
 first draft on, not as an afterthought. (They extend the repository-wide
 no-em-dash rule from the coding standards to prose.)
 
+Rule 1 applies beyond the blog: every self-authored Markdown file under
+`docs/` is the same kind of editorial prose and follows it (decided in #80;
+the reference docs are brought up to the rule in a separate sweep). The
+other rules stay blog-specific. Learner content in the content repositories
+is out of scope: that is multilingual material with its own authorship and
+its own conventions.
+
 This is the single place the blog formatting guidelines live (elsewhere
 referred to as the "formatierungsrichtlinien-blog-engine-cc" rules). Read
 it before drafting or reviewing an article.
@@ -72,3 +79,9 @@ grep -oP '[^\x00-\x7F]' docs/blog/<article>.md | sort -u   # review every non-AS
 The second grep matters: a spaced hyphen used as a pause is rule 1's other
 half and a plain U+2014 count misses it entirely. Ignore hits inside code
 fences (ASCII diagrams) and table rows.
+
+Because rule 1 covers all of `docs/`, its check also runs corpus-wide:
+
+```shell
+grep -rnP '\S - \S' docs --include='*.md'   # faked em-dashes anywhere under docs/
+```
