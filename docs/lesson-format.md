@@ -565,6 +565,7 @@ drifting.
 | `W-PIC-DUP-LABEL` | A `picture_choice` distractor shares its `label` with the correct image. |
 | `W-PIC-DATA-URI` | A `picture_choice` image `src` is an inline `data:` URI (schema v1.8 allows it for consumer-local content, e.g. uploaded images). Repo content should prefer a relative `assets/` path - inline data URIs bloat the lesson JSON and the git history. Advisory only, never blocks. |
 | `W-HINT-LENGTH` | A hint reveals the answer length (e.g. "four letters"). Consumers that display an answer-length indicator make such a hint redundant; on other consumers it gives part of the answer away. |
+| `W-INVISIBLE-CHAR` | The lesson's text carries characters that render as nothing: zero-width spaces, byte-order marks, directional marks, soft hyphens. They are legal JSON and survive every structural check, and no one spots them by reading the file; they usually arrive by pasting from a PDF or a web page. The warning names each codepoint (`U+200B ZERO WIDTH SPACE`), its Unicode name, and where it sits, aggregated once per lesson. Every string is scanned, including `ext_payload`, so extension text is covered without the engine knowing its shape. Deliberately NOT flagged: `U+00A0` NO-BREAK SPACE and `U+202F` NARROW NO-BREAK SPACE, which render as whitespace and are legitimate typography (French sets one before `?` and `!`). |
 
 ## Linting
 
