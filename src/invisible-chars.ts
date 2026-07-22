@@ -2,64 +2,117 @@
  * Detection of invisible Unicode characters in lesson content (#75).
  *
  * Text pasted out of a PDF or a web page carries characters that cannot be
- * seen: zero-width spaces, byte-order marks, directional marks, soft hyphens.
- * They are legal JSON string content, so no structural check rejects them, and
- * no one notices them by reading the file. The app's book-text wizard asks the
- * author to paste a textbook section, which is precisely how they arrive.
+ * seen: zero-width spaces, byte-order marks, directional marks, soft hyphens,
+ * and control characters that a JSON escape smuggled through. They are legal
+ * JSON string content, so no structural check rejects them, and no one notices
+ * them by reading the file. The app's book-text wizard asks the author to
+ * paste a textbook section, which is precisely how they arrive.
  *
- * The rule is deliberately NARROW. Only characters that render as nothing at
- * all are listed. A no-break space (``U+00A0``) and a narrow no-break space
- * (``U+202F``) are excluded on purpose: they render as whitespace and are
- * legitimate typography, notably in the French content this ecosystem carries
- * ("Comment ca va ?" sets one before the question mark by convention).
- * Flagging them would make the lint usually-wrong, and a lint that is usually
- * wrong stops being read.
+ * Two deliberate exclusions keep the rule from crying wolf:
+ *
+ * - Tab, newline and carriage return are ordinary text. Theory bodies are full
+ *   of newlines, so flagging them would warn on nearly every knowledge lesson.
+ * - ``U+00A0`` NO-BREAK SPACE and ``U+202F`` NARROW NO-BREAK SPACE render as
+ *   whitespace and are legitimate typography, notably in the French content
+ *   this ecosystem carries ("Comment ca va ?" sets one before the question
+ *   mark). A lint that is usually wrong stops being read.
+ *
+ * The table below is keyed by NUMERIC codepoint on purpose. Keying it by the
+ * characters themselves made the source unreadable: a reviewer saw an empty
+ * string and had to take the label on trust, in the one file where that is
+ * least acceptable.
  */
 
-/** Invisible codepoints, with the Unicode name reported to the author. */
-const INVISIBLE_CHARACTERS = new Map<string, string>([
-  ["­", "SOFT HYPHEN"],
-  ["​", "ZERO WIDTH SPACE"],
-  ["‌", "ZERO WIDTH NON-JOINER"],
-  ["‍", "ZERO WIDTH JOINER"],
-  ["‎", "LEFT-TO-RIGHT MARK"],
-  ["‏", "RIGHT-TO-LEFT MARK"],
-  [" ", "LINE SEPARATOR"],
-  [" ", "PARAGRAPH SEPARATOR"],
-  ["‪", "LEFT-TO-RIGHT EMBEDDING"],
-  ["‫", "RIGHT-TO-LEFT EMBEDDING"],
-  ["‬", "POP DIRECTIONAL FORMATTING"],
-  ["‭", "LEFT-TO-RIGHT OVERRIDE"],
-  ["‮", "RIGHT-TO-LEFT OVERRIDE"],
-  ["⁠", "WORD JOINER"],
-  ["﻿", "BYTE ORDER MARK"],
-]);
+/** A codepoint, or an inclusive range of them, that renders as nothing. */
+interface InvisibleRange {
+  /** First codepoint in the range. */
+  from: number;
+  /** Last codepoint, inclusive. Equal to ``from`` for a single character. */
+  to: number;
+  /** Unicode name reported to the author. */
+  name: string;
+}
+
+/**
+ * Every codepoint the lint flags. C0 skips 0x09/0x0A/0x0D (tab, newline,
+ * carriage return); C1 has no such exceptions, none of it is text.
+ */
+const INVISIBLE_RANGES: readonly InvisibleRange[] = [
+  { from: 0x0000, to: 0x0008, name: "CONTROL CHARACTER" },
+  { from: 0x000b, to: 0x000c, name: "CONTROL CHARACTER" },
+  { from: 0x000e, to: 0x001f, name: "CONTROL CHARACTER" },
+  { from: 0x007f, to: 0x007f, name: "DELETE" },
+  { from: 0x0080, to: 0x009f, name: "CONTROL CHARACTER" },
+  { from: 0x00ad, to: 0x00ad, name: "SOFT HYPHEN" },
+  { from: 0x200b, to: 0x200b, name: "ZERO WIDTH SPACE" },
+  { from: 0x200c, to: 0x200c, name: "ZERO WIDTH NON-JOINER" },
+  { from: 0x200d, to: 0x200d, name: "ZERO WIDTH JOINER" },
+  { from: 0x200e, to: 0x200e, name: "LEFT-TO-RIGHT MARK" },
+  { from: 0x200f, to: 0x200f, name: "RIGHT-TO-LEFT MARK" },
+  { from: 0x2028, to: 0x2028, name: "LINE SEPARATOR" },
+  { from: 0x2029, to: 0x2029, name: "PARAGRAPH SEPARATOR" },
+  { from: 0x202a, to: 0x202a, name: "LEFT-TO-RIGHT EMBEDDING" },
+  { from: 0x202b, to: 0x202b, name: "RIGHT-TO-LEFT EMBEDDING" },
+  { from: 0x202c, to: 0x202c, name: "POP DIRECTIONAL FORMATTING" },
+  { from: 0x202d, to: 0x202d, name: "LEFT-TO-RIGHT OVERRIDE" },
+  { from: 0x202e, to: 0x202e, name: "RIGHT-TO-LEFT OVERRIDE" },
+  { from: 0x2060, to: 0x2060, name: "WORD JOINER" },
+  { from: 0xfeff, to: 0xfeff, name: "BYTE ORDER MARK" },
+];
+
+const asEscape = (codepoint: number): string =>
+  `\\u{${codepoint.toString(16).padStart(4, "0")}}`;
+
+/**
+ * One character class covering every range, matched globally so the offenders
+ * can be pulled straight out of a string instead of walking it character by
+ * character. A pasted chapter is long and almost entirely clean, so skipping
+ * the visible text matters.
+ *
+ * The ``u`` flag is not decoration: without it a pattern is matched in UTF-16
+ * code units, so any future codepoint above the BMP would be compared against
+ * half a surrogate pair. ``\u{...}`` syntax requires the flag in turn.
+ */
+const INVISIBLE_PATTERN = new RegExp(
+  `[${INVISIBLE_RANGES.map((range) =>
+    range.from === range.to
+      ? asEscape(range.from)
+      : `${asEscape(range.from)}-${asEscape(range.to)}`,
+  ).join("")}]`,
+  "gu",
+);
+
+/** The Unicode name for a codepoint, or null when it is ordinary text. */
+function nameOf(codepoint: number): string | null {
+  const range = INVISIBLE_RANGES.find(
+    (candidate) => codepoint >= candidate.from && codepoint <= candidate.to,
+  );
+  return range ? range.name : null;
+}
 
 /** One invisible character found at one place in the lesson. */
 export interface InvisibleCharFinding {
   /** JSON-pointer-ish location, e.g. ``/cards/0/front``. */
   path: string;
-  /** The offending character itself. */
-  character: string;
   /** ``U+200B`` style label. */
   codepoint: string;
   /** The Unicode name, e.g. ``ZERO WIDTH SPACE``. */
   name: string;
 }
 
-/** ``U+200B``-style label for a single character. */
-function toCodepointLabel(character: string): string {
-  return `U+${character.codePointAt(0)!.toString(16).toUpperCase().padStart(4, "0")}`;
-}
+/** ``U+200B``-style label. */
+const toCodepointLabel = (codepoint: number): string =>
+  `U+${codepoint.toString(16).toUpperCase().padStart(4, "0")}`;
 
-/** Collect every invisible character in one string value. */
+/** Collect every invisible character in one string value. Only the matches are
+ *  visited; the surrounding text is never inspected. */
 function findingsInString(value: string, path: string): InvisibleCharFinding[] {
   const findings: InvisibleCharFinding[] = [];
-  for (const character of value) {
-    const name = INVISIBLE_CHARACTERS.get(character);
-    if (name) {
-      findings.push({ path, character, codepoint: toCodepointLabel(character), name });
-    }
+  for (const match of value.matchAll(INVISIBLE_PATTERN)) {
+    const codepoint = match[0].codePointAt(0);
+    if (codepoint === undefined) continue;
+    const name = nameOf(codepoint);
+    if (name) findings.push({ path, codepoint: toCodepointLabel(codepoint), name });
   }
   return findings;
 }
@@ -70,17 +123,27 @@ function findingsInString(value: string, path: string): InvisibleCharFinding[] {
  * what lets this cover ``ext_payload`` (whose shape the engine does not know)
  * and any field a later schema version adds.
  */
-export function findInvisibleChars(value: unknown, path = ""): InvisibleCharFinding[] {
+export function findInvisibleChars(
+  value: unknown,
+  path = "",
+  ancestors: ReadonlySet<object> = new Set(),
+): InvisibleCharFinding[] {
   if (typeof value === "string") return findingsInString(value, path);
+  if (typeof value !== "object" || value === null) return [];
+  // A lesson from JSON.parse cannot be cyclic, but this API takes `unknown`,
+  // so a hand-built object can be. Unguarded that is a stack overflow rather
+  // than a diagnosis. Tracking the ANCESTORS rather than everything seen keeps
+  // a shared (but acyclic) node reported at each path it appears at.
+  if (ancestors.has(value)) return [];
+  const nested = new Set(ancestors).add(value);
   if (Array.isArray(value)) {
-    return value.flatMap((entry, index) => findInvisibleChars(entry, `${path}/${index}`));
-  }
-  if (typeof value === "object" && value !== null) {
-    return Object.entries(value).flatMap(([key, entry]) =>
-      findInvisibleChars(entry, `${path}/${key}`),
+    return value.flatMap((entry, index) =>
+      findInvisibleChars(entry, `${path}/${index}`, nested),
     );
   }
-  return [];
+  return Object.entries(value).flatMap(([key, entry]) =>
+    findInvisibleChars(entry, `${path}/${key}`, nested),
+  );
 }
 
 /** How many distinct paths to name before trailing off. Enough to start
@@ -97,13 +160,17 @@ export function describeInvisibleChars(findings: readonly InvisibleCharFinding[]
   if (findings.length === 0) return null;
   const byCodepoint = new Map<string, string>();
   for (const finding of findings) byCodepoint.set(finding.codepoint, finding.name);
+  // Sort by numeric value, not by the label: once a codepoint needs five hex
+  // digits, "U+10000" sorts before "U+FEFF" lexicographically and after it
+  // numerically, and the numeric order is the one a reader expects.
   const kinds = [...byCodepoint]
-    .sort(([left], [right]) => left.localeCompare(right))
+    .sort(([left], [right]) => Number.parseInt(left.slice(2), 16) - Number.parseInt(right.slice(2), 16))
     .map(([codepoint, name]) => `${codepoint} ${name}`)
     .join(", ");
   const paths = [...new Set(findings.map((finding) => finding.path))];
   const shown = paths.slice(0, MAX_PATHS_LISTED).join(", ");
-  const rest = paths.length > MAX_PATHS_LISTED ? `, and ${paths.length - MAX_PATHS_LISTED} more` : "";
+  const rest =
+    paths.length > MAX_PATHS_LISTED ? `, and ${paths.length - MAX_PATHS_LISTED} more` : "";
   const plural = findings.length === 1 ? "occurrence" : "occurrences";
   return (
     `lesson text contains invisible characters (${kinds}): ` +

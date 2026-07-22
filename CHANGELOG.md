@@ -5,6 +5,30 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [0.13.3] - 2026-07-22
+
+Hardens `W-INVISIBLE-CHAR` (#77), the lint shipped one release earlier.
+
+Control characters were the gap. A JSON source escapes them (`\u0007`), so
+`JSON.parse` hands back a real control character that every structural check
+accepts; verified before fixing, such a lesson validated clean and produced no
+warning at all. The rule now covers C0 (except tab, newline and carriage
+return), `U+007F` DELETE and the C1 range.
+
+Tab, newline and carriage return stay excluded on purpose: theory bodies are
+full of newlines, so flagging them would warn on nearly every knowledge lesson.
+A boundary test pins that.
+
+The codepoint table is now keyed by numeric codepoint instead of by the
+characters themselves. Keying it by the characters made the source unreadable
+in the one file where that is least acceptable: a reviewer saw an empty string
+and had to take the label on trust. Matching is also a single regex test per
+string now, walking a string only when it actually matches.
+
+Re-measured on the same 528 real lessons across seven content repositories:
+still 4 findings, still 0 false positives, with control characters and C1 newly
+in scope.
+
 ## [0.13.2] - 2026-07-22
 
 New author lint `W-INVISIBLE-CHAR` (#75): warns when a lesson's text carries
