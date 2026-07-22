@@ -27,6 +27,14 @@
  * the sanitizer of `manuscript-tools`
  * (https://github.com/astrapi69/manuscript-tools), whose checker had the same
  * gap this module closed.
+ *
+ * Scope note: the walker below reads plain JSON shapes only. ``Map`` and
+ * ``Set`` values would be walked as empty objects, which sounds like a silent
+ * false negative but cannot happen here. ``validateLesson`` returns early when
+ * the structural check fails, so the lint only ever sees a schema-valid
+ * lesson, and this module is not exported from the package entry. Both would
+ * have to change before the gap is reachable; if this is ever made public,
+ * handle those two types before doing so.
  */
 
 /** A codepoint, or an inclusive range of them, that renders as nothing. */
