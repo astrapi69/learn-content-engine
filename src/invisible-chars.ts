@@ -21,6 +21,12 @@
  * characters themselves made the source unreadable: a reviewer saw an empty
  * string and had to take the label on trust, in the one file where that is
  * least acceptable.
+ *
+ * Codepoints and names follow the Unicode Character Database; the format
+ * ranges are those of general category Cf. The starting set was taken from
+ * the sanitizer of `manuscript-tools`
+ * (https://github.com/astrapi69/manuscript-tools), whose checker had the same
+ * gap this module closed.
  */
 
 /** A codepoint, or an inclusive range of them, that renders as nothing. */
@@ -56,7 +62,11 @@ const INVISIBLE_RANGES: readonly InvisibleRange[] = [
   { from: 0x202c, to: 0x202c, name: "POP DIRECTIONAL FORMATTING" },
   { from: 0x202d, to: 0x202d, name: "LEFT-TO-RIGHT OVERRIDE" },
   { from: 0x202e, to: 0x202e, name: "RIGHT-TO-LEFT OVERRIDE" },
-  { from: 0x2060, to: 0x2060, name: "WORD JOINER" },
+  // The whole U+2060-206F format block: word joiner, the invisible math
+  // operators a formula editor pastes, the bidi isolates that modern editors
+  // emit in place of the older embeddings, and the deprecated format
+  // characters. All are Unicode general category Cf and all render as nothing.
+  { from: 0x2060, to: 0x206f, name: "INVISIBLE FORMAT CHARACTER" },
   { from: 0xfeff, to: 0xfeff, name: "BYTE ORDER MARK" },
 ];
 
@@ -123,27 +133,40 @@ function findingsInString(value: string, path: string): InvisibleCharFinding[] {
  * what lets this cover ``ext_payload`` (whose shape the engine does not know)
  * and any field a later schema version adds.
  */
-export function findInvisibleChars(
-  value: unknown,
-  path = "",
-  ancestors: ReadonlySet<object> = new Set(),
-): InvisibleCharFinding[] {
+export function findInvisibleChars(value: unknown, path = ""): InvisibleCharFinding[] {
+  return walk(value, path, new Set());
+}
+
+/**
+ * The recursion behind {@link findInvisibleChars}.
+ *
+ * ``ancestors`` holds the current PATH, not everything seen, so a node reached
+ * twice without a cycle is still reported at each path it appears at. It is
+ * one mutable set that is extended on the way down and restored on the way
+ * back up: copying it per node would allocate one set per object in the
+ * lesson, which for a pasted chapter is thousands of short-lived sets. The
+ * ``finally`` keeps the set honest even if a callee throws.
+ */
+function walk(value: unknown, path: string, ancestors: Set<object>): InvisibleCharFinding[] {
   if (typeof value === "string") return findingsInString(value, path);
   if (typeof value !== "object" || value === null) return [];
   // A lesson from JSON.parse cannot be cyclic, but this API takes `unknown`,
   // so a hand-built object can be. Unguarded that is a stack overflow rather
-  // than a diagnosis. Tracking the ANCESTORS rather than everything seen keeps
-  // a shared (but acyclic) node reported at each path it appears at.
+  // than a diagnosis.
   if (ancestors.has(value)) return [];
-  const nested = new Set(ancestors).add(value);
-  if (Array.isArray(value)) {
-    return value.flatMap((entry, index) =>
-      findInvisibleChars(entry, `${path}/${index}`, nested),
+  ancestors.add(value);
+  try {
+    if (Array.isArray(value)) {
+      return value.flatMap((entry, index) => walk(entry, `${path}/${index}`, ancestors));
+    }
+    // Object.entries, not for..in: only own enumerable keys, so nothing
+    // inherited from a polluted prototype is ever walked.
+    return Object.entries(value).flatMap(([key, entry]) =>
+      walk(entry, `${path}/${key}`, ancestors),
     );
+  } finally {
+    ancestors.delete(value);
   }
-  return Object.entries(value).flatMap(([key, entry]) =>
-    findInvisibleChars(entry, `${path}/${key}`, nested),
-  );
 }
 
 /** How many distinct paths to name before trailing off. Enough to start
