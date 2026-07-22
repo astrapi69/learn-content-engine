@@ -68,7 +68,7 @@ For our four cards the generator produced ten exercises, starting with a matchin
 
 Four more details matter here:
 
-- **The generation is deterministic and local.** It derives exercises from your cards by rule, not by a language model, so it needs no API key and produces the same kind of result every time. Don't like the mix? **Regenerate**, adjust the type checkboxes, or delete individual exercises from the list.
+- **The generation is deterministic and local.** It derives exercises from your cards by rule, not by a language model, so it needs no API key and produces the same kind of result every time. To change the mix, **Regenerate**, adjust the type checkboxes, or delete individual exercises from the list.
 - **The exercises are real schema exercises.** What the generator emits are the same `matching` and `free_text` structures a hand-written lesson JSON would contain. The wizard is writing the canonical format for you, one form at a time.
 - **Every exercise is editable in place.** Generated output is a starting point, not a verdict: open any entry and adjust the prompt, the accepted answers, the options. You are editing the exercise, not regenerating around it.
 - **You do not have to generate at all.** **Add exercise** creates one by hand, picking the type yourself. That closes the gap for the exercise the generator cannot derive from your cards, and it means the generator is a convenience rather than the only way in.
