@@ -64,6 +64,11 @@ not a mandate: a purely referential note needs none.
 A quick audit before committing an article:
 
 ```shell
-grep -c $'—' docs/blog/<article>.md         # em-dashes, expect 0
+grep -c $'—' docs/blog/<article>.md          # real em-dashes (U+2014), expect 0
+grep -nP '\S - \S' docs/blog/<article>.md     # faked em-dashes (spaced hyphen as a pause), expect none in prose
 grep -oP '[^\x00-\x7F]' docs/blog/<article>.md | sort -u   # review every non-ASCII char
 ```
+
+The second grep matters: a spaced hyphen used as a pause is rule 1's other
+half and a plain U+2014 count misses it entirely. Ignore hits inside code
+fences (ASCII diagrams) and table rows.
