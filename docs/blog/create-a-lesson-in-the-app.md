@@ -1,6 +1,6 @@
 ---
 title: "Create a Lesson in the App, Step by Step"
-description: "A hands-on walkthrough of the adaptive-learner lesson creator: the four wizard steps, the book-text path that turns a pasted textbook chapter into a knowledge lesson, the extension path for the five advanced exercise types, and the edit mode - with real screenshots from the running app."
+description: "A hands-on walkthrough of the adaptive-learner lesson creator: the four wizard steps, the book-text path that turns a pasted textbook chapter into a knowledge lesson, the extension path for the five advanced exercise types, and the edit mode, with real screenshots from the running app."
 date: 2026-07-17
 tags: [tutorial, authoring, adaptive-learner, walkthrough]
 ---
@@ -64,11 +64,11 @@ The type list now holds all six core exercise types: matching, free text, cloze,
 
 ![Step 3 after generating: ten exercises, plus a notice naming the one selected type that could not be built](assets/create-lesson/s3-exercises.png)
 
-For our four cards the generator produced ten exercises, starting with a matching exercise over all four pairs. It also reports what it could *not* do: "Some selected types produced no exercises: picture_choice", because none of our cards carries an image. That notice is the point of the optional fields in step 2. Cloze and word tiles need example sentences, picture choice needs images, and the step names the missing precondition instead of quietly handing back a shorter list.
+For our four cards the generator produced ten exercises, starting with a matching exercise over all four pairs. It also reports what it could *not* do, and does it as an instruction rather than a complaint: "Some selected types produced no exercises: Picture choice: add an image to at least two cards." That notice is the point of the optional fields in step 2. Cloze and word tiles need example sentences, picture choice needs images, and the step names both the missing precondition and its fix instead of quietly handing back a shorter list.
 
 Four more details matter here:
 
-- **The generation is deterministic and local.** It derives exercises from your cards by rule, not by a language model, so it needs no API key and produces the same kind of result every time. Don't like the mix? **Regenerate**, adjust the type checkboxes, or delete individual exercises from the list.
+- **The generation is deterministic and local.** It derives exercises from your cards by rule, not by a language model, so it needs no API key and produces the same kind of result every time. To change the mix, **Regenerate**, adjust the type checkboxes, or delete individual exercises from the list.
 - **The exercises are real schema exercises.** What the generator emits are the same `matching` and `free_text` structures a hand-written lesson JSON would contain. The wizard is writing the canonical format for you, one form at a time.
 - **Every exercise is editable in place.** Generated output is a starting point, not a verdict: open any entry and adjust the prompt, the accepted answers, the options. You are editing the exercise, not regenerating around it.
 - **You do not have to generate at all.** **Add exercise** creates one by hand, picking the type yourself. That closes the gap for the exercise the generator cannot derive from your cards, and it means the generator is a convenience rather than the only way in.
@@ -80,7 +80,6 @@ The last step shows the lesson summary and, more importantly, a checklist:
 ![Step 4: the review screen with the quality checklist, all green](assets/create-lesson/s4-review.png)
 
 - Has a title
-- Language pair is valid
 - At least 4 cards
 - At least 5 exercises
 - At least 2 exercise types
@@ -99,15 +98,15 @@ The four steps above assume vocabulary cards. Since then the wizard has grown a 
 
 ![Step 1 with the template row, including the new "Knowledge lesson from text" card](assets/create-lesson/s5-template-book.png)
 
-Choosing it switches the wizard to a shorter three-step flow: metadata, book text, review. The middle step is where the work happens - you paste **one section of a textbook** (a chapter is the right size), optionally add the book reference, and press **Generate theory + exercises**:
+Choosing it switches the wizard to a shorter three-step flow: metadata, book text, review. The middle step is where the work happens: you paste **one section of a textbook** (a chapter is the right size), optionally add the book reference, and press **Generate theory + exercises**:
 
 ![The book-text step: pasted chapter, the rights hint, book reference fields, and the generate button](assets/create-lesson/s6-book-text.png)
 
 What happens on generate is deliberately NOT a copy-paste job:
 
-- **The AI rewrites the text in its own words.** The rephrase prompt carries an explicit guardrail - reformulate, never reproduce the wording verbatim - both for copyright reasons and because a rephrasing that has to survive in its own words is a better theory text than a quote. It is a design guardrail, not a user option, and a unit test pins that the prompt carries it. The UI reminds you of your side of the deal too: paste only text you have the rights to, or that is intended for personal use.
+- **The AI rewrites the text in its own words.** The rephrase prompt carries an explicit guardrail (reformulate, never reproduce the wording verbatim), both for copyright reasons and because a rephrasing that has to survive in its own words is a better theory text than a quote. It is a design guardrail, not a user option, and a unit test pins that the prompt carries it. The UI reminds you of your side of the deal too: paste only text you have the rights to, or that is intended for personal use.
 - **The exercises point back at the theory.** Each generated exercise is linked to its theory step via the schema's `theory_ref` field, using the same resolver the app uses at play time, so the write side and the read side cannot diverge.
-- **The book reference travels with the set.** Title, author, URL and ISBN/ASIN land in the set's `book` block - the same field the official content sets use for their companion books.
+- **The book reference travels with the set.** Title, author, URL and ISBN/ASIN land in the set's `book` block, the same field the official content sets use for their companion books.
 
 This path calls a language model, so it is the one part of the creator that needs an API key (bring your own; Anthropic, OpenAI or Gemini). Without a key configured, the step tells you so in plain words instead of failing.
 
@@ -135,24 +134,24 @@ The picker shows the technical type ids, which is honest about what you are auth
 
 Dictation is the newest of the five, and its editor shows what a self-contained extension payload looks like:
 
-![The dictation editor: instruction, audio file path with its hint, and two accepted transcriptions](assets/create-lesson/e3-dictation-fields.png)
+![The dictation editor: instruction, the audio field with upload and path, and two accepted transcriptions](assets/create-lesson/e3-dictation-fields.png)
 
-Three fields, no more: the instruction the learner sees, the **audio file path**, and the list of **accepted transcriptions**. The accepted list is why dictation is forgiving in the right way: you decide up front that *"a coffee please"* counts as well as *"A coffee, please."*, so the grader does not have to guess how strict to be about capitals and punctuation.
+Three fields, no more: the instruction the learner sees, the **audio**, and the list of **accepted transcriptions**. The accepted list is why dictation is forgiving in the right way: you decide up front that *"a coffee please"* counts as well as *"A coffee, please."*, so the grader does not have to guess how strict to be about capitals and punctuation.
 
-Note what the audio field is: a path, typed. The wizard does not upload the clip for you in this version; you put the file into the set's `assets` folder and name it here. That is a real limit, and it is the honest one to state rather than implying an upload button that is not there.
+The audio field takes the clip two ways. **Upload audio** stores it self-contained with the lesson, inlined as a data URI, which is the quick path for a lesson you keep locally. Or you type a relative path to a file in the set's `assets` folder, which is what a published repo set wants, because an inlined clip travels inside the lesson JSON and grows it.
 
 Saving works exactly as everywhere else in the creator. The lesson that comes out is a normal lesson in the canonical schema, with one addition: it declares the extension it uses, so the portability contract holds.
 
 ## The wizard is now also the editor
 
-The second door: every lesson you created (or imported) can be reopened. In the Content area, own lessons carry an **Edit** action - lessons from foreign repositories stay read-only - and it opens the same wizard, pre-filled with the lesson's title, languages, cards and exercises. Walk the steps, change what you want, and the review screen offers a choice the create flow does not have:
+The second door: every lesson you created (or imported) can be reopened. In the Content area, own lessons carry an **Edit** action (lessons from foreign repositories stay read-only), and it opens the same wizard, pre-filled with the lesson's title, languages, cards and exercises. Walk the steps, change what you want, and the review screen offers a choice the create flow does not have:
 
 ![The review step in edit mode: the overwrite note, Save changes, and Save as a copy](assets/create-lesson/s7-edit-review.png)
 
 - **Save changes** overwrites the lesson in place, keeping the same set id and lesson filename. That detail matters: spaced-repetition progress is keyed on the filename and the card content, so unchanged cards keep their learning history, edited or removed cards fall away cleanly, and new cards start fresh. Editing a typo does not reset your streak.
 - **Save as a copy** leaves the original untouched and writes a new lesson next to it.
 
-Alongside editing, the same area lets you **combine several of your own lessons into one set** - select them, group them into a new set (or append to an existing one), and the result is a normal own set that exports and shares like any other. Both features route through the same save path as everything else in this article, so nothing about the output format changes.
+Alongside editing, the same area lets you **combine several of your own lessons into one set**: select them, group them into a new set (or append to an existing one), and the result is a normal own set that exports and shares like any other. Both features route through the same save path as everything else in this article, so nothing about the output format changes.
 
 ## What you just made
 
@@ -163,8 +162,8 @@ The output of these steps is not a proprietary in-app object. It is a lesson in 
 The creator is deliberately the *simple* path, and it has edges:
 
 - Extension exercises are authorable now, but one at a time and by hand. There is no generator for them: the wizard gives you a form per type, not a rule that derives a graded quiz from your cards. That is a deliberate order of work (make it authorable first, automate later), not an oversight.
-- Dictation takes an audio path, not an upload. You place the clip in the set's `assets` folder yourself and type the path. Recording or uploading from the browser is not built in this version.
-- The card-path generator is rule-based on purpose. It produces solid drill exercises from your cards and needs no API key; it does not invent prose. Theory-rich lessons are now the book-text path's job - that one does write theory, and in exchange it is the only part that needs a model key.
+- Dictation takes an existing audio file, either uploaded (inlined with the lesson) or referenced by asset path. Recording a clip in the browser is not built.
+- The card-path generator is rule-based on purpose. It produces solid drill exercises from your cards and needs no API key; it does not invent prose. Theory-rich lessons are now the book-text path's job: that one does write theory, and in exchange it is the only part that needs a model key.
 - The book-text path takes pasted text only. PDF or Word upload and automatic chapter detection are not built; splitting a book into chapters is still your call.
 
 For the everyday case (a teacher or learner who wants a small, clean vocabulary lesson that plays immediately and can be shared properly) the four steps above are the whole job. For turning a textbook chapter into a playable knowledge lesson, the book-text path is; and when either result needs a second pass, the wizard doubles as the editor.
