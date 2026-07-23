@@ -213,6 +213,51 @@ describe("Content-Engine — canonical set-entry projection", () => {
     expect(entry.cached_version).toBe("1.0.0");
   });
 
+  it("projects visibility: hidden through to the canonical entry (#83)", () => {
+    const entry = asContentSetEntry(
+      SOURCE,
+      {
+        id: "graded-quiz-demo-from-de",
+        title: "Graded Quiz Demo",
+        target_language: "de",
+        level: "A1",
+        version: "1.0.0",
+        lesson_count: 1,
+        visibility: "hidden",
+      },
+      null,
+    );
+    expect(entry.visibility).toBe("hidden");
+  });
+
+  it("defaults visibility to ``visible`` when the set omits it (boundary)", () => {
+    const entry = asContentSetEntry(
+      SOURCE,
+      { id: "fr-a1", title: "French A1", target_language: "fr", level: "A1", version: "1.0.0", lesson_count: 1 },
+      null,
+    );
+    expect(entry.visibility).toBe("visible");
+  });
+
+  it("normalizes an unexpected visibility value to ``visible`` (defensive projection)", () => {
+    const entry = asContentSetEntry(
+      SOURCE,
+      {
+        id: "fr-a1",
+        title: "French A1",
+        target_language: "fr",
+        level: "A1",
+        version: "1.0.0",
+        lesson_count: 1,
+        // A raw parsed set may carry an out-of-enum value; the projection
+        // must not leak it as a truthy "hidden"-like state.
+        visibility: "bogus" as unknown as "visible",
+      },
+      null,
+    );
+    expect(entry.visibility).toBe("visible");
+  });
+
   it("passes through downloaded_at, explicit status and optional set fields", () => {
     const entry = asContentSetEntry(
       SOURCE,

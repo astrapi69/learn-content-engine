@@ -54,6 +54,7 @@ export type {
   ContentSetEntry,
   ContentSetSource,
   SetStatus,
+  SetVisibility,
 } from "./types/index.js";
 
 // Underlying generated schema element types.
