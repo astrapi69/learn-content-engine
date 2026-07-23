@@ -21,6 +21,7 @@ export type {
   ContentSetEntry,
   ContentSetSource,
   SetStatus,
+  SetVisibility,
 } from "./content.js";
 
 // The generated schema element types (raw, pre-alias) — useful for consumers

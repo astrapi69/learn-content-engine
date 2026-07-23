@@ -5,6 +5,32 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [0.14.0] - 2026-07-23
+
+Adds an optional `visibility` flag to the content-manifest set entry (#83).
+
+Some sets in a content repo are technical reference or conformance fixtures,
+not learner content. The canonical case is the graded-quiz demo in
+`adaptive-learner-content-test`, the deliberate `E-EXT-UNSUPPORTED` negative
+case in `scripts/conformance-real.mjs`: it must stay on disk for conformance
+but should not surface to learners. Until now the consumer app carried a
+hardcoded app-side blocklist, the wrong layer for repo-owned metadata, because
+the strict set-entry schema (`additionalProperties: false`) rejected any new
+field.
+
+`schema/content-manifest.schema.json` now declares an optional
+`visibility: "visible" | "hidden"` on `ContentSet` (default `"visible"`). It is
+a consumer-display hint only: the engine and the real-content conformance
+harness still validate hidden sets and never exclude them from validation; only
+consumer apps filter on it. Absent means visible, so every existing manifest
+keeps validating unchanged. The flag flows through the canonical projection, so
+`asContentSetEntry` exposes it on `ContentSetEntry.visibility` (a new
+`SetVisibility` type), normalizing any out-of-enum value back to `"visible"`.
+
+Additive and backward compatible, so `x-schema-version` stays `1.8` (matching
+the field-level additive precedent in the lesson schema); the frozen schema
+baseline is refreshed in the same commit.
+
 ## [0.13.3] - 2026-07-22
 
 Hardens `W-INVISIBLE-CHAR` (#77), the lint shipped one release earlier.

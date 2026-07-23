@@ -400,4 +400,47 @@ describe("validateManifest — negative + legacy-alias parity", () => {
     const result = validateManifest({ name: "Broken", sets: [null] });
     expect(result.valid).toBe(false);
   });
+
+  it("accepts a set with visibility: hidden (additive consumer-display hint, #83)", () => {
+    const manifest = {
+      schema_version: "1.2",
+      name: "Fixtures",
+      sets: [
+        {
+          id: "graded-quiz-demo-from-de",
+          title: "Graded Quiz Demo",
+          target_language: "de",
+          level: "A1",
+          version: "1.0.0",
+          lesson_count: 1,
+          visibility: "hidden",
+        },
+      ],
+    };
+    expect(validateManifest(manifest).valid).toBe(true);
+  });
+
+  it("accepts an explicit visibility: visible", () => {
+    const manifest = {
+      schema_version: "1.2",
+      name: "Fixtures",
+      sets: [
+        { id: "x", title: "X", target_language: "de", level: "A1", version: "1.0.0", lesson_count: 1, visibility: "visible" },
+      ],
+    };
+    expect(validateManifest(manifest).valid).toBe(true);
+  });
+
+  it("rejects an unknown visibility value (closed enum)", () => {
+    const manifest = {
+      schema_version: "1.2",
+      name: "Fixtures",
+      sets: [
+        { id: "x", title: "X", target_language: "de", level: "A1", version: "1.0.0", lesson_count: 1, visibility: "secret" },
+      ],
+    };
+    const result = validateManifest(manifest);
+    expect(result.valid).toBe(false);
+    expect(mentions(result, "visibility")).toBe(true);
+  });
 });

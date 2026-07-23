@@ -20,9 +20,10 @@ manifest.yaml ──parseManifest──▶ ParsedManifest
    `ParsedManifest` (a thin YAML/JSON parse - no projection).
 2. **`asContentSetEntry(source, parsedSet, cachedVersion, ...)`** projects one
    `sets[]` entry into a canonical `ContentSetEntry`: it resolves the language
-   pair, applies defaults, computes `update_available`, and projects the book
-   block. **`setBasePath(parsedSet)`** tells you the repo-relative directory
-   holding that set's `lessons/`.
+   pair, applies defaults, computes `update_available`, projects the book
+   block, and carries the optional `visibility` hint (`"visible"` unless the set
+   opts out with `"hidden"`). **`setBasePath(parsedSet)`** tells you the
+   repo-relative directory holding that set's `lessons/`.
 3. From the set entry you build a **`LessonSetContext`** (`language`,
    `target_language`, `source_language`, `domain`) - the context a lesson
    inherits from its parent set.

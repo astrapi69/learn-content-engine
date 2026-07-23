@@ -34,6 +34,7 @@ import type {
   ContentSetEntry,
   ContentSetSource,
   SetStatus,
+  SetVisibility,
 } from "./types/index.js";
 
 /** Manifest ``sets[].book`` block. */
@@ -78,6 +79,9 @@ export interface ParsedSet {
   path?: string;
   /** Optional set-level book block (title/author/url/asin). */
   book?: ParsedSetBook;
+  /** Consumer-display hint (#83). ``"hidden"`` keeps the set out of a
+   *  consumer app's learner-facing list; absent means ``"visible"``. */
+  visibility?: SetVisibility;
 }
 
 /** A parsed ``manifest.yaml`` document (repo-level or set-level). */
@@ -181,6 +185,7 @@ export function asContentSetEntry(
     downloaded_at: downloadedAt,
     status,
     book: asContentSetBook(parsed.book),
+    visibility: parsed.visibility === "hidden" ? "hidden" : "visible",
   };
 }
 

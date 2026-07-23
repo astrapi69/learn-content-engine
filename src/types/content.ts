@@ -36,6 +36,15 @@ import type {
  */
 export type SetStatus = "active" | "deferred" | "completed";
 
+/**
+ * Consumer-display hint for a set (#83). ``"visible"`` is the default;
+ * ``"hidden"`` asks a consumer app NOT to surface the set to learners (e.g. a
+ * conformance/reference fixture that must stay on disk for engine validation
+ * but is not learner content). It is a DISPLAY hint only: the engine never
+ * excludes a hidden set from validation or conformance.
+ */
+export type SetVisibility = "visible" | "hidden";
+
 /** The canonical projection of one content set (a manifest ``sets[]`` entry
  *  resolved against its cached state). Produced by ``asContentSetEntry``. */
 export interface ContentSetEntry {
@@ -72,6 +81,10 @@ export interface ContentSetEntry {
   status?: SetStatus;
   /** Optional set-level book block. */
   book?: ContentSetBook | null;
+  /** Consumer-display hint (#83); ``"visible"`` unless the set opts out
+   *  with ``"hidden"``. A DISPLAY hint only - never affects engine
+   *  validation or conformance. */
+  visibility: SetVisibility;
 }
 
 /** A set's manifest-level book block. Mirrors the manifest \`sets[].book\`
