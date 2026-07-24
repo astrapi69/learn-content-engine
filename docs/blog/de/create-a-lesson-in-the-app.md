@@ -1,13 +1,13 @@
 ---
 title: "Eine Lektion in der App erstellen, Schritt für Schritt"
-description: "Eine praktische Tour durch den Lektions-Editor von adaptive-learner: die vier Assistenten-Schritte, der Buch-Text-Pfad, der aus einem eingefügten Lehrbuchkapitel eine Wissens-Lektion macht, der Erweiterungs-Pfad für die fünf fortgeschrittenen Übungstypen und der Bearbeitungsmodus, mit echten Screenshots aus der laufenden App."
+description: "Eine praktische Tour durch den Lektions-Editor von adaptive-learner: die vier Assistenten-Schritte, der Buch-Pfad, der aus eingefügten oder hochgeladenen Lehrbuchkapiteln Wissens-Lektionen macht, der Erweiterungs-Pfad für die fünf fortgeschrittenen Übungstypen und der Bearbeitungsmodus, mit echten Screenshots aus der laufenden App."
 date: 2026-07-17
 tags: [tutorial, authoring, adaptive-learner, walkthrough]
 ---
 
 # Eine Lektion in der App erstellen, Schritt für Schritt
 
-*Eine praktische Tour durch den Lektions-Editor in adaptive-learner: die klassischen vier Assistenten-Schritte vom leeren Formular bis zur gespeicherten, schema-gültigen Lektion, der Buch-Text-Pfad, der aus einem eingefügten Lehrbuchkapitel eine Wissens-Lektion macht, der Erweiterungs-Pfad, der die fünf fortgeschrittenen Übungstypen ohne JSON autorierbar macht, und der Bearbeitungsmodus des Assistenten. Jeder Screenshot in dieser Anleitung stammt aus der laufenden App, aufgenommen während des exakt beschriebenen Ablaufs.*
+*Eine praktische Tour durch den Lektions-Editor in adaptive-learner: die klassischen vier Assistenten-Schritte vom leeren Formular bis zur gespeicherten, schema-gültigen Lektion, der Buch-Pfad, der aus eingefügten oder hochgeladenen Lehrbuchkapiteln Wissens-Lektionen macht, der Erweiterungs-Pfad, der die fünf fortgeschrittenen Übungstypen ohne JSON autorierbar macht, und der Bearbeitungsmodus des Assistenten. Jeder Screenshot in dieser Anleitung stammt aus der laufenden App, aufgenommen während des exakt beschriebenen Ablaufs.*
 
 `adaptive-learner` · für Lehrende und Content-Autoren · Teil 3 der Serie
 
@@ -19,9 +19,9 @@ Der Editor ist eine Seite in der App: Öffnen Sie `/create-lesson` (oder folgen 
 
 ## Schritt 1: Lektionsdetails
 
-Der erste Schritt sammelt die Metadaten, die jede Lektion trägt: einen Titel, einen optionalen Titel in der Zielsprache, das Sprachpaar, ein Niveau sowie ein optionales Thema und einen Autorennamen.
+Der erste Schritt sammelt die Metadaten, die jede Lektion trägt: einen Titel, einen optionalen Titel in der Zielsprache, eine Content-Domäne, das Sprachpaar, ein Niveau sowie ein optionales Thema und einen Autorennamen. Die Domänen-Auswahl ist hier neu und spiegelt das `domain`-Feld des Schemas: Wählen Sie eine Wissens-Domäne (etwa Psychologie), klappt das Formular das Sprachpaar zu einer einzelnen Inhaltssprache zusammen, weil eine Wissens-Lektion in einer Sprache lehrt statt zwischen zweien.
 
-![Schritt 1: das Lektionsdetails-Formular mit Titel, Sprachen, Niveau, Thema und Autor](assets/create-lesson/s1-metadata.png)
+![Schritt 1: das Lektionsdetails-Formular mit Titel, Domäne, Sprachen, Niveau, Thema und Autor](assets/create-lesson/s1-metadata.png)
 
 Für unser Beispiel:
 
@@ -80,6 +80,7 @@ Der letzte Schritt zeigt die Lektionsübersicht und, wichtiger, eine Checkliste:
 ![Schritt 4: der Überprüfungs-Bildschirm mit der Qualitäts-Checkliste, alles grün](assets/create-lesson/s4-review.png)
 
 - Hat einen Titel
+- Sprachpaar ist gültig
 - Mindestens 4 Karten
 - Mindestens 5 Übungen
 - Mindestens 2 Übungstypen
@@ -94,13 +95,17 @@ Dann zwei Wege hinaus:
 
 ## Der Buch-Text-Pfad: eine Wissens-Lektion aus einem Kapitel
 
-Die vier Schritte oben setzen Vokabelkarten voraus. Seitdem hat der Assistent einen zweiten Weg hinein bekommen, gebaut für **Wissens-Lektionen**: Material, das in derselben Sprache geschrieben ist, die es lehrt, wie die Psychologie- und Technologie-Sets im Content-Ökosystem. Der Einstieg ist die letzte Start-Vorlage in Schritt 1:
+Die vier Schritte oben setzen Vokabelkarten voraus. Der Assistent hat einen zweiten Weg hinein, gebaut für **Wissens-Lektionen**: Material, das in derselben Sprache geschrieben ist, die es lehrt, wie die Psychologie- und Technologie-Sets im Content-Ökosystem. Der Einstieg sitzt in der Vorlagen-Reihe in Schritt 1 (zuerst einen Titel eintragen; die Vorlagen-Pfade verlangen einen, bevor sie sich öffnen):
 
 ![Schritt 1 mit der Vorlagen-Reihe, einschließlich der neuen Karte "Wissens-Lektion aus Text"](assets/create-lesson/s5-template-book.png)
 
-Sie zu wählen schaltet den Assistenten auf einen kürzeren dreistufigen Ablauf um: Metadaten, Buchtext, Überprüfung. Der mittlere Schritt ist, wo die Arbeit passiert: Sie fügen **einen Abschnitt eines Lehrbuchs** ein (ein Kapitel ist die richtige Größe), fügen optional die Buchangabe hinzu und drücken **Theorie + Übungen generieren**:
+Sie zu wählen schaltet den Assistenten auf einen kürzeren dreistufigen Ablauf um: Metadaten, Buchtext, Überprüfung. Der mittlere Schritt ist, wo die Arbeit passiert, und er nimmt den Text inzwischen auf zwei Wegen an. Der erste ist der ursprüngliche: Sie fügen **einen Abschnitt eines Lehrbuchs** ein (ein Kapitel ist die richtige Größe), fügen optional die Buchangabe hinzu und drücken **Theorie + Übungen generieren**:
 
 ![Der Buch-Text-Schritt: eingefügtes Kapitel, der Rechte-Hinweis, die Buchangabe-Felder und die Generieren-Schaltfläche](assets/create-lesson/s6-book-text.png)
+
+Der zweite Weg spart die Kopierrunden ganz: **Aus Datei laden** liest eine komplette Buchdatei (EPUB, DOCX, reiner Text oder Markdown), erkennt ihre Abschnitte aus der Dokumentstruktur und zeigt sie als Auswahlliste. Abschnitte, die nach Vor- oder Nachspann aussehen (ein Vorwort, ein Glossar, ein Index), kommen abgewählt an; alles andere ist ausgewählt. Wählen Sie die gewünschten Kapitel, und ein Klick generiert **eine Lektion pro gewähltem Abschnitt** in einem einzigen Batch-Lauf:
+
+![Der Datei-Upload mit der Abschnittsauswahl: das Vorwort von der Heuristik abgewählt, zwei Kapitel ausgewählt und die Batch-Generieren-Schaltfläche](assets/create-lesson/s6b-book-upload.png)
 
 Was beim Generieren passiert, ist bewusst KEINE Kopieraktion:
 
@@ -110,11 +115,11 @@ Was beim Generieren passiert, ist bewusst KEINE Kopieraktion:
 
 Dieser Pfad ruft ein Sprachmodell auf, ist also der eine Teil des Editors, der einen API-Schlüssel braucht (bringen Sie Ihren eigenen mit; Anthropic, OpenAI oder Gemini). Ohne konfigurierten Schlüssel sagt der Schritt es Ihnen in klaren Worten, statt zu scheitern.
 
-Ein Durchlauf des Assistenten erzeugt eine Lektion in einem Set. Für ein Buch mit vielen Kapiteln durchlaufen Sie den Assistenten einmal pro Kapitel; jedes Set trägt denselben Buch-Block, sodass die Lektionen sichtbar verwandt bleiben.
+Auf dem Einfüge-Pfad erzeugt ein Durchlauf des Assistenten eine Lektion in einem Set; arbeiten Sie Abschnitt für Abschnitt, durchlaufen Sie ihn einmal pro Kapitel. Auf dem Upload-Pfad deckt ein Durchlauf so viele Kapitel ab, wie Sie ausgewählt haben, je eine Lektion. In beiden Fällen trägt jede Lektion denselben Buch-Block, sodass sie sichtbar verwandt bleiben.
 
 ## Der Erweiterungs-Pfad: fortgeschrittene Übungstypen
 
-Die sechs Kern-Typen decken das alltägliche Einüben ab. Manche Übungsformen passen in keinen davon, und die leben in der Erweiterungs-Schicht: einer getrennten, freiwilligen Ebene, die Übungstypen hinzufügt, ohne das Kern-Schema zu verbreitern (der zweite Artikel erklärt, warum diese Grenze existiert). Bis vor Kurzem waren sie nur als JSON verfügbar. Das sind sie nicht mehr. Der dritte Eintrag in der Vorlagen-Reihe öffnet ihren eigenen Assistenten-Zweig:
+Die sechs Kern-Typen decken das alltägliche Einüben ab. Manche Übungsformen passen in keinen davon, und die leben in der Erweiterungs-Schicht: einer getrennten, freiwilligen Ebene, die Übungstypen hinzufügt, ohne das Kern-Schema zu verbreitern (der zweite Artikel erklärt, warum diese Grenze existiert). Bis vor Kurzem waren sie nur als JSON verfügbar. Das sind sie nicht mehr. Der Eintrag **Erweiterte Übungstypen** in der Vorlagen-Reihe öffnet ihren eigenen Assistenten-Zweig:
 
 ![Schritt 1 mit der Vorlagen-Reihe: die vier Start-Vorlagen plus die Einträge Buch-Text und Erweiterte Übungstypen](assets/create-lesson/e1-extensions-entry.png)
 
@@ -144,7 +149,7 @@ Das Speichern funktioniert genau wie überall sonst im Editor. Die Lektion, die 
 
 ## Der Assistent ist jetzt auch der Editor
 
-Die zweite Tür: Jede Lektion, die Sie erstellt (oder importiert) haben, lässt sich wieder öffnen. Im Inhalte-Bereich tragen eigene Lektionen eine **Bearbeiten**-Aktion (Lektionen aus fremden Repositories bleiben schreibgeschützt), und sie öffnet denselben Assistenten, vorausgefüllt mit Titel, Sprachen, Karten und Übungen der Lektion. Gehen Sie die Schritte durch, ändern Sie, was Sie möchten, und der Überprüfungs-Bildschirm bietet eine Wahl, die der Erstellen-Ablauf nicht hat:
+Die zweite Tür: Jede Lektion, die Sie erstellt (oder importiert) haben, lässt sich wieder öffnen. Im Inhalte-Bereich tragen eigene Lektionen eine **Bearbeiten**-Aktion (Lektionen aus fremden Repositories bleiben schreibgeschützt), und sie öffnet denselben Assistenten, vorausgefüllt mit Titel, Sprachen, Karten und Übungen der Lektion. Ein Set mit mehr als einer Lektion zeigt zuerst eine Auswahl, welche Lektion bearbeitet werden soll, und eine Buch-Text-Lektion öffnet sich im Übungs-Editor (Theorie und Buch-Block reisen mit) statt im leeren Karten-Schritt. Gehen Sie die Schritte durch, ändern Sie, was Sie möchten, und der Überprüfungs-Bildschirm bietet eine Wahl, die der Erstellen-Ablauf nicht hat:
 
 ![Der Überprüfungs-Schritt im Bearbeitungsmodus: der Überschreiben-Hinweis, Änderungen speichern und Als Kopie speichern](assets/create-lesson/s7-edit-review.png)
 
@@ -164,10 +169,10 @@ Der Editor ist bewusst der *einfache* Pfad, und er hat Kanten:
 - Erweiterungsübungen sind jetzt autorierbar, aber einzeln und von Hand. Es gibt keinen Generator für sie: Der Assistent gibt Ihnen ein Formular pro Typ, keine Regel, die ein benotetes Quiz aus Ihren Karten ableitet. Das ist eine bewusste Reihenfolge der Arbeit (erst autorierbar machen, später automatisieren), kein Versäumnis.
 - Diktat nimmt eine vorhandene Audiodatei, entweder hochgeladen (mit der Lektion eingebettet) oder über einen Asset-Pfad referenziert. Einen Clip im Browser aufzunehmen ist nicht gebaut.
 - Der Karten-Pfad-Generator ist bewusst regelbasiert. Er erzeugt solide Einübungs-Übungen aus Ihren Karten und braucht keinen API-Schlüssel; er erfindet keine Prosa. Theorie-reiche Lektionen sind jetzt die Aufgabe des Buch-Text-Pfads: Dieser schreibt tatsächlich Theorie und ist im Gegenzug der einzige Teil, der einen Modell-Schlüssel braucht.
-- Der Buch-Text-Pfad nimmt nur eingefügten Text. PDF- oder Word-Upload und automatische Kapitelerkennung sind nicht gebaut; ein Buch in Kapitel zu teilen bleibt Ihre Aufgabe.
+- Der Buchdatei-Upload liest EPUB, DOCX, reinen Text und Markdown; PDF ist nicht gebaut. Die Abschnittserkennung folgt der Struktur des Dokuments, eine Datei ohne brauchbare Überschriften kommt also als ein großer Abschnitt an, und auf dem Einfüge-Pfad bleibt das Teilen in Kapitel Ihre Aufgabe.
 
 Für den Alltagsfall (eine Lehrkraft oder lernende Person, die eine kleine, saubere Vokabel-Lektion will, die sofort spielbar und ordentlich teilbar ist) sind die vier Schritte oben die ganze Arbeit. Um ein Lehrbuchkapitel in eine spielbare Wissens-Lektion zu verwandeln, ist es der Buch-Text-Pfad; und wenn eines der Ergebnisse einen zweiten Durchgang braucht, dient der Assistent zugleich als Editor.
 
 ---
 
-*Vier Schritte, kein JSON: Metadaten, Karten, generierte Übungen und eine Überprüfung, die denselben Qualitäts-Boden wie die CI ausführt. Und drei Türen mehr: ein Lehrbuchkapitel hinein, eine Wissens-Lektion hinaus; die fünf fortgeschrittenen Übungstypen autorierbar in ihrem eigenen Zweig, Diktat inklusive; und jede eigene Lektion bearbeitbar, ohne ihren Fortschritt zu verlieren.*
+*Vier Schritte, kein JSON: Metadaten, Karten, generierte Übungen und eine Überprüfung, die denselben Qualitäts-Boden wie die CI ausführt. Und drei Türen mehr: ein Lehrbuchkapitel eingefügt oder eine ganze Buchdatei mit einer Lektion pro gewähltem Kapitel hinein, eine Wissens-Lektion hinaus; die fünf fortgeschrittenen Übungstypen autorierbar in ihrem eigenen Zweig, Diktat inklusive; und jede eigene Lektion bearbeitbar, ohne ihren Fortschritt zu verlieren.*

@@ -1,13 +1,13 @@
 ---
 title: "Create a Lesson in the App, Step by Step"
-description: "A hands-on walkthrough of the adaptive-learner lesson creator: the four wizard steps, the book-text path that turns a pasted textbook chapter into a knowledge lesson, the extension path for the five advanced exercise types, and the edit mode, with real screenshots from the running app."
+description: "A hands-on walkthrough of the adaptive-learner lesson creator: the four wizard steps, the book path that turns pasted or uploaded textbook chapters into knowledge lessons, the extension path for the five advanced exercise types, and the edit mode, with real screenshots from the running app."
 date: 2026-07-17
 tags: [tutorial, authoring, adaptive-learner, walkthrough]
 ---
 
 # Create a Lesson in the App, Step by Step
 
-*A hands-on walkthrough of the lesson creator in adaptive-learner: the classic four wizard steps from an empty form to a saved, schema-valid lesson, the book-text path that turns a pasted textbook chapter into a knowledge lesson, the extension path that makes the five advanced exercise types authorable without JSON, and the wizard's edit mode. Every screenshot in this guide comes from the running app, captured during the exact flow described.*
+*A hands-on walkthrough of the lesson creator in adaptive-learner: the classic four wizard steps from an empty form to a saved, schema-valid lesson, the book path that turns pasted or uploaded textbook chapters into knowledge lessons, the extension path that makes the five advanced exercise types authorable without JSON, and the wizard's edit mode. Every screenshot in this guide comes from the running app, captured during the exact flow described.*
 
 `adaptive-learner` · for teachers and content authors · part 3 of the series
 
@@ -19,9 +19,9 @@ The creator is a page in the app: open `/create-lesson` (or follow the create ac
 
 ## Step 1: Lesson details
 
-The first step collects the metadata that every lesson carries: a title, an optional title in the target language, the language pair, a level, and an optional topic and author name.
+The first step collects the metadata that every lesson carries: a title, an optional title in the target language, a content domain, the language pair, a level, and an optional topic and author name. The domain selector is new here and mirrors the schema's `domain` field: pick a knowledge domain (say, psychology) and the form collapses the language pair into a single content language, because a knowledge lesson teaches in one language rather than between two.
 
-![Step 1: the lesson details form with title, languages, level, topic, and author](assets/create-lesson/s1-metadata.png)
+![Step 1: the lesson details form with title, domain, languages, level, topic, and author](assets/create-lesson/s1-metadata.png)
 
 For our example:
 
@@ -80,6 +80,7 @@ The last step shows the lesson summary and, more importantly, a checklist:
 ![Step 4: the review screen with the quality checklist, all green](assets/create-lesson/s4-review.png)
 
 - Has a title
+- Language pair is valid
 - At least 4 cards
 - At least 5 exercises
 - At least 2 exercise types
@@ -94,13 +95,17 @@ Then, two ways out:
 
 ## The book-text path: a knowledge lesson from a chapter
 
-The four steps above assume vocabulary cards. Since then the wizard has grown a second way in, built for **knowledge lessons**: material written in the same language it teaches, like the psychology and technology sets in the content ecosystem. The entry is the last starter template on step 1:
+The four steps above assume vocabulary cards. The wizard has a second way in, built for **knowledge lessons**: material written in the same language it teaches, like the psychology and technology sets in the content ecosystem. Its entry sits in the template row on step 1 (fill in a title first; the template paths ask for one before they open):
 
 ![Step 1 with the template row, including the new "Knowledge lesson from text" card](assets/create-lesson/s5-template-book.png)
 
-Choosing it switches the wizard to a shorter three-step flow: metadata, book text, review. The middle step is where the work happens: you paste **one section of a textbook** (a chapter is the right size), optionally add the book reference, and press **Generate theory + exercises**:
+Choosing it switches the wizard to a shorter three-step flow: metadata, book text, review. The middle step is where the work happens, and it now takes the text two ways. The first is the original one: paste **one section of a textbook** (a chapter is the right size), optionally add the book reference, and press **Generate theory + exercises**:
 
 ![The book-text step: pasted chapter, the rights hint, book reference fields, and the generate button](assets/create-lesson/s6-book-text.png)
+
+The second way skips the copy-paste round-trips entirely: **Load from file** reads a whole book file (EPUB, DOCX, plain text or Markdown), detects its sections from the document structure, and shows them as a checklist. Sections that look like front or back matter (a preface, a glossary, an index) arrive unchecked; everything else is selected. Pick the chapters you want and one click generates **one lesson per selected section** in a single batch run:
+
+![The file upload with the detected-sections picker: the preface unchecked by the heuristic, two chapters selected, and the batch generate button](assets/create-lesson/s6b-book-upload.png)
 
 What happens on generate is deliberately NOT a copy-paste job:
 
@@ -110,11 +115,11 @@ What happens on generate is deliberately NOT a copy-paste job:
 
 This path calls a language model, so it is the one part of the creator that needs an API key (bring your own; Anthropic, OpenAI or Gemini). Without a key configured, the step tells you so in plain words instead of failing.
 
-One run of the wizard produces one lesson in one set. For a book with many chapters, run the wizard once per chapter; every set carries the same book block, so the lessons stay visibly related.
+On the paste path, one run of the wizard produces one lesson in one set; run it once per chapter if you work section by section. On the upload path, one run covers as many chapters as you selected, one lesson each. Either way every lesson carries the same book block, so they stay visibly related.
 
 ## The extension path: advanced exercise types
 
-The six core types cover the everyday drill. Some exercise shapes do not fit any of them, and those live in the extension tier: a separate, opt-in layer that adds exercise types without widening the core schema (the second article covers why that boundary exists). Until recently they were JSON-only. They are not any more. The third entry in the template row opens their own wizard branch:
+The six core types cover the everyday drill. Some exercise shapes do not fit any of them, and those live in the extension tier: a separate, opt-in layer that adds exercise types without widening the core schema (the second article covers why that boundary exists). Until recently they were JSON-only. They are not any more. The **Advanced exercise types** entry in the template row opens their own wizard branch:
 
 ![Step 1 with the template row: the four starter templates plus the book-text and Advanced exercise types entries](assets/create-lesson/e1-extensions-entry.png)
 
@@ -144,7 +149,7 @@ Saving works exactly as everywhere else in the creator. The lesson that comes ou
 
 ## The wizard is now also the editor
 
-The second door: every lesson you created (or imported) can be reopened. In the Content area, own lessons carry an **Edit** action (lessons from foreign repositories stay read-only), and it opens the same wizard, pre-filled with the lesson's title, languages, cards and exercises. Walk the steps, change what you want, and the review screen offers a choice the create flow does not have:
+The second door: every lesson you created (or imported) can be reopened. In the Content area, own lessons carry an **Edit** action (lessons from foreign repositories stay read-only), and it opens the same wizard, pre-filled with the lesson's title, languages, cards and exercises. A set that holds more than one lesson first shows a picker asking which lesson to edit, and a book-text lesson reopens in the exercise editor (its theory and book block travel along) rather than in the empty card step. Walk the steps, change what you want, and the review screen offers a choice the create flow does not have:
 
 ![The review step in edit mode: the overwrite note, Save changes, and Save as a copy](assets/create-lesson/s7-edit-review.png)
 
@@ -164,10 +169,10 @@ The creator is deliberately the *simple* path, and it has edges:
 - Extension exercises are authorable now, but one at a time and by hand. There is no generator for them: the wizard gives you a form per type, not a rule that derives a graded quiz from your cards. That is a deliberate order of work (make it authorable first, automate later), not an oversight.
 - Dictation takes an existing audio file, either uploaded (inlined with the lesson) or referenced by asset path. Recording a clip in the browser is not built.
 - The card-path generator is rule-based on purpose. It produces solid drill exercises from your cards and needs no API key; it does not invent prose. Theory-rich lessons are now the book-text path's job: that one does write theory, and in exchange it is the only part that needs a model key.
-- The book-text path takes pasted text only. PDF or Word upload and automatic chapter detection are not built; splitting a book into chapters is still your call.
+- The book-file upload reads EPUB, DOCX, plain text and Markdown; PDF is not built. Section detection follows the document's own structure, so a file without usable headings arrives as one big section, and on the paste path splitting a book into chapters is still your call.
 
 For the everyday case (a teacher or learner who wants a small, clean vocabulary lesson that plays immediately and can be shared properly) the four steps above are the whole job. For turning a textbook chapter into a playable knowledge lesson, the book-text path is; and when either result needs a second pass, the wizard doubles as the editor.
 
 ---
 
-*Four steps, no JSON: metadata, cards, generated exercises, and a review that runs the same quality floor as CI. And three doors more: a textbook chapter in, a knowledge lesson out; the five advanced exercise types authorable in their own branch, dictation included; and every own lesson editable without losing its progress.*
+*Four steps, no JSON: metadata, cards, generated exercises, and a review that runs the same quality floor as CI. And three doors more: a textbook chapter pasted in, or a whole book file with one lesson per selected chapter, a knowledge lesson out; the five advanced exercise types authorable in their own branch, dictation included; and every own lesson editable without losing its progress.*
