@@ -46,7 +46,7 @@ item body's first `<p>` (text entry), falling back to the item `title`.
 
 Any interaction outside the table above is **refused**. Import collects every
 unmappable item and throws a single `QtiImportError` whose `issues` array lists
-each one (`itemIdentifier`, `interaction`, `reason`) - there is no silent skip.
+each one (`itemIdentifier`, `interaction`, `reason`): there is no silent skip.
 Refused cases include `orderInteraction`, `associateInteraction`,
 `gapMatchInteraction`, `hotspotInteraction`, `inlineChoiceInteraction`,
 `extendedTextInteraction`, `sliderInteraction`, `uploadInteraction`, an item
@@ -62,7 +62,7 @@ as the `migrate` CLI).
 A single `assessmentItem` becomes a one-step lesson; an `assessmentTest` becomes
 a lesson with one step per contained item (lesson `id` / `title` from the test's
 `identifier` / `title`, overridable via the `meta` argument). Items may be
-inline inside the test - a self-contained convenience over QTI's usual
+inline inside the test, a self-contained convenience over QTI's usual
 one-item-per-file layout with `assessmentItemRef` hrefs.
 
 ## Export
@@ -105,7 +105,7 @@ subset is deliberate, and expanding it is intentionally NOT on the roadmap
 unless a concrete QTI consumer needs it. The reasoning:
 
 - **The remaining core types have QTI equivalents, but with fidelity cost.**
-  `word_tiles` maps to `orderInteraction` (losing `accept_orderings` - QTI has
+  `word_tiles` maps to `orderInteraction` (losing `accept_orderings`: QTI has
   one correct order); `cloze` maps to inline `textEntryInteraction` /
   `inlineChoiceInteraction` / `choiceInteraction` by mode; `picture_choice`
   maps to `choiceInteraction` with image objects, but only usefully if the
@@ -115,7 +115,7 @@ unless a concrete QTI consumer needs it. The reasoning:
 - **QTI 2.x is not the lever for the teacher / LMS use case.** Native question
   import varies by LMS and is often partial or plugin-based; Moodle's native
   format is Moodle XML, not QTI 2.x. A Moodle-XML (or Canvas) exporter would be
-  a consumer-specific tool, not a framework-agnostic engine adapter - the same
+  a consumer-specific tool, not a framework-agnostic engine adapter: the same
   boundary that keeps xAPI and persistence in the consumer (see below). If that
   path is ever wanted, it belongs in consumer tooling.
 - **Extension (`ext:`) types never map.** Their payload is opaque to the core;
@@ -131,7 +131,7 @@ Recording learner activity (xAPI / Experience API statements) is **not** part of
 this engine, by design. The engine is the source-to-canonical content boundary;
 fetching, persistence, and tracking stay in the consumer
 ([architecture.md](architecture.md)). A host that needs xAPI maps its own
-runtime events (attempt, answer, completion) to xAPI statements - the engine
+runtime events (attempt, answer, completion) to xAPI statements: the engine
 neither emits nor stores them. This keeps the no-network, no-storage boundary
 intact and is why xAPI is a consumer responsibility rather than an engine
 adapter.

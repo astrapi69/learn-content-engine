@@ -2,7 +2,7 @@
 
 `learn-content-engine` turns raw lesson content (a single-JSON lesson plus a
 `manifest.yaml`) into canonical objects, and validates it against a strict,
-bundled schema. It has **no** network, storage, or UI - you supply the bytes and
+bundled schema. It has **no** network, storage, or UI: you supply the bytes and
 keep fetch + persistence.
 
 ## Install
@@ -20,7 +20,7 @@ npm install github:astrapi69/learn-content-engine
 ```
 
 On a git install npm runs the package's `prepare` script (`npm run build`) to
-compile `dist/` from source - a plain `npm install` is enough, no extra step.
+compile `dist/` from source: a plain `npm install` is enough, no extra step.
 
 The package is ESM and ships TypeScript declarations. Node >= 18.
 
@@ -94,14 +94,14 @@ if (!result.valid) {
 }
 ```
 
-`parse` never validates - it is permissive by design. Validation is a separate,
+`parse` never validates: it is permissive by design. Validation is a separate,
 explicit step you run when you want the format contract enforced. See
 [validation.md](validation.md).
 
 ## Where to next
 
-- [concepts.md](concepts.md) - the pipeline, context inheritance, schema policy.
-- [lesson-format.md](lesson-format.md) - the full format reference (every field,
+- [concepts.md](concepts.md): the pipeline, context inheritance, schema policy.
+- [lesson-format.md](lesson-format.md): the full format reference (every field,
   every exercise type, with tested examples).
-- [validation.md](validation.md) - what `validate*` checks and the error model.
-- [architecture.md](architecture.md) - the engine boundary and roadmap.
+- [validation.md](validation.md): what `validate*` checks and the error model.
+- [architecture.md](architecture.md): the engine boundary and roadmap.

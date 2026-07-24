@@ -5,8 +5,8 @@ first draft on, not as an afterthought. (They extend the repository-wide
 no-em-dash rule from the coding standards to prose.)
 
 Rule 1 applies beyond the blog: every self-authored Markdown file under
-`docs/` is the same kind of editorial prose and follows it (decided in #80;
-the reference docs are brought up to the rule in a separate sweep). The
+`docs/` is the same kind of editorial prose and follows it (decided and
+swept in #80). The
 other rules stay blog-specific. Learner content in the content repositories
 is out of scope: that is multilingual material with its own authorship and
 its own conventions.

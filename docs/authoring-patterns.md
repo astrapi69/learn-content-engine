@@ -1,7 +1,7 @@
 # Authoring patterns with existing types
 
 Many exercise "types" you might reach for from other learning apps do not need
-a new engine type - they are shapes you can author today with the six core
+a new engine type: they are shapes you can author today with the six core
 types (`matching`, `picture_choice`, `free_text`, `word_tiles`, `cloze`,
 `multiple_choice`). This page collects the common recipes. Every JSON block
 below is validated by the doc-example gate (`src/docs-examples.test.ts`), so
@@ -9,7 +9,7 @@ the recipes cannot drift from the engine.
 
 Reach for a new core type (a schema change) or an extension (`ext:` tier, see
 [extensions.md](extensions.md)) only when a shape genuinely cannot be
-expressed below - the clearest current example is a shared reading passage
+expressed below: the clearest current example is a shared reading passage
 bound to several sub-questions, which the flat "one step = one exercise" model
 cannot represent.
 
