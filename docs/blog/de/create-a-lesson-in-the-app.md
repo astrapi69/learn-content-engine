@@ -11,7 +11,7 @@ tags: [tutorial, authoring, adaptive-learner, walkthrough]
 
 `adaptive-learner` · für Lehrende und Content-Autoren · Teil 3 der Serie
 
-Der [vorige Artikel](../one-source-many-outputs.md) machte ein Versprechen: Sie müssen Lektions-JSON nicht von Hand schreiben. Dieser Artikel löst es ein. Wir bauen eine kleine echte Lektion ("Ordering coffee", Englisch für Deutschsprachige) im Lektions-Editor der App und enden mit einer Lektion, die dieselben Qualitätsprüfungen besteht wie jede andere Lektion im Ökosystem. Kein Editor, kein Terminal, kein JSON.
+Der [vorige Artikel](one-source-many-outputs.md) machte ein Versprechen: Sie müssen Lektions-JSON nicht von Hand schreiben. Dieser Artikel löst es ein. Wir bauen eine kleine echte Lektion ("Ordering coffee", Englisch für Deutschsprachige) im Lektions-Editor der App und enden mit einer Lektion, die dieselben Qualitätsprüfungen besteht wie jede andere Lektion im Ökosystem. Kein Editor, kein Terminal, kein JSON.
 
 ## Wo der Editor lebt
 
