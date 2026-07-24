@@ -9,11 +9,11 @@ tags: [architecture, schema-design, typescript, content-engineering]
 
 *How `learn-content-engine` keeps a stable core schema and still leaves room for pedagogical invention: by drawing a hard line between the contract it owns and the rules its consumers own.*
 
-`learn-content-engine` · schema v1.7 · framework-agnostic TypeScript
+`learn-content-engine` · schema currently v1.8 · framework-agnostic TypeScript
 
 ## The content-schema dilemma
 
-`learn-content-engine` is a framework-agnostic TypeScript library that parses and validates learning content: language courses foremost, though a free-form `domain` field lets the same shape carry other knowledge domains (tech courses, driving-test prep, psychology). It turns raw sources (lesson JSON plus a `manifest.yaml`) into a canonical internal shape, and it is the single source of truth for the lesson schema, currently version 1.7.
+`learn-content-engine` is a framework-agnostic TypeScript library that parses and validates learning content: language courses foremost, though a free-form `domain` field lets the same shape carry other knowledge domains (tech courses, driving-test prep, psychology). It turns raw sources (lesson JSON plus a `manifest.yaml`) into a canonical internal shape, and it is the single source of truth for the lesson schema, currently version 1.8.
 
 The core is deliberately small. No rendering, no persistence, no networking; its only runtime dependency is a YAML parser. What it offers is pure validation and transformation. That minimalism is the point, and it forces one hard question: *how do you evolve a content schema without breaking every consumer that depends on it?*
 
@@ -38,7 +38,7 @@ Adding a new *core* `ExerciseType` is not a small change. It is a product commit
 
 Trace what a single core type touches:
 
-- **Schema.** `lesson.schema.json` gains an enum value and a payload definition (an additive minor bump, 1.7 to 1.8).
+- **Schema.** `lesson.schema.json` gains an enum value and a payload definition (an additive minor bump, 1.8 to 1.9).
 - **Types.** `generate-lesson-types.mjs` regenerates the interfaces; every consumer picks up the new shape.
 - **Mirrors.** Ten content repositories mirror the schema (the official repo, the test/starter repo, the template, and seven `alc-*` domain repos, plus the app's own generated copy), and byte-parity gates keep them honest.
 - **Dispatcher & renderer.** The app's exercise dispatcher needs a new branch and a new renderer component.

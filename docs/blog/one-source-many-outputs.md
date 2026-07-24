@@ -43,7 +43,7 @@ Three things stay deliberately separate in what you write: the **content** (the 
 
 You don't have to write that JSON by hand. The reference app ships a **lesson creator** that has outgrown the word "simple": the classic four-step wizard (metadata, cards, exercises, save & share), a book path that turns pasted or uploaded textbook chapters into knowledge lessons, an extension branch that makes even graded quizzes and dictation authorable without JSON, and an edit mode. All of it produces lessons in this same canonical schema and can even open a pull request against a content repository directly from the app; part 3 of the series walks through every path. What is **planned** beyond it is a richer, teacher-facing editor for the heavier cases (larger sets). Neither changes the model: the source stays the contract, and every editor (simple or rich) is just one more tool that reads and writes it.
 
-> **Additive by policy.** The schema is versioned (currently 1.7) and only grows additively: new fields are optional, so a lesson written last year still validates today. You are never forced to migrate content just because the schema moved.
+> **Additive by policy.** The schema is versioned (currently 1.8) and only grows additively: new fields are optional, so a lesson written last year still validates today. You are never forced to migrate content just because the schema moved.
 
 ## Validation is spell-check for test logic
 
