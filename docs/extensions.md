@@ -10,7 +10,7 @@ that "validates here => loads in any consumer".
 
 - **Core is guaranteed.** A lesson using only core exercise types
   (`matching`, `picture_choice`, `free_text`, `word_tiles`, `cloze`,
-  `multiple_choice`) validates and parses exactly as before - the registry is
+  `multiple_choice`) validates and parses exactly as before: the registry is
   irrelevant to it.
 - **Extensions are opt-in and declared.** A lesson that uses an `ext:` type MUST
   list it in the top-level `requires_extensions` array, each entry pinned to a
@@ -90,8 +90,8 @@ An extension's own `validate` may return any additional issues (its own ids).
 
 ## Reference extension: `ext:ref-ordering`
 
-`src/examples/ext-ref-ordering/` is a deliberately trivial worked example -
-"put these items in the correct order" - that proves the seam end-to-end. It
+`src/examples/ext-ref-ordering/` is a deliberately trivial worked example
+("put these items in the correct order") that proves the seam end-to-end. It
 ships both halves in one folder: the engine-half `refOrderingExtension` (an
 `ExerciseExtension` validating `ext_payload.items`) and the consumer-half
 `renderRefOrdering` (a minimal renderer). It is excluded from the published
@@ -163,9 +163,9 @@ renders the bucket names over the item pool and grades a learner assignment
 
 `src/examples/ext-ref-error-correction/` works out the second adoption
 candidate from the external review (adaptive-learner#1579): "one token in this
-sentence is wrong - mark it and correct it". The payload carries the tokenized
+sentence is wrong: mark it and correct it". The payload carries the tokenized
 sentence, the wrong token's index, and the accepted corrections as an
-`accept` ARRAY - mirroring the core `free_text` contract, because real
+`accept` ARRAY, mirroring the core `free_text` contract, because real
 sentences often allow more than one defensible fix for the same wrong token
 and a single authored string would reproduce the too-narrow-accept-list class
 of false negatives (adaptive-learner#1580). `accept[0]` is the canonical
@@ -232,14 +232,14 @@ tolerance) and surfaces `accept[0]` after a wrong attempt.
 
 `src/examples/ext-ref-reading-comprehension/` works out the shared-passage
 case (engine#43): a passage (stimulus) bound to N sub-questions. This is the
-one shape the flat core schema cannot express - `LessonStep.exercise` is
-singular, there is no passage-with-questions grouping - so instead of a
+one shape the flat core schema cannot express (`LessonStep.exercise` is
+singular, there is no passage-with-questions grouping), so instead of a
 core-schema change it is modelled as a SINGLE ext exercise whose `ext_payload`
 carries the passage plus the questions. Sub-questions reuse the core question
 shapes (`multiple_choice` / `free_text`); a consumer renders each with its
 existing renderer. The payload is deliberately a first cut: the `@major` pin
 lets it evolve (more sub-question types, scoring variants) without migrating
-core content - exactly why the shared-passage case is an extension, not a core
+core content: exactly why the shared-passage case is an extension, not a core
 type.
 
 Payload rules (engine half `refReadingComprehensionExtension`):
@@ -309,7 +309,7 @@ optional `pass_threshold` (percent) decides pass/fail. Questions reuse the core
 `multiple_choice` / `free_text` shapes.
 
 This demonstrates that the points / partial-credit / pass-threshold concern
-fits the extension tier WITHOUT a core-schema change - "points on an exercise"
+fits the extension tier WITHOUT a core-schema change: "points on an exercise"
 is a cross-cutting concern, not an interaction type, so it is a bounded
 graded-quiz payload rather than a core `points` field on every exercise (which
 would be a full core ripple). The payload carries only the grading METADATA;
@@ -397,7 +397,7 @@ instead of a core-schema change it is modelled as a SINGLE ext exercise whose
 `ext_payload` carries the audio reference plus the accepted transcriptions.
 
 The payload is deliberately SELF-CONTAINED: no card reference, no lookup into
-another part of the lesson - everything the consumer needs sits in
+another part of the lesson: everything the consumer needs sits in
 `ext_payload`. The engine validates only the SHAPE of `audio` (a non-empty
 string) and knows nothing about how the clip is stored, uploaded, resolved or
 played; an audio player is a consumer capability, which is exactly why this is
@@ -445,7 +445,7 @@ prompt over the audio reference (a real consumer mounts its player there) and
 grades the typed transcription against EVERY `accept` entry (trim + case-fold;
 a production consumer would reuse its free-text matcher for typo tolerance).
 
-The example extensions exist as a DECISION BASIS for adoption - nothing in the
+The example extensions exist as a DECISION BASIS for adoption: nothing in the
 app or the content repos references them until that decision is made
 (adaptive-learner#1579 tracked the exercise-type adoptions; engine#46 tracks
 the school-test direction). A production adoption would pick its own vendor
@@ -455,6 +455,6 @@ namespace (the `ref` vendor marks engine-repo demonstrations).
 
 The core schema, the core `ExerciseType` enum, and the schema-authority process
 for core types are unchanged. Extensions are a separate, versioned, opt-in tier
-that sits AROUND the portable core - they never bypass the core enum, the strict
+that sits AROUND the portable core: they never bypass the core enum, the strict
 `additionalProperties: false` on core fields, or the RED-first process for a new
 CORE type. Core content authored before 1.7 validates and parses byte-identically.

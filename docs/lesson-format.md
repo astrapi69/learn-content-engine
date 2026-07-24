@@ -230,10 +230,10 @@ Pick the correct image. Requires at least two `images` (`{src, label,
 is_correct?}`), exactly one marked `"is_correct": "true"`. `src` takes one of
 two explicit formats (schema v1.8): a relative path inside the set's
 `assets/` (up to 500 chars, the right choice for repo content) or an inline
-base64 data URI (`data:image/...;base64,...`, own 250000-char cap - sized for
+base64 data URI (`data:image/...;base64,...`, own 250000-char cap, sized for
 the reference consumer's 150-KiB upload compression). Repo content should
 stay on the `assets/` path; the `W-PIC-DATA-URI` author lint flags inline
-data URIs. Do **not** use this for text-only multiple choice - use `cloze`
+data URIs. Do **not** use this for text-only multiple choice: use `cloze`
 `select` mode for that.
 
 ```json
@@ -318,7 +318,7 @@ order.
 
 Cloze has three modes, selected by `cloze_mode` (defaults to `type`).
 
-**`type`** - one `<input>` per blank. Requires a `sentence` with visible `___`
+**`type`**: one `<input>` per blank. Requires a `sentence` with visible `___`
 markers and a `blanks` array. The **blanks rule**: the number of `___` markers
 in `sentence` must equal `blanks.length` (each blank's `accept` list carries its
 answers).
@@ -347,7 +347,7 @@ answers).
 }
 ```
 
-**`select`** - the single-multiple-choice vehicle: a `<select>` per blank drawn
+**`select`**: the single-multiple-choice vehicle, a `<select>` per blank drawn
 from `distractors`. Requires `sentence` + `blanks` (same marker rule) **and** a
 non-empty `distractors` pool. `accept[0]` of the blank is the correct option.
 
@@ -373,7 +373,7 @@ non-empty `distractors` pool. `accept[0]` of the blank is the correct option.
 }
 ```
 
-**`multiselect`** - "select all that apply". Here `sentence` is the question
+**`multiselect`**: "select all that apply". Here `sentence` is the question
 stem (no `___` markers, no `blanks`); `accept` lists **every** correct option
 and `distractors` the wrong ones. The two lists must be non-empty and
 **disjoint**.
@@ -406,7 +406,7 @@ First-class text multiple choice (schema v1.6). Requires at least two `options`
 (`{text, correct?}`); option texts must be unique (the text IS the option).
 `multiple` selects the mode:
 
-**`multiple: false`** (default) - single choice: exactly **one** option carries
+**`multiple: false`** (default): single choice, exactly **one** option carries
 `"correct": true`, the learner picks one.
 
 ```json
@@ -432,9 +432,9 @@ First-class text multiple choice (schema v1.6). Requires at least two `options`
 }
 ```
 
-**`multiple: true`** - "select all that apply": **at least one** option is
+**`multiple: true`**: "select all that apply". **At least one** option is
 correct; the learner must select the exact set of correct options (graded by
-exact-set match, no partial credit - the same contract as `cloze` `multiselect`).
+exact-set match, no partial credit, the same contract as `cloze` `multiselect`).
 
 ```json
 {
@@ -462,7 +462,7 @@ exact-set match, no partial credit - the same contract as `cloze` `multiselect`)
 ```
 
 Correctness is a per-option flag, so there are no separate accept/distractor
-lists and no disjointness rule - the structure makes that authoring error
+lists and no disjointness rule: the structure makes that authoring error
 impossible. `multiple_choice` **coexists** with the [`cloze`](#cloze)
 `select`/`multiselect` forms; existing cloze-based multiple choice stays valid.
 
@@ -514,7 +514,7 @@ it defaults to `sets/{id}` when omitted. See
 ## Rule catalog
 
 `validateLesson` returns `{ valid, errors, warnings }`. **Errors** block (`valid`
-is false); **warnings** never block - they flag likely authoring mistakes. Every
+is false); **warnings** never block: they flag likely authoring mistakes. Every
 issue carries a stable `id`, a `severity`, and a `docAnchor`. IDs are stable API:
 a downstream (e.g. a content-repo) validator can mirror a rule by its id without
 drifting.
@@ -617,17 +617,17 @@ What it does per exercise: `select` becomes a single-answer `multiple_choice`
 -> the other options), `multiselect` becomes `multiple: true` (every `accept`
 entry correct). The `sentence` is merged into the `prompt` so the gap context
 survives; alternate accepts are dropped and distractors equal to a correct
-text are deduped - both reported as notes. `cloze_mode: "type"` and
+text are deduped, both reported as notes. `cloze_mode: "type"` and
 multi-blank selects are never touched (they have no clean MC equivalent).
 Every rewritten lesson is checked with the bundled validator BEFORE writing;
 an invalid result is reported and never written. Add `--json` for
 machine-readable output.
 
 > **Scope:** this is deliberate per-file author tooling, not a bulk-migration
-> mandate. The coexistence policy stands - existing cloze select/multiselect
+> mandate. The coexistence policy stands: existing cloze select/multiselect
 > content stays valid and stays as it is. A sweeping conversion of existing
 > repos would revisit that policy (and silently drop alternate accepted
-> spellings, see the notes above) - that is a content-owner decision, never a
+> spellings, see the notes above): that is a content-owner decision, never a
 > side effect of this command existing.
 
 ## Suggesting card wiring for unused cards
@@ -652,19 +652,19 @@ How it decides: detection is exactly the `W-CARD-UNUSED` rule (the two share
 one implementation); a wiring is proposed only when the card's `front` or
 `back` appears **verbatim** in a text field of exactly ONE exercise (`prompt`,
 `sentence`, option texts, `pairs`, `accept`, blank accepts, `tiles`). There is
-no fuzzy matching - no stemming, no case folding, no similarity scores. A card
+no fuzzy matching: no stemming, no case folding, no similarity scores. A card
 that matches nothing, or matches several exercises, is listed as "manual
 review" with the reason (and the candidate exercises) instead of a guess.
 
 Applying is per suggestion, never bulk: `--write` requires an explicit
 `--accept <suggestion-id>` (the stable `<cardId>:<exerciseId>` token from the
 dry run) for every change, and the rewired lesson must pass the bundled
-validator BEFORE the file is touched - an invalid result is reported and never
+validator BEFORE the file is touched: an invalid result is reported and never
 written. An accepted id that matches no current suggestion fails the run
 loudly instead of silently no-opping. Add `--json` for machine-readable
 output.
 
-> **Scope:** this is a suggest tool, not auto-wiring - suggestions stay
+> **Scope:** this is a suggest tool, not auto-wiring: suggestions stay
 > suggestions until an author accepts them one by one. `card_ids` drives SRS
 > scheduling (a wrong wiring schedules the wrong card for review after a wrong
 > answer), so anything the exact-containment evidence cannot settle stays a
@@ -675,7 +675,7 @@ output.
 ## Editor setup
 
 Bind the bundled schema in your editor for autocomplete and inline errors while
-typing. **Do not** add a `"$schema"` key inside a lesson file - the schema is
+typing. **Do not** add a `"$schema"` key inside a lesson file: the schema is
 strict (`additionalProperties: false`) and would reject it. Instead map it
 externally. In VS Code (`.vscode/settings.json`):
 
@@ -696,5 +696,5 @@ externally. In VS Code (`.vscode/settings.json`):
 
 This gives field/enum completion and catches structural mistakes (typos in
 `type`, missing required fields) as you type. The semantic rules and warnings
-above are not expressible in JSON-Schema - run `learn-content-engine lint` for
+above are not expressible in JSON-Schema: run `learn-content-engine lint` for
 those.

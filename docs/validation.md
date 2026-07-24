@@ -14,7 +14,7 @@ if (result.warnings.length) console.warn(result.warnings);
 ```
 
 Neither function throws; both return a `ValidationResult`. `valid` is
-**errors-only** - warnings never block. Every issue carries a stable `id` and a
+**errors-only**: warnings never block. Every issue carries a stable `id` and a
 `docAnchor`; the complete list of ids is the
 [rule catalog](lesson-format.md#rule-catalog). For an offline author workflow
 that surfaces both errors and warnings, use the
@@ -22,7 +22,7 @@ that surfaces both errors and warnings, use the
 
 Validation runs in two layers (field checks before cross-field checks):
 
-## Layer 1 - structural (ajv, strict)
+## Layer 1: structural (ajv, strict)
 
 The input is checked against the bundled JSON-Schema
 ([`schema/lesson.schema.json`](../schema/lesson.schema.json) /
@@ -35,17 +35,17 @@ The schema is **strict**: `additionalProperties: false` everywhere, so **unknown
 fields are rejected**.
 
 > **Why strict?** This engine is a format *reference*: content authored against
-> it must load in any consumer - for example
+> it must load in any consumer: for example
 > [adaptive-learner](https://github.com/astrapi69/adaptive-learner), the
 > reference consumer, whose schema is itself strict. Tolerating unknown fields
-> here would let content pass the engine yet fail a strict consumer - the
+> here would let content pass the engine yet fail a strict consumer, the
 > opposite of a reliable reference. Strict rejection keeps parity: if it
 > validates here, it is shape-valid there.
 
 If any structural error is found, validation stops and returns those errors
 (the semantic layer assumes a well-formed shape).
 
-## Layer 2 - semantic (cross-field rules)
+## Layer 2: semantic (cross-field rules)
 
 These rules cannot be expressed in JSON-Schema; they mirror the reference
 consumer's (adaptive-learner) Pydantic `model_validator`s one-for-one:
@@ -64,7 +64,7 @@ consumer's (adaptive-learner) Pydantic `model_validator`s one-for-one:
 | `cloze` (`multiselect`) requires `sentence`, non-empty `accept` + `distractors`, and the two must be **disjoint** | `must be disjoint` |
 | Every `card_ids` entry must resolve to a card in the lesson | `references unknown card` |
 
-## Layer 3 - author lints (warnings)
+## Layer 3: author lints (warnings)
 
 Warnings never affect `valid` or appear in `errors`; they live in `warnings` and
 flag likely authoring mistakes: an unused card (`W-CARD-UNUSED`), an ambiguous
@@ -128,14 +128,14 @@ neither `language` nor `target_language` fails on the missing `target_language`.
 ## Quality minimums artifact
 
 Besides the two JSON-Schemas the package ships
-[`schema/quality-rules.json`](../schema/quality-rules.json) - the shared
+[`schema/quality-rules.json`](../schema/quality-rules.json): the shared
 quality minimums (`minExercisesPerLesson`, `minExerciseTypes`,
 `minFreeTextAccepts`, `minMatchingPairs`, `minTheorySteps`). Like the two
 schemas, its canonical home is this engine (since the v0.6.0 authority flip).
 The engine does **not** evaluate these rules itself (there is no
 `validateQuality` API); the artifact exists so consumer validators
 (adaptive-learner, the content repos) can mirror the numbers from the
-pinned engine release instead of owning a repo-local copy - the same
+pinned engine release instead of owning a repo-local copy, the same
 engine → consumers channel as the schemas. Consume it via
 `import qualityRules from "learn-content-engine/schema/quality-rules.json"`
 or read it from the installed package.
@@ -143,6 +143,6 @@ or read it from the installed package.
 ## Real-content conformance
 
 `make conformance-real` runs the full pipeline (parse + validate) over both
-public content repos on demand. It is not part of the mandatory CI - the CI
+public content repos on demand. It is not part of the mandatory CI: the CI
 truth is the vendored fixtures and the doc examples, which run offline. See
 [architecture.md](architecture.md#roadmap).
