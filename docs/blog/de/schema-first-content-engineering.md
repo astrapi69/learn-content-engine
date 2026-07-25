@@ -69,11 +69,11 @@ Ein Erweiterungstyp trägt einen Namensraum-Namen (`ext:<vendor>-<name>`, zum Be
 
 Die Aufteilung der Verantwortung ist die ganze Idee:
 
-| Die Engine besitzt | Der Consumer besitzt |
-|---|---|
-| Das Parsen von Typ und Payload aus JSON/YAML | Payload-Validierung: die Form innerhalb von `ext_payload` |
-| Strukturelle Validierung: das Typ-Muster, den Versions-Pin | Rendering: die Oberfläche der Übung |
-| Den Lade-Wächter: ist die Erweiterung registriert? | Fachlogik: Bewertung, verteilte Wiederholung, Feedback |
+| Die Engine besitzt                                         | Der Consumer besitzt                                      |
+|------------------------------------------------------------|-----------------------------------------------------------|
+| Das Parsen von Typ und Payload aus JSON/YAML               | Payload-Validierung: die Form innerhalb von `ext_payload` |
+| Strukturelle Validierung: das Typ-Muster, den Versions-Pin | Rendering: die Oberfläche der Übung                       |
+| Den Lade-Wächter: ist die Erweiterung registriert?         | Fachlogik: Bewertung, verteilte Wiederholung, Feedback    |
 
 Die Engine besitzt den Vertrag; der Consumer besitzt die Regeln. Nichts im Erweiterungs-Namensraum ist app-spezifisch: Die Engine wählt keinen Vendor. Ihre eigenen Referenz-Implementierungen leben unter `src/examples/ext-ref-*` und verwenden den neutralen Vendor `ref` (`ext:ref-categorization`, `ext:ref-graded-quiz`); ein echter Consumer wählt seinen eigenen Vendor und registriert seine eigenen Validatoren. Die Referenz-App, `adaptive-learner`, adoptiert sie unter dem Vendor `al`.
 
@@ -162,12 +162,12 @@ Nach vier Adoptionen und mehreren Diskussionsrunden verdichtet sich die Frage au
 
 An diesem Test aufgereiht ordnen sich die vier sauber, und der überraschende Fall ist der, den wir bewusst nicht befördert haben:
 
-| Typ | Lesart | Urteil |
-|---|---|---|
-| categorization | Eine bestehende Form (matching) mit spezifischer Behälter-Oberfläche | **Erweiterung** |
-| error-correction | Tokens plus markierter Index und akzeptierte Korrekturen | **Erweiterung** |
-| graded-quiz | Multiple-Choice plus Bewertungs- und Bestehens-Logik | **Erweiterung** |
-| reading-comprehension | Eine wirklich neue Form: geteilter Stimulus, gebundene Unterfragen | *Könnte Kern sein, Erweiterung gewählt* |
+| Typ                   | Lesart                                                               | Urteil                                  |
+|-----------------------|----------------------------------------------------------------------|-----------------------------------------|
+| categorization        | Eine bestehende Form (matching) mit spezifischer Behälter-Oberfläche | **Erweiterung**                         |
+| error-correction      | Tokens plus markierter Index und akzeptierte Korrekturen             | **Erweiterung**                         |
+| graded-quiz           | Multiple-Choice plus Bewertungs- und Bestehens-Logik                 | **Erweiterung**                         |
+| reading-comprehension | Eine wirklich neue Form: geteilter Stimulus, gebundene Unterfragen   | *Könnte Kern sein, Erweiterung gewählt* |
 
 Vor alldem lohnt eine Vorfrage, weil sie das Ganze oft auflöst: *Lässt sich die Idee mit bestehenden Typen plus Metadaten ausdrücken?* Wenn ja, fügen Sie gar nichts hinzu. Erst wenn die Antwort ehrlich Nein lautet, beginnt die Kern-oder-Erweiterung-Wahl überhaupt, und selbst dann ist die Erweiterung für das meiste, was übrig bleibt, der richtige Standard. Kern-Typen sind für die kleine Menge von Formen, die wirklich universelles Verständnis verlangen.
 
