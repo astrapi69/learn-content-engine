@@ -75,9 +75,9 @@ Für die Tooling-Interessierten: Ein Content-Repo fährt das als zwei Gates in d
 Sobald die Quelle kanonisch und gültig ist, ist jede Ausgabe eine Projektion davon. Keine der drei unten autoriert den Inhalt neu; jede rendert die eine Quelle in ihre eigene Form.
 
 ```
-                                     +- app   : interactive exercise + spaced repetition
-  lesson JSON  -->  validate    -->  +- print : student test PDF + teacher answer key
-  + manifest.yaml   canonicalize     +- LMS   : QTI 2.x import / export (mappable subset)
+                                    ├─ app   : interactive exercise + spaced repetition
+  lesson JSON  ──▶  validate   ──▶  ├─ print : student test PDF + teacher answer key
+  + manifest.yaml   canonicalize    └─ LMS   : QTI 2.x import / export (mappable subset) 
 ```
 
 ### Die App: interaktiv, mit Gedächtnis
@@ -97,11 +97,11 @@ Bemerkenswert: Dieses Werkzeug ist *eigenständig*. Es liest die kanonische Lekt
 
 Um Inhalte in ein LMS und wieder heraus zu bewegen, liefert die Engine einen optionalen **QTI-2.x-Adapter** hinter einem Subpath-Import (`learn-content-engine/qti`), damit seine XML-Abhängigkeit den abhängigkeitsfreien Kern nie berührt. Er bildet die Teilmenge ab, die sich *treu* abbilden lässt:
 
-| QTI-Interaktion | Engine-Typ |
-|---|---|
+| QTI-Interaktion                       | Engine-Typ      |
+|---------------------------------------|-----------------|
 | choiceInteraction (single / multiple) | multiple_choice |
-| textEntryInteraction | free_text |
-| matchInteraction | matching |
+| textEntryInteraction                  | free_text       |
+| matchInteraction                      | matching        |
 
 Alles außerhalb dieser Tabelle (Ordering, Association, Gap-Match, Hotspot, ein Item ohne Interaktion oder mit mehr als einer) wird **laut abgewiesen**. Der Import sammelt jedes nicht abbildbare Item und wirft einen einzigen Fehler, der jedes davon nennt, mit Identifier und Grund. Es gibt kein stilles Überspringen: Sie bekommen nie einen QTI-Import, der vollständig aussieht, aber leise die Hälfte der Fragen verworfen hat. Und ein Import, der eine ungültige Lektion erzeugen würde, wird abgewiesen statt zurückgegeben: dieselbe Disziplin, mit der die ganze Pipeline läuft.
 
@@ -109,10 +109,10 @@ Alles außerhalb dieser Tabelle (Ordering, Association, Gap-Match, Hotspot, ein 
 
 Die Linie ist es wert, ausgesprochen zu werden, denn sie ist es, was die Pipeline wartbar hält statt zu einem Monolithen zu machen. Die Engine validiert und kanonisiert. Das ist alles. Sie rendert nicht, speichert nicht, druckt nicht, spricht nicht mit einem LMS.
 
-| Die Engine tut | Consumer-Tooling tut |
-|---|---|
-| Quelle in eine kanonische Lektion parsen | Für einen Bildschirm rendern und Wiederholungen planen |
-| Struktur, Semantik und Qualität validieren | Einen Test und einen Lösungsschlüssel drucken |
+| Die Engine tut                                  | Consumer-Tooling tut                                          |
+|-------------------------------------------------|---------------------------------------------------------------|
+| Quelle in eine kanonische Lektion parsen        | Für einen Bildschirm rendern und Wiederholungen planen        |
+| Struktur, Semantik und Qualität validieren      | Einen Test und einen Lösungsschlüssel drucken                 |
 | Die QTI-Teilmenge abbilden, in beide Richtungen | Fortschritt persistieren, synchronisieren, an ein LMS liefern |
 
 Zwei ehrliche Grenzen fallen daraus, und sie zu benennen ist der Punkt:

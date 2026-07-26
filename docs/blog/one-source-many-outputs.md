@@ -75,9 +75,9 @@ For the tooling-minded: a content repo runs this as two gates in CI, and both mu
 Once the source is canonical and valid, each output is a projection of it. None of the three below re-authors the content; each renders the one source into its own shape.
 
 ```
-                                     +- app   : interactive exercise + spaced repetition
-  lesson JSON  -->  validate    -->  +- print : student test PDF + teacher answer key
-  + manifest.yaml   canonicalize     +- LMS   : QTI 2.x import / export (mappable subset)
+                                    ├─ app   : interactive exercise + spaced repetition
+  lesson JSON  -->  validate   -->  ├─ print : student test PDF + teacher answer key
+  + manifest.yaml   canonicalize    └─ LMS   : QTI 2.x import / export (mappable subset) 
 ```
 
 ### The app: interactive, with memory
