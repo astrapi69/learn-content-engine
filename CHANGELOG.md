@@ -5,6 +5,28 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [0.15.0] - 2026-07-28
+
+Adds `ext:ref-image-description`, the SEVENTH reference extension: an image
+stimulus bound to a typed answer ("look at the picture, describe it" or answer
+a question about it), the visual twin of `ext:ref-dictation`.
+
+The core schema cannot express the shape: `images` is the `picture_choice`
+OPTION list (exactly-one-correct contract) and `free_text` carries no media,
+so a picture-prompted free-text answer had no home. Modelled as a single ext
+exercise with a self-contained `ext_payload` of `src` (image reference: a
+relative `assets/` path or an inline data URI, resolution stays with the
+consumer) and `accept` (the accepted answers, mirroring the `free_text`
+contract). Rules `E-EXT-REFIMGDESC-SHAPE|-SRC|-ACCEPT`. Deliberately no
+alt-text field: it would leak the expected answer, so the accessibility
+affordance is a consumer decision.
+
+Like every `ref` extension this is a decision basis for adoption, excluded
+from the published build; no schema change (`ext_payload` is an open object,
+`x-schema-version` stays 1.8). Consumer-half demonstrations
+(`renderRefImageDescription`, `gradeRefImageDescription`) show the seam; the
+doc gate validates the new reference lesson.
+
 ## [0.14.0] - 2026-07-23
 
 Adds an optional `visibility` flag to the content-manifest set entry (#83).

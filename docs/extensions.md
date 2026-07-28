@@ -445,6 +445,68 @@ prompt over the audio reference (a real consumer mounts its player there) and
 grades the typed transcription against EVERY `accept` entry (trim + case-fold;
 a production consumer would reuse its free-text matcher for typo tolerance).
 
+## Example extension: `ext:ref-image-description`
+
+`src/examples/ext-ref-image-description/` works out the image-stimulus
+free-text case: the learner looks at a picture and types a description (or the
+answer to a question about it). It is the visual twin of `ext:ref-dictation`.
+The flat core schema has no image-stimulus free-text type: `images` is the
+`picture_choice` OPTION list with an exactly-one-correct contract, and
+`free_text` carries no media. So instead of a core-schema change it is
+modelled as a SINGLE ext exercise whose `ext_payload` carries the image
+reference plus the accepted answers.
+
+The payload is deliberately SELF-CONTAINED: no card reference, everything the
+consumer needs sits in `ext_payload`. The engine validates only the SHAPE of
+`src` (a non-empty string); whether that string is a relative path into the
+set's `assets/` directory or an inline data URI, and how the image is stored,
+resolved or displayed, stays consumer-side. There is deliberately NO alt-text
+field: a description of the image would leak the expected answer, so the
+accessibility affordance is a consumer decision, not payload data.
+
+Payload rules (engine half `refImageDescriptionExtension`):
+
+| Id | Rule |
+|---|---|
+| `E-EXT-REFIMGDESC-SHAPE` | `ext_payload` must carry `src` (string) and `accept` (`string[]`). |
+| `E-EXT-REFIMGDESC-SRC` | `src` is non-empty. |
+| `E-EXT-REFIMGDESC-ACCEPT` | `accept` has at least 1 non-empty entry. |
+
+A reference lesson on an existing topic (dog training), validated by the doc
+gate:
+
+```json
+{
+  "id": "hunde-bildbeschreibung",
+  "title": "Hundetraining: Bildbeschreibung",
+  "requires_extensions": ["ext:ref-image-description@1"],
+  "steps": [
+    {
+      "id": "s1",
+      "type": "exercise",
+      "exercise": {
+        "id": "e1",
+        "type": "ext:ref-image-description",
+        "prompt": "Sieh dir das Bild an: Welches Koerpersignal zeigt der Hund?",
+        "ext_payload": {
+          "src": "assets/images/hund-beschwichtigung.jpg",
+          "accept": [
+            "Der Hund gaehnt zur Beschwichtigung.",
+            "Er gaehnt zur Beschwichtigung."
+          ]
+        }
+      }
+    }
+  ]
+}
+```
+
+The consumer half (`renderRefImageDescription` + `gradeRefImageDescription`)
+renders the prompt over the image reference (a real consumer mounts its image
+view there) and grades the typed answer against EVERY `accept` entry (trim +
+case-fold; a production consumer would reuse its free-text matcher for typo
+tolerance).
+
 The example extensions exist as a DECISION BASIS for adoption: nothing in the
 app or the content repos references them until that decision is made
 (adaptive-learner#1579 tracked the exercise-type adoptions; engine#46 tracks
