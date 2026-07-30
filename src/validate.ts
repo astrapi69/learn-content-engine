@@ -534,5 +534,27 @@ export function validateManifest(input: unknown): ValidationResult {
   if (!structural(normalized)) {
     return { valid: false, errors: toStructuralIssues(structural.errors as ErrorObject[]), warnings: [] };
   }
+  // E-RETIRED-IDS-LOCKED: 'retired_ids' is the planned deliberate-deletion
+  // list of the engine#90 stability gate. Retiring an id makes the element
+  // vanish while learner progress rows for it survive, so the list MUST NOT
+  // be used before adaptive-learner#2188 defines the app-side consequence
+  // (remove, keep orphaned, or surface to the user). Presence is the signal;
+  // an empty list is locked too. Remove this rule deliberately when #2188 is
+  // decided and implemented - the trigger is recorded on that issue.
+  const manifestMetadata = (normalized as { metadata?: Record<string, unknown> }).metadata;
+  if (manifestMetadata && "retired_ids" in manifestMetadata) {
+    return {
+      valid: false,
+      errors: [
+        err(
+          "E-RETIRED-IDS-LOCKED",
+          "/metadata/retired_ids",
+          "'retired_ids' is locked until adaptive-learner#2188 defines the app-side consequence of retiring an id (engine#90 stability gate). Remove the list; add-only retrofits retire nothing.",
+          "rule-catalog",
+        ),
+      ],
+      warnings: [],
+    };
+  }
   return { valid: true, errors: [], warnings: [] };
 }
