@@ -327,6 +327,62 @@ describe("validateLesson — negative: rejection is part of the format", () => {
   });
 });
 
+describe("validateManifest — retired_ids lock (engine#90 / adaptive-learner#2188)", () => {
+  const validSet = {
+    id: "x",
+    title: "X",
+    target_language: "fr",
+    level: "A1",
+    version: "1.0.0",
+    lesson_count: 1,
+  };
+
+  it("rejects a manifest whose metadata carries retired_ids (E-RETIRED-IDS-LOCKED)", () => {
+    const manifest = {
+      schema_version: "1.2",
+      name: "Locked",
+      sets: [validSet],
+      metadata: { retired_ids: ["old-card-1"] },
+    };
+    const result = validateManifest(manifest);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((issue) => issue.id === "E-RETIRED-IDS-LOCKED")).toBe(true);
+  });
+
+  it("boundary: an EMPTY retired_ids list is locked too (presence is the signal)", () => {
+    const manifest = {
+      schema_version: "1.2",
+      name: "Locked",
+      sets: [validSet],
+      metadata: { retired_ids: [] },
+    };
+    expect(validateManifest(manifest).valid).toBe(false);
+  });
+
+  it("keeps other free-form metadata untouched by the lock", () => {
+    const manifest = {
+      schema_version: "1.2",
+      name: "Fine",
+      sets: [validSet],
+      metadata: { author: "Asterios Raptis", license: "CC-BY-SA-4.0" },
+    };
+    expect(validateManifest(manifest).valid).toBe(true);
+  });
+
+  it("the lock message names the deciding issue, so the gate points at the open decision", () => {
+    const manifest = {
+      schema_version: "1.2",
+      name: "Locked",
+      sets: [validSet],
+      metadata: { retired_ids: ["a"] },
+    };
+    const locked = validateManifest(manifest).errors.find(
+      (issue) => issue.id === "E-RETIRED-IDS-LOCKED",
+    );
+    expect(locked?.message).toContain("adaptive-learner#2188");
+  });
+});
+
 describe("validateManifest — negative + legacy-alias parity", () => {
   it("accepts a well-formed manifest", () => {
     const manifest = parseManifest(

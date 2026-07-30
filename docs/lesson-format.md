@@ -525,6 +525,7 @@ drifting.
 |---|---|
 | `E-SCHEMA` | Structural schema violation (missing required field, wrong type, bad enum value). |
 | `E-UNKNOWN-FIELD` | An unknown field is present (the schema is strict, `additionalProperties: false`). |
+| `E-RETIRED-IDS-LOCKED` | A manifest `metadata.retired_ids` list is present. The deliberate-deletion list of the planned stability gate (engine#90) is locked until adaptive-learner#2188 defines the app-side consequence of retiring an id; until then add-only retrofits retire nothing. The lock is removed deliberately once #2188 is decided. |
 | `E-STEP-THEORY-BODY` | A [theory step](#steps) has no `body`. |
 | `E-STEP-THEORY-EXERCISE` | A theory step also carries an `exercise`. |
 | `E-STEP-EXERCISE-PAYLOAD` | An exercise step has no `exercise` payload. |
