@@ -78,12 +78,14 @@ function run() {
   const totals = { repos: 0, sets: 0, lessons: 0, parseErrors: 0, invalid: 0 };
   const exerciseTally = {};
   const discrepancies = [];
+  const emptyRepos = [];
   const workDir = localParent ? null : mkdtempSync(join(tmpdir(), "lce-conformance-"));
 
   try {
     for (const repo of REPOS) {
       console.log(`\n== ${repo.name} ==`);
       totals.repos += 1;
+      const lessonsBeforeRepo = totals.lessons;
       const repoDir = resolveRepo(repo, workDir);
 
       const manifestText = readFileSync(join(repoDir, "manifest.yaml"), "utf8");
@@ -137,6 +139,11 @@ function run() {
           }
         }
       }
+      // Floor: a listed repo that yields ZERO lessons is the renamed/removed/
+      // emptied-repo case and must never pass silently (a run over nothing is
+      // not a run). The checked quantity is printed anyway; this only asserts
+      // it is not empty, per entry.
+      if (totals.lessons === lessonsBeforeRepo) emptyRepos.push(repo.name);
     }
   } finally {
     if (workDir) rmSync(workDir, { recursive: true, force: true });
@@ -171,6 +178,16 @@ function run() {
   // Success criterion is PARSE (the whole real corpus flows through the engine).
   // validate() discrepancies are reported for content triage, not a target
   // failure, since they mean the engine correctly rejected malformed content.
+  // Floor: a run over nothing is not a run. Zero lessons in total, or a listed
+  // repo contributing zero, fails loudly instead of reporting "100% (0/0)".
+  if (totals.lessons === 0) {
+    console.log("\nFAIL: 0 lessons checked - a run over nothing never passes");
+    process.exit(1);
+  }
+  if (emptyRepos.length > 0) {
+    console.log(`\nFAIL: listed repo(s) yielded 0 lessons (renamed, removed or emptied?): ${emptyRepos.join(", ")}`);
+    process.exit(1);
+  }
   const parseClean = totals.parseErrors === 0;
   console.log(`\nparse success: ${parseClean ? "100%" : "FAILED"} (${totals.lessons - totals.parseErrors}/${totals.lessons})`);
   process.exit(parseClean ? 0 : 1);
