@@ -80,6 +80,23 @@ versions - do not let that recur):
 Do steps 5-7 for every release, in this order. A version that is committed but
 not tagged + published is not done.
 
+## Identity is a contract
+
+Two content-facing rules the engine can only partly enforce, so they are
+written down here and mirrored in the content repos' authoring docs:
+
+- **A published `stable_id` is never renamed or reused.** It is the identity
+  learner progress and SRS scheduling join on. Editing the content under a
+  constant id is the intended case; changing the id orphans every learner's
+  progress for that element silently. The same holds for a lesson FILENAME,
+  which is the lesson's identity (display order is a separate concern; see
+  adaptive-learner#2172 for the precedent that separated them).
+- **Retrofits are add-only.** Minting ids into existing content inserts
+  `stable_id` members and touches nothing else, so old derived keys and new
+  ids coexist in one file and a consumer can compute its remap locally. Use
+  `learn-content-engine mint-stable-ids` (it proves the add-only property per
+  file); never a reformat-in-passing.
+
 ## Adding a new exercise type
 
 As of v0.6.0 the engine holds [schema authority](README.md#schema-authority), so

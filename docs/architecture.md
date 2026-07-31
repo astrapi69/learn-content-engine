@@ -69,6 +69,16 @@ content repos).
   conforms to the engine).
 - **Content repos** mirror the engine's schema from the pinned release.
 
+One boundary is worth naming, because it decides where enforcement lives: the
+engine validates ONE document. It can therefore demand that a `stable_id`
+(schema v1.9) is present, well-formed and unique inside a lesson, and it
+exports `collectStableIds` so a caller can check set-wide uniqueness across
+several lessons. It can NEVER check that an id stayed the same across
+versions: that needs the previous version, which only the content repo has.
+So the version-stability half of the promise lives in the content repos'
+stability gate (compare against the last published state), not here. A schema
+rule without that gate would be a promise without enforcement.
+
 The JSON-Schema `$id` is engine-owned
 (`https://astrapi69.github.io/learn-content-engine/schema/…`). The
 TypeScript types (`src/types/lesson-schema.generated.ts`) are generated from the
