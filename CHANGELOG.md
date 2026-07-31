@@ -5,6 +5,27 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [0.16.2] - 2026-07-31
+
+Makes an incomplete mint a failure instead of a success.
+
+The 0.16.1 fix closed the concrete scanner bug; it did not close the class.
+The add-only proof answers "did anything ELSE move?", never "was everything
+eligible actually minted?", which is exactly why 2 of 8 could pass as a
+success. A future scanner gap minting 7 of 8 would again only show if a
+fixture happened to match.
+
+`mintStableIds` now derives the eligible count from the PARSED lesson,
+independently of the byte scanner, and refuses to write when the two numbers
+disagree: `incomplete mint: the scanner found N of M eligible element(s)`.
+The report carries `eligible` next to `minted`, and the human output prints
+`N of M eligible`, so an incomplete run cannot look like a clean one.
+
+Structural note behind both fixes: every fixture had exactly one card and one
+exercise, and a fixture with one element cannot show a bug in the handling of
+several. State that spills between two elements needs two elements to exist
+at all.
+
 ## [0.16.1] - 2026-07-31
 
 Fixes the `mint-stable-ids` scanner, found by the coverage ratchet on the very
