@@ -16,6 +16,7 @@ import {
   buildStableIdInventory,
   compareStableIdInventories,
   formatStabilityResult,
+  isBaseCredible,
 } from "../dist/stable-id-stability.js";
 import {
   parseSuggestWiringArgs,
@@ -94,7 +95,7 @@ if (argv[0] === "check-stable-ids") {
   const baseFlagIndex = argv.indexOf("--base");
   const baseRef = baseFlagIndex === -1 ? "origin/main" : argv[baseFlagIndex + 1];
   if (!baseRef) {
-    console.error("usage: learn-content-engine check-stable-ids [--base <ref>]");
+    console.error("usage: learn-content-engine check-stable-ids [--base <ref>] [--allow-empty-base]");
     process.exit(2);
   }
   const git = (...args) => execFileSync("git", args, { encoding: "utf8" });
@@ -131,10 +132,14 @@ if (argv[0] === "check-stable-ids") {
   const result = compareStableIdInventories(base, head);
   console.log(`base: ${mergeBase.slice(0, 7)} (${baseRef})`);
   console.log(formatStabilityResult(result));
-  // A run over nothing is not a run: a repo that lists lessons in the base but
-  // yields none in the head is broken, not clean.
+  // A run over nothing is not a run, in either direction.
   if (base.lessons.length > 0 && head.lessons.length === 0) {
     console.log("FAIL: the base carries lessons but the head yields none");
+    process.exit(1);
+  }
+  const credibility = isBaseCredible(result.checked);
+  if (!credibility.credible && !argv.includes("--allow-empty-base")) {
+    console.log(`FAIL: ${credibility.reason}`);
     process.exit(1);
   }
   process.exit(result.violations.length === 0 ? 0 : 1);

@@ -3,6 +3,7 @@ import { describe, it, expect } from "vitest";
 import {
   buildStableIdInventory,
   compareStableIdInventories,
+  isBaseCredible,
   type StableIdInventory,
 } from "./stable-id-stability.js";
 
@@ -103,6 +104,31 @@ describe("compareStableIdInventories", () => {
     const empty = inventory([], []);
     const result = compareStableIdInventories(empty, empty);
     expect(result.checked).toEqual({ baseIds: 0, headIds: 0, baseLessons: 0, headLessons: 0 });
+  });
+});
+
+describe("isBaseCredible", () => {
+  it("a base carrying lessons is credible, minted or not (the mint wave case)", () => {
+    // During a mint wave the base legitimately has lessons but ZERO stable_ids
+    // while the head has many. That must pass, or no mint PR could ever land.
+    expect(isBaseCredible({ baseIds: 0, headIds: 42, baseLessons: 12, headLessons: 12 }).credible).toBe(true);
+  });
+
+  it("a base with NO lessons while the head has them is not a credible predecessor", () => {
+    // The dangerous shape: an empty or unrelated ref yields no previous ids,
+    // so nothing can be violated and the gate would report green exactly when
+    // it is needed most.
+    const verdict = isBaseCredible({ baseIds: 0, headIds: 42, baseLessons: 0, headLessons: 12 });
+    expect(verdict.credible).toBe(false);
+    expect(verdict.reason).toContain("no lessons");
+  });
+
+  it("an empty base with an empty head is credible (nothing to compare, nothing claimed)", () => {
+    expect(isBaseCredible({ baseIds: 0, headIds: 0, baseLessons: 0, headLessons: 0 }).credible).toBe(true);
+  });
+
+  it("boundary: a single base lesson is enough to make the base credible", () => {
+    expect(isBaseCredible({ baseIds: 0, headIds: 5, baseLessons: 1, headLessons: 3 }).credible).toBe(true);
   });
 });
 

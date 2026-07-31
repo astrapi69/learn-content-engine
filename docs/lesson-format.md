@@ -746,9 +746,25 @@ It compares the working tree against the merge base with `--base` (default
 | `V3` | a `stable_id` now points at another kind or exercise type (id reuse) |
 | `V4` | a lesson FILE vanished while its set survived (the filename is the lesson's identity for progress joins) |
 
-Editing content under a constant id passes, and that is the entire point. The
-run prints the checked quantities and fails when the base carries lessons but
-the head yields none, so a run over nothing never reports success.
+Editing content under a constant id passes, and that is the entire point.
+
+Two floors keep a green run meaningful, because this gate matters most while
+ids are being minted:
+
+- The base must be a plausible predecessor. A base carrying NO lessons while
+  the head has them yields no previous ids, so nothing could be violated and
+  the run would report green exactly when it is needed. That fails; a genuine
+  first publication states it with `--allow-empty-base`. A base WITH lessons
+  but zero `stable_id`s is the normal mint-wave shape and passes, since that
+  is the state a minting PR starts from.
+- A head that yields no lessons while the base has them fails too.
+
+A base ref that does not resolve exits 2 rather than comparing against
+nothing. The default `origin/main` fits the ten content repos (all of them
+default to `main`, verified); a repo whose published state lives on another
+branch passes it via `--base`. Note the app repo's opposite convention
+(`develop` is default, `main` is releases) as the reason this is a flag and
+not an assumption.
 
 Why a shipped command and not a script per repo: the schema claims stable
 identity in every consuming repo, so the enforcement has to reach every one of
