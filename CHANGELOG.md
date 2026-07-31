@@ -60,6 +60,18 @@ element-key decision closes it.
   and new ids coexist in one file, so a consumer computes its remap locally.
 - New export `collectStableIds` (+ `StableIdReport`, `StableIdDuplicate`) for
   set-wide uniqueness in the content-repo gates.
+- New CLI command `check-stable-ids [--base <ref>]`: the stability gate,
+  SHIPPED rather than copied into each content repo. It compares the working
+  tree against the merge base with `--base` (default `origin/main`, the
+  published state) and reports `V1` a published id disappeared, `V2` a
+  set-wide duplicate, `V3` an id pointing at another kind or exercise type,
+  `V4` a lesson file gone while its set survives (the filename is the
+  lesson's identity). Editing content under a constant id passes, which is
+  the entire point. The reason it ships: the schema claims stable identity in
+  every consuming repo, so enforcement living in one of them would leave the
+  rest claiming a promise nobody checks. `compareStableIdInventories` and
+  `buildStableIdInventory` are its pure, exported core; git history and file
+  reads stay in the CLI shim, so the library keeps its no-I/O boundary.
 
 ### Also in this release
 
@@ -72,6 +84,14 @@ element-key decision closes it.
 - `make conformance-real` no longer reports success over nothing (#93): zero
   lessons in total, or any listed repo contributing zero lessons (the
   renamed/removed/emptied case a hardcoded list ages into), now fails loudly.
+
+### Fixed
+
+- `mint-stable-ids` returned a bare string from its formatter while the CLI
+  shim destructures `{ text, exitCode }`, so the command printed `undefined`
+  and exited 0 whatever happened. Its unit tests asserted on the string and
+  never exercised the shim contract. A contract test now pins the shape for
+  every command at once.
 
 ## [0.15.0] - 2026-07-28
 
