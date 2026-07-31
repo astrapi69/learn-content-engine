@@ -10,6 +10,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 
 import { parseLintArgs, lintContent, formatReports } from "../dist/cli.js";
 import { parseMigrateArgs, migrateContent, formatMigrateReports } from "../dist/migrate.js";
+import { parseMintArgs, mintStableIds, formatMintReports } from "../dist/mint-stable-ids.js";
 import {
   parseSuggestWiringArgs,
   suggestWiringContent,
@@ -38,6 +39,23 @@ const COMMANDS = {
       }
     },
     format: (reports, args) => formatMigrateReports(reports, { json: args.json, write: args.write }),
+  },
+  "mint-stable-ids": {
+    parseArgs: parseMintArgs,
+    run: (rawJson, path) => mintStableIds(rawJson, path),
+    readError: (path, message) => ({ path, ok: false, minted: 0, parseError: message }),
+    // Dry-run by default; --write applies the core's format-preserving text,
+    // which carries the built-in add-only proof (a file that failed the proof
+    // has no newText and is never written).
+    afterRun: (reports, args) => {
+      if (!args.write) return;
+      for (const report of reports) {
+        if (report.ok && report.minted > 0 && report.newText) {
+          writeFileSync(report.path, report.newText);
+        }
+      }
+    },
+    format: (reports, args) => formatMintReports(reports, { json: args.json, write: args.write }),
   },
   "suggest-wiring": {
     parseArgs: parseSuggestWiringArgs,
