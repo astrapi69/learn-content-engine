@@ -143,6 +143,72 @@ describe("mintStableIds", () => {
   });
 });
 
+describe("mintStableIds: several elements in real repo shape", () => {
+  // Regression for the scanner bug the coverage ratchet caught on the first
+  // real wave: after a string VALUE the pending key stayed set, so the NEXT
+  // object inherited that key instead of its array index, its path no longer
+  // matched, and only the first card plus one lucky exercise were minted.
+  const MULTI = `{
+  "id": "01-demo",
+  "title": "Demo",
+  "cards": [
+    { "id": "c1", "front": "f1", "back": "b1" },
+    { "id": "c2", "front": "f2", "back": "b2" },
+    { "id": "c3", "front": "f3", "back": "b3" }
+  ],
+  "steps": [
+    { "id": "t1", "type": "theory", "body": "text" },
+    {
+      "id": "s1",
+      "type": "exercise",
+      "exercise": { "id": "e1", "type": "free_text", "prompt": "p1", "accept": ["a"] }
+    },
+    {
+      "id": "s2",
+      "type": "exercise",
+      "exercise": { "id": "e2", "type": "free_text", "prompt": "p2", "accept": ["a"] }
+    }
+  ]
+}
+`;
+
+  it("mints EVERY card and EVERY exercise, not just the first", () => {
+    const report = mintStableIds(MULTI, "01-demo.json", minter);
+    expect(report.minted).toBe(5);
+    const after = JSON.parse(report.newText ?? "") as {
+      cards: { stable_id?: string }[];
+      steps: { exercise?: { stable_id?: string } }[];
+    };
+    expect(after.cards.every((card) => Boolean(card.stable_id))).toBe(true);
+    expect(
+      after.steps.filter((step) => step.exercise).every((step) => Boolean(step.exercise?.stable_id)),
+    ).toBe(true);
+  });
+
+  it("leaves theory steps and the lesson itself untouched", () => {
+    const report = mintStableIds(MULTI, "01-demo.json", minter);
+    const after = JSON.parse(report.newText ?? "") as {
+      stable_id?: string;
+      steps: { stable_id?: string }[];
+    };
+    expect(after.stable_id).toBeUndefined();
+    expect(after.steps.every((step) => step.stable_id === undefined)).toBe(true);
+  });
+
+  it("mints unique ids (a shared id would collapse two elements into one)", () => {
+    const report = mintStableIds(MULTI, "01-demo.json", minter);
+    const after = JSON.parse(report.newText ?? "") as {
+      cards: { stable_id: string }[];
+      steps: { exercise?: { stable_id: string } }[];
+    };
+    const ids = [
+      ...after.cards.map((card) => card.stable_id),
+      ...after.steps.filter((step) => step.exercise).map((step) => step.exercise!.stable_id),
+    ];
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
 describe("parseMintArgs / formatMintReports", () => {
   it("parses paths and the write flag; dry-run is the default", () => {
     const parsed = parseMintArgs(["mint-stable-ids", "a.json", "--write"]);

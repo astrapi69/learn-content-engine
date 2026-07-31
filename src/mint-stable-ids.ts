@@ -142,16 +142,24 @@ function findTargets(raw: string): InsertionTarget[] {
       if (expectKey) {
         pendingKey = text;
         expectKey = false;
-      } else if (pendingKey === "id") {
-        const match = pathMatches();
-        if (match) {
-          const wanted = match.kind === "card" ? wantsCard[match.ordinal] : wantsExercise[match.ordinal];
-          if (wanted) {
-            const lineStart = raw.lastIndexOf("\n", start) + 1;
-            const indent = /^[ \t]*/.exec(raw.slice(lineStart, start))?.[0] ?? "";
-            targets.push({ kind: match.kind, afterIdValue: position, indent });
+      } else {
+        if (pendingKey === "id") {
+          const match = pathMatches();
+          if (match) {
+            const wanted = match.kind === "card" ? wantsCard[match.ordinal] : wantsExercise[match.ordinal];
+            if (wanted) {
+              const lineStart = raw.lastIndexOf("\n", start) + 1;
+              const indent = /^[ \t]*/.exec(raw.slice(lineStart, start))?.[0] ?? "";
+              targets.push({ kind: match.kind, afterIdValue: position, indent });
+            }
           }
         }
+        // A consumed VALUE clears the pending key. Without this the key
+        // survived into the next `{`, which then took it instead of its array
+        // index, so its path stopped matching and every element after the
+        // first was skipped (caught by the coverage ratchet on the first real
+        // wave, not by the unit tests, which used single-element lessons).
+        pendingKey = null;
       }
       continue;
     }
