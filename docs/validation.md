@@ -63,6 +63,27 @@ consumer's (adaptive-learner) Pydantic `model_validator`s one-for-one:
 | `cloze` (`type`/`select`) requires `sentence` + `blanks` with `markers == blanks.length`; `select` also needs `distractors` | `CLOZE marker count mismatch` |
 | `cloze` (`multiselect`) requires `sentence`, non-empty `accept` + `distractors`, and the two must be **disjoint** | `must be disjoint` |
 | Every `card_ids` entry must resolve to a card in the lesson | `references unknown card` |
+| A `stable_id` is unique within the lesson (exercises and cards share one namespace) | `is used more than once in this lesson` |
+
+### Set-wide stable_id uniqueness lives outside validateLesson
+
+`validateLesson` sees ONE lesson, so it can only enforce that a `stable_id`
+is unique inside that document. The set-wide half of the promise (schema v1.9,
+engine#90) is exported as a helper the caller drives over the lessons of a set:
+
+```ts
+import { collectStableIds } from "learn-content-engine";
+
+const report = collectStableIds(lessonsOfOneSet);
+// report.total      -> how many stable_ids were checked (the checked quantity)
+// report.duplicates -> [{ stableId, locations: [{ lessonId, kind, elementId }] }]
+```
+
+Version STABILITY (an id still pointing at the same element after an update)
+is not checkable here at all: it needs the previous version. That is the
+content repos' stability gate, which diffs the set against its last published
+state. See the [scope and limit](lesson-format.md#stable-identity-stable_id)
+of the stage.
 
 ## Layer 3: author lints (warnings)
 
