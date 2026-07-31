@@ -265,7 +265,9 @@ describe("Content-Engine — canonical set-entry projection", () => {
     expect(bare.review_status).toBe("authored");
     const bogus = asContentSetEntry(
       SOURCE,
-      { id: "fr-a1", title: "F", target_language: "fr", level: "A1", version: "1.0.0", lesson_count: 1, review_status: "verified" },
+      // Deliberately out-of-enum: a hand-edited manifest can carry anything,
+      // and the runtime normalization (not the type) is what this test pins.
+      { id: "fr-a1", title: "F", target_language: "fr", level: "A1", version: "1.0.0", lesson_count: 1, review_status: "verified" as unknown as "authored" },
       null,
     );
     expect(bogus.review_status).toBe("authored");
