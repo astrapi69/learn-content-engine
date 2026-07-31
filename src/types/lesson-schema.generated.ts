@@ -44,6 +44,10 @@ export type Hint = string | null;
  */
 export type Id = string;
 /**
+ * engine#90 - schema 1.9 (additive). Author-owned, version-stable identity for progress/SRS joins: once published it NEVER changes, set-wide unique (cross-lesson uniqueness is checked by the repo gate via collectStableIds; the schema sees one document). Opaque mint-once value (lowercase slug, 8-64 chars), NOT derived from content, so answer-text fixes do not move it. Optional: pre-1.9 content validates unchanged. SCOPE: this closes orphaning by slug rename or position shift on the exercise/card level; it does NOT close the element-level case (an answer correction inside a surviving exercise still moves the content-derived element key, engine#91).
+ */
+export type StableId = string | null;
+/**
  * Optional relative path inside the set's ``assets/`` directory ('assets/img/bonjour.png'). Resolved by the asset loader.
  */
 export type Image = string | null;
@@ -216,6 +220,10 @@ export type Hint2 = string | null;
  */
 export type Id2 = string;
 /**
+ * engine#90 - schema 1.9 (additive). Author-owned, version-stable identity for progress/SRS joins: once published it NEVER changes, set-wide unique (cross-lesson uniqueness is checked by the repo gate via collectStableIds; the schema sees one document). Opaque mint-once value (lowercase slug, 8-64 chars), NOT derived from content, so answer-text fixes do not move it. Optional: pre-1.9 content validates unchanged. SCOPE: this closes orphaning by slug rename or position shift on the exercise/card level; it does NOT close the element-level case (an answer correction inside a surviving exercise still moves the content-derived element key, engine#91).
+ */
+export type StableId1 = string | null;
+/**
  * PICTURE_CHOICE: list of {src, label, is_correct?} options. Exactly one entry MUST include 'is_correct': 'true'. ``src`` is a relative path inside the set's ``assets/`` directory.
  */
 export type Images = PictureImage[] | null;
@@ -382,6 +390,7 @@ export interface Card {
   front: Front;
   hint?: Hint;
   id: Id;
+  stable_id?: StableId;
   image?: Image;
   media_type?: MediaType;
   notes?: Notes;
@@ -504,6 +513,7 @@ export interface Exercise {
   from_cards?: FromCards;
   hint?: Hint2;
   id: Id2;
+  stable_id?: StableId1;
   images?: Images;
   multiple?: Multiple;
   options?: Options;

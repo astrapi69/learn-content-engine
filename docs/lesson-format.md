@@ -110,6 +110,7 @@ the lesson's `cards` (referential integrity is enforced).
 | Field | Type | Notes |
 |---|---|---|
 | `id` | string, required | Slug-safe, unique within the lesson. |
+| `stable_id` | string \| null | Version-stable identity (schema v1.9, see [Stable identity](#stable-identity-stable_id)). |
 | `front` | string, required | What the learner sees first (usually the target term). |
 | `back` | string, required | What they recall (translation / definition). |
 | `tags` | string[] | Slug-safe tags for filtering. |
@@ -161,7 +162,8 @@ and `prompt`. `type` is one of `matching`, `picture_choice`, `free_text`,
 for-type combinations are rejected (see [validation.md](validation.md)).
 
 Common optional exercise fields: `card_ids` (the cards drilled; each must exist),
-`distractors`, `hint`, `direction`, `examples`.
+`distractors`, `hint`, `direction`, `examples`, and `stable_id` (schema v1.9,
+see [Stable identity](#stable-identity-stable_id)).
 
 ### matching
 
@@ -473,6 +475,33 @@ Any exercise may set `direction` to control which way a card is drilled:
 `both`, or `random`. It is additive and optional; cloze ignores it. See the
 `free_text` drill in the [glance example](#a-lesson-at-a-glance).
 
+## Stable identity (stable_id)
+
+Since schema v1.9 (additive, engine#90) every exercise and card may carry a
+`stable_id`: an author-owned, version-stable identity for progress and SRS
+joins. The contract:
+
+- **Mint once, never change.** Once a `stable_id` is published it stays with
+  its element forever. It is an opaque lowercase slug (8-64 chars,
+  `^[a-z0-9][a-z0-9_-]{7,63}$`), deliberately NOT derived from the content,
+  so fixing a typo in an answer does not move it.
+- **Set-wide unique.** Within one lesson the engine enforces uniqueness
+  (`E-STABLE-ID-DUP`; exercises and cards share one namespace). Across the
+  lessons of a set, the content repo's stability gate enforces it via the
+  exported `collectStableIds` helper: the schema can only see one document.
+- **Optional.** Pre-v1.9 content validates unchanged; the requirement for the
+  shipped content repos lives in their quality gate, not in the schema
+  (additive by policy).
+
+Scope and limit of this stage: it closes orphaning caused by slug renames and
+position shifts on the exercise and card level. It does NOT close the case
+that actually occurred (adaptive-learner#2161): an answer correction inside a
+surviving exercise still moves the content-derived element key and orphans
+exactly that element. That remainder is reduced, not closed, and is currently
+covered only by the app-side update guard (the stopgap from
+adaptive-learner#2128) until engine#91 or an app-side element-key decision
+closes it.
+
 ## Manifest format
 
 A content repo publishes a root `manifest.yaml` (or JSON) that lists its sets.
@@ -511,6 +540,30 @@ The set's `path` is the repo-relative directory holding its `lessons/` folder;
 it defaults to `sets/{id}` when omitted. See
 [concepts.md](concepts.md) for how set context flows into each lesson.
 
+Three optional set-entry fields carry consumer-facing metadata (all additive,
+absent keeps every pre-existing manifest valid):
+
+- `visibility` (schema v1.8): display hint; `"hidden"` keeps a
+  conformance/reference set out of learner-facing lists. Never a quality
+  statement.
+- `review_status` (schema v1.9, engine#94): three-state review standing,
+  derived from origin because origin is what makes a set review-worthy.
+  `"authored"` = hand-written by a speaker or domain expert, no review
+  required (also the meaning of an absent field, covering legacy content);
+  `"generated"` = machine-generated (AI, book import, analysis), native-
+  speaker or expert review pending; `"reviewed"` = machine-generated and
+  reviewed. Consumers derive "advertisable as reviewed" as
+  `review_status != "generated"`. Distinct from `visibility` and from the
+  free-form `ai_validation` provenance block.
+- `attribution` (schema v1.9, engine#90): who the set's content is attributed
+  to, plus a bounded derivation chain (`derived_from`, oldest first, at most
+  8 entries; when full, the origin entry stays and the oldest middle entry is
+  dropped). Attribution, not authorization: without accounts a name is
+  unverifiable, and the field claims nothing more. PERSONAL DATA: the name
+  travels with the set when shared; a consumer app must point that out before
+  it becomes visible. Distinct from `book` (source material), repo-level
+  `metadata.author` (repo operator) and the lesson-level `contributed_by`.
+
 ## Rule catalog
 
 `validateLesson` returns `{ valid, errors, warnings }`. **Errors** block (`valid`
@@ -525,6 +578,7 @@ drifting.
 |---|---|
 | `E-SCHEMA` | Structural schema violation (missing required field, wrong type, bad enum value). |
 | `E-UNKNOWN-FIELD` | An unknown field is present (the schema is strict, `additionalProperties: false`). |
+| `E-STABLE-ID-DUP` | A `stable_id` is used more than once within one lesson (exercises and cards share one namespace). Set-wide uniqueness is the repo gate's job via `collectStableIds`. |
 | `E-RETIRED-IDS-LOCKED` | A manifest `metadata.retired_ids` list is present. The deliberate-deletion list of the planned stability gate (engine#90) is locked until adaptive-learner#2188 defines the app-side consequence of retiring an id; until then add-only retrofits retire nothing. The lock is removed deliberately once #2188 is decided. |
 | `E-STEP-THEORY-BODY` | A [theory step](#steps) has no `body`. |
 | `E-STEP-THEORY-EXERCISE` | A theory step also carries an `exercise`. |
