@@ -5,6 +5,23 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [0.16.1] - 2026-07-31
+
+Fixes the `mint-stable-ids` scanner, found by the coverage ratchet on the very
+first mint wave.
+
+After consuming a string VALUE the scanner kept the pending key, so the next
+`{` took that key instead of its array index; its path stopped matching and
+every element after the first was skipped. On the first real lesson it minted
+2 of 8 ids and reported success, because the add-only proof only checks that
+nothing OTHER than `stable_id` moved, not that everything eligible was minted.
+The repo-local coverage ratchet caught it (0 of 1 sets fully minted against a
+baseline of 1), which is exactly the job it was added for.
+
+The unit tests missed it because every fixture had a single card and a single
+exercise; the regression test now uses a lesson with three cards, a theory
+step and two exercise steps, and asserts full coverage plus id uniqueness.
+
 ## [0.16.0] - 2026-07-31
 
 The bundled schema stage for content identity (#90) plus the two changes that
