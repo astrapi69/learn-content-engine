@@ -72,6 +72,15 @@ element-key decision closes it.
   rest claiming a promise nobody checks. `compareStableIdInventories` and
   `buildStableIdInventory` are its pure, exported core; git history and file
   reads stay in the CLI shim, so the library keeps its no-I/O boundary.
+  Two floors keep a green run meaningful, since the gate matters most while
+  ids are being minted: a base carrying no lessons while the head has them is
+  not a plausible predecessor and fails (`--allow-empty-base` states a genuine
+  first publication), and a base ref that does not resolve exits 2 instead of
+  comparing against nothing. A base WITH lessons and zero `stable_id`s stays
+  credible, because that is exactly the state a minting PR starts from. The
+  default base `origin/main` fits the ten content repos (all default to
+  `main`, checked); `--base` covers a repo whose published state lives
+  elsewhere.
 
 ### Also in this release
 
