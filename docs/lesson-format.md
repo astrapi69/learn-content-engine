@@ -780,6 +780,12 @@ The engine#90 retrofit tool. Dry-run by default; `--write` applies:
 npx learn-content-engine mint-stable-ids sets/en/de-b1/lessons/*.json --write
 ```
 
+It reports `N of M eligible` and FAILS when those numbers disagree: the
+eligible count comes from the parsed lesson, the inserted count from the
+scanner, so an incomplete mint is a failure rather than a smaller success.
+(The add-only proof below answers a different question, whether anything else
+moved, which is why it could not catch a partial mint on its own.)
+
 It inserts a `stable_id` for every exercise and card that lacks one and
 touches NOTHING else: the insertion is byte-offset based (pretty-printed and
 inline-array lesson styles both survive unchanged), existing `stable_id`s are

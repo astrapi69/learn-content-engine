@@ -26,6 +26,10 @@ export interface MintArgs {
 export interface MintReport extends FileReport {
   /** Number of stable_ids inserted (0 = already fully minted). */
   minted: number;
+  /** Number of elements that WERE eligible, derived structurally from the
+   *  parsed lesson, independent of the byte scanner. `minted` must equal this
+   *  or the run failed: an incomplete mint is not a success. */
+  eligible: number;
   /** The file text with insertions; present only when minted > 0 and the
    *  add-only self-proof held. */
   newText?: string;
@@ -192,6 +196,21 @@ function findTargets(raw: string): InsertionTarget[] {
   }
 }
 
+/** How many exercises and cards of this lesson still lack a stable_id?
+ *  Derived from the PARSED structure, deliberately not from the scanner, so
+ *  the two can be compared. */
+function countEligible(raw: string): number {
+  const lesson = JSON.parse(raw) as {
+    cards?: { stable_id?: string }[];
+    steps?: { exercise?: { stable_id?: string } }[];
+  };
+  const cards = (lesson.cards ?? []).filter((card) => !card?.stable_id).length;
+  const exercises = (lesson.steps ?? []).filter(
+    (step) => step?.exercise && !step.exercise.stable_id,
+  ).length;
+  return cards + exercises;
+}
+
 /** Strip every `stable_id` member from a parsed structure (for the proof). */
 const stripStableIds = (value: unknown): unknown =>
   JSON.parse(JSON.stringify(value), (key, entry) => (key === "stable_id" ? undefined : entry));
@@ -205,15 +224,44 @@ export function mintStableIds(
   rawJson: string,
   path: string,
   minter: StableIdMinter = defaultMinter,
+  options: { findTargetsLimit?: number } = {},
 ): MintReport {
   let targets: InsertionTarget[];
+  let eligible: number;
   try {
+    eligible = countEligible(rawJson);
     targets = findTargets(rawJson);
   } catch (error) {
-    return { path, ok: false, minted: 0, parseError: String(error instanceof Error ? error.message : error) };
+    return {
+      path,
+      ok: false,
+      minted: 0,
+      eligible: 0,
+      parseError: String(error instanceof Error ? error.message : error),
+    };
+  }
+  // Test seam: shrink the scanner's result to simulate a scanner gap, so the
+  // completeness rule is provable without waiting for the next real bug.
+  if (options.findTargetsLimit !== undefined) {
+    targets = targets.slice(0, options.findTargetsLimit);
+  }
+  // COMPLETENESS: the eligible count comes from the parsed structure, the
+  // targets from the byte scanner. Two independent derivations of the same
+  // number. When they disagree the scanner missed something, and an
+  // incomplete mint must FAIL rather than report the part it managed - that
+  // is how 2 of 8 once passed as success (the add-only proof only ever
+  // answered whether anything ELSE moved).
+  if (targets.length !== eligible) {
+    return {
+      path,
+      ok: false,
+      minted: 0,
+      eligible,
+      parseError: `incomplete mint: the scanner found ${targets.length} of ${eligible} eligible element(s); refusing to write a partial mint`,
+    };
   }
   if (targets.length === 0) {
-    return { path, ok: true, minted: 0 };
+    return { path, ok: true, minted: 0, eligible };
   }
 
   let newText = "";
@@ -247,13 +295,13 @@ export function mintStableIds(
     const before = stripStableIds(JSON.parse(rawJson));
     const after = stripStableIds(JSON.parse(newText));
     if (JSON.stringify(before) !== JSON.stringify(after)) {
-      return { path, ok: false, minted: 0, parseError: "add-only proof failed: output differs beyond stable_id" };
+      return { path, ok: false, minted: 0, eligible, parseError: "add-only proof failed: output differs beyond stable_id" };
     }
   } catch (error) {
-    return { path, ok: false, minted: 0, parseError: `add-only proof failed: ${String(error)}` };
+    return { path, ok: false, minted: 0, eligible, parseError: `add-only proof failed: ${String(error)}` };
   }
 
-  return { path, ok: true, minted: targets.length, newText };
+  return { path, ok: true, minted: targets.length, eligible, newText };
 }
 
 /** Human/JSON output for a batch of mint reports. */
@@ -281,7 +329,7 @@ export function formatMintReports(
       continue;
     }
     mintedTotal += report.minted;
-    lines.push(`${report.minted === 0 ? "ok   " : "MINT "}${report.path}: ${report.minted} stable_id(s)`);
+    lines.push(`${report.minted === 0 ? "ok   " : "MINT "}${report.path}: ${report.minted} of ${report.eligible} eligible stable_id(s)`);
   }
   lines.push(`total: ${mintedTotal} stable_id(s) across ${reports.length} file(s)`);
   if (!options.write) lines.push("dry run - pass --write to apply");

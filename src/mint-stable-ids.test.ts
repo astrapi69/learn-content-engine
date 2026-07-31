@@ -209,6 +209,60 @@ describe("mintStableIds: several elements in real repo shape", () => {
   });
 });
 
+describe("mintStableIds: completeness is asserted, not assumed", () => {
+  // The add-only proof answers "did anything ELSE move?" - never "was
+  // everything eligible actually minted?". That is why 2 of 8 could pass as a
+  // success. The regression test for that bug closed the case, not the class:
+  // a future scanner gap that mints 7 of 8 would need a matching fixture to
+  // show. So the tool now derives the eligible count structurally (from the
+  // parsed lesson) and compares it against what the byte scanner produced.
+  const TWO_CARDS = `{
+  "id": "01-demo",
+  "title": "Demo",
+  "cards": [
+    { "id": "c1", "front": "f1", "back": "b1" },
+    { "id": "c2", "front": "f2", "back": "b2" }
+  ],
+  "steps": []
+}
+`;
+
+  it("reports how many ids were eligible alongside how many were minted", () => {
+    const report = mintStableIds(TWO_CARDS, "01-demo.json", minter);
+    expect(report.eligible).toBe(2);
+    expect(report.minted).toBe(2);
+    expect(report.ok).toBe(true);
+  });
+
+  it("fails instead of succeeding when the minter covers only part of them", () => {
+    // A scanner that finds fewer targets than the lesson has eligible
+    // elements is the shape of the 0.16.0 bug. It must be a failure, whatever
+    // the fixtures look like.
+    const partial = mintStableIds(TWO_CARDS, "01-demo.json", minter, {
+      findTargetsLimit: 1,
+    });
+    expect(partial.ok).toBe(false);
+    expect(partial.minted).toBe(0);
+    expect(partial.newText).toBeUndefined();
+    expect(partial.parseError).toContain("1 of 2");
+  });
+
+  it("an already fully minted lesson is complete with zero eligible", () => {
+    const first = mintStableIds(TWO_CARDS, "01-demo.json", minter);
+    const second = mintStableIds(first.newText ?? "", "01-demo.json", minter);
+    expect(second.eligible).toBe(0);
+    expect(second.minted).toBe(0);
+    expect(second.ok).toBe(true);
+  });
+
+  it("counts a partially minted lesson's REMAINING elements as eligible", () => {
+    const partiallyMinted = TWO_CARDS.replace('"id": "c1",', '"id": "c1", "stable_id": "card-vorhanden1",');
+    const report = mintStableIds(partiallyMinted, "01-demo.json", minter);
+    expect(report.eligible).toBe(1);
+    expect(report.minted).toBe(1);
+  });
+});
+
 describe("parseMintArgs / formatMintReports", () => {
   it("parses paths and the write flag; dry-run is the default", () => {
     const parsed = parseMintArgs(["mint-stable-ids", "a.json", "--write"]);

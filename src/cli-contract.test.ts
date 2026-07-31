@@ -33,7 +33,7 @@ const CASES = [
   },
   {
     command: "mint-stable-ids",
-    format: () => formatMintReports([{ ...FAILING_REPORT, minted: 0 }], { json: false, write: false }),
+    format: () => formatMintReports([{ ...FAILING_REPORT, minted: 0, eligible: 0 }], { json: false, write: false }),
   },
   {
     command: "suggest-wiring",
