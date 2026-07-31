@@ -154,6 +154,7 @@ describe("parseMintArgs / formatMintReports", () => {
   it("mentions the dry run in the human output", () => {
     const report = mintStableIds(PRETTY, "01-demo.json", minter);
     const output = formatMintReports([report], { json: false, write: false });
-    expect(output).toContain("dry run");
+    expect(output.text).toContain("dry run");
+    expect(output.exitCode).toBe(0);
   });
 });

@@ -87,6 +87,7 @@ if (!result.valid) console.error(result.errors); // [{ path, message }, …]
 | `validateLesson` | fn | validate a lesson against the bundled schema + semantic rules → `ValidationResult` |
 | `validateManifest` | fn | validate a manifest against the bundled schema (legacy alias normalized) |
 | `collectStableIds` | fn | set-wide `stable_id` view over several lessons: total count + duplicates with locations (the cross-lesson half the schema cannot see) |
+| `buildStableIdInventory`, `compareStableIdInventories`, `formatStabilityResult` | fn | the pure core of the shipped `check-stable-ids` gate: published-state vs head, violations V1-V4 |
 | `ContentLesson`, `ContentSetEntry`, `ContentSetBook`, `ContentSetSource`, … | types | the canonical internal format |
 | `ContentLessonInlineExample` | type | one inline worked example (schema v1.5) on a theory step or exercise |
 | `SetReviewStatus`, `SetAttribution` | types | the set entry's review standing (schema v1.9) and attribution block |

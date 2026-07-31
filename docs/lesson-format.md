@@ -727,6 +727,35 @@ output.
 > real content, the answer is to report that finding, not to loosen the
 > matching.
 
+## Checking stable identity across versions
+
+The schema cannot see whether an id survived an update, so the check ships as
+a COMMAND instead of a rule. A content repo calls it from its pinned engine:
+
+```shell
+npx learn-content-engine check-stable-ids --base origin/main
+```
+
+It compares the working tree against the merge base with `--base` (default
+`origin/main`, the published state) and reports:
+
+| Rule | Violation |
+|---|---|
+| `V1` | a published `stable_id` disappeared (retiring one is locked until the consumer side defines what happens to the learner progress behind it) |
+| `V2` | a `stable_id` is used more than once inside one set (the same id in two different sets is fine) |
+| `V3` | a `stable_id` now points at another kind or exercise type (id reuse) |
+| `V4` | a lesson FILE vanished while its set survived (the filename is the lesson's identity for progress joins) |
+
+Editing content under a constant id passes, and that is the entire point. The
+run prints the checked quantities and fails when the base carries lessons but
+the head yields none, so a run over nothing never reports success.
+
+Why a shipped command and not a script per repo: the schema claims stable
+identity in every consuming repo, so the enforcement has to reach every one of
+them. A copied script reaches the repo that has it and drifts in the rest; a
+command that arrives with the pinned release reaches each repo the moment it
+re-pins, exactly like the validator rules do.
+
 ## Minting stable ids
 
 The engine#90 retrofit tool. Dry-run by default; `--write` applies:

@@ -75,9 +75,17 @@ engine validates ONE document. It can therefore demand that a `stable_id`
 exports `collectStableIds` so a caller can check set-wide uniqueness across
 several lessons. It can NEVER check that an id stayed the same across
 versions: that needs the previous version, which only the content repo has.
-So the version-stability half of the promise lives in the content repos'
-stability gate (compare against the last published state), not here. A schema
-rule without that gate would be a promise without enforcement.
+So the version-stability half of the promise lives in a comparison against the
+last published state, not in the schema. A schema rule without that comparison
+would be a promise without enforcement.
+
+That comparison still SHIPS from here, as the `check-stable-ids` command
+(`compareStableIdInventories` is its pure core; git history and files stay in
+the bin shim). The reason is reach, not convenience: the schema claims stable
+identity in all ten consuming repos, so enforcement that lives in one of them
+leaves nine claiming a promise nobody checks. A vendored copy drifts ten ways;
+a command that travels with the pinned release arrives everywhere the schema
+does.
 
 The JSON-Schema `$id` is engine-owned
 (`https://astrapi69.github.io/learn-content-engine/schema/…`). The
