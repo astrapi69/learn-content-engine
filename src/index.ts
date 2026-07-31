@@ -28,6 +28,7 @@ export {
   buildStableIdInventory,
   compareStableIdInventories,
   formatStabilityResult,
+  isBaseCredible,
 } from "./stable-id-stability.js";
 export type {
   StabilityResult,
