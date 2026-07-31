@@ -5,6 +5,103 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [0.16.0] - 2026-07-31
+
+The bundled schema stage for content identity (#90) plus the two changes that
+were waiting for a carrier. Schema `x-schema-version` moves 1.8 -> 1.9,
+additive: every pre-1.9 lesson and manifest validates unchanged.
+
+### Schema 1.9 (additive, three fields in one round)
+
+Three field wishes shared one mirror-and-repin round over ten content repos
+instead of three:
+
+- `stable_id` on `Exercise` and `Card` (#90): author-owned, version-stable
+  identity for learner-progress and SRS joins. An opaque mint-once lowercase
+  slug (`^[a-z0-9][a-z0-9_-]{7,63}$`), deliberately NOT derived from content,
+  so correcting an answer never moves it. Uniqueness inside a lesson is
+  enforced (`E-STABLE-ID-DUP`; exercises and cards share one namespace); the
+  set-wide half ships as the exported `collectStableIds` helper, because the
+  schema only ever sees one document. Version stability itself cannot live
+  here at all: it needs the previous version, so it lives in the content
+  repos' stability gate.
+- `attribution` on `ContentSet` (#90): `author` plus a bounded `derived_from`
+  chain (oldest first, at most 8 entries). Attribution, not authorization:
+  without accounts a name is unverifiable and the field claims nothing more.
+  The name travels with the set when it is shared, so a consumer app must say
+  so before it becomes visible.
+- `review_status` on `ContentSet` (#94): three states derived from ORIGIN,
+  because origin is what makes a set review-worthy. `authored` (hand-written
+  by a speaker or domain expert, no review needed; also the meaning of an
+  absent field), `generated` (machine-generated, review pending), `reviewed`
+  (machine-generated and reviewed). A two-valued field would have put
+  hand-written sets in the same class as unreviewed machine output.
+
+`ContentSetEntry` projects both set fields: `review_status` normalized (absent
+or out-of-enum folds to `authored`), `attribution` verbatim or `null`.
+
+### Scope and limit of the identity stage
+
+This stage closes orphaning caused by slug renames and position shifts on the
+exercise and card level. It does NOT close the case that actually occurred
+(adaptive-learner#2161): an answer correction inside a surviving exercise
+still moves the content-derived element key and orphans exactly that element.
+That remainder is reduced, not closed, and is currently covered only by the
+app-side update guard (adaptive-learner#2128) until #91 or an app-side
+element-key decision closes it.
+
+### Tooling
+
+- New CLI command `mint-stable-ids <file...> [--write] [--json]`: the add-only
+  retrofit tool. Byte-offset insertion keeps both lesson formatting styles
+  byte-identical apart from the added members, and the core proves the
+  add-only property on its own output before returning it. That property is
+  what keeps the retrofit a non-event for learner progress: old derived keys
+  and new ids coexist in one file, so a consumer computes its remap locally.
+- New export `collectStableIds` (+ `StableIdReport`, `StableIdDuplicate`) for
+  set-wide uniqueness in the content-repo gates.
+- New CLI command `check-stable-ids [--base <ref>]`: the stability gate,
+  SHIPPED rather than copied into each content repo. It compares the working
+  tree against the merge base with `--base` (default `origin/main`, the
+  published state) and reports `V1` a published id disappeared, `V2` a
+  set-wide duplicate, `V3` an id pointing at another kind or exercise type,
+  `V4` a lesson file gone while its set survives (the filename is the
+  lesson's identity). Editing content under a constant id passes, which is
+  the entire point. The reason it ships: the schema claims stable identity in
+  every consuming repo, so enforcement living in one of them would leave the
+  rest claiming a promise nobody checks. `compareStableIdInventories` and
+  `buildStableIdInventory` are its pure, exported core; git history and file
+  reads stay in the CLI shim, so the library keeps its no-I/O boundary.
+  Two floors keep a green run meaningful, since the gate matters most while
+  ids are being minted: a base carrying no lessons while the head has them is
+  not a plausible predecessor and fails (`--allow-empty-base` states a genuine
+  first publication), and a base ref that does not resolve exits 2 instead of
+  comparing against nothing. A base WITH lessons and zero `stable_id`s stays
+  credible, because that is exactly the state a minting PR starts from. The
+  default base `origin/main` fits the ten content repos (all default to
+  `main`, checked); `--base` covers a repo whose published state lives
+  elsewhere.
+
+### Also in this release
+
+- `E-RETIRED-IDS-LOCKED` (#92): a manifest carrying `metadata.retired_ids` is
+  rejected. The deliberate-deletion list of the stability gate stays unusable
+  until adaptive-learner#2188 defines what happens to the learner progress of
+  a retired element; otherwise the mechanism would create exactly the
+  orphaning it exists to prevent. The rule is removed deliberately once that
+  decision lands.
+- `make conformance-real` no longer reports success over nothing (#93): zero
+  lessons in total, or any listed repo contributing zero lessons (the
+  renamed/removed/emptied case a hardcoded list ages into), now fails loudly.
+
+### Fixed
+
+- `mint-stable-ids` returned a bare string from its formatter while the CLI
+  shim destructures `{ text, exitCode }`, so the command printed `undefined`
+  and exited 0 whatever happened. Its unit tests asserted on the string and
+  never exercised the shim contract. A contract test now pins the shape for
+  every command at once.
+
 ## [0.15.0] - 2026-07-28
 
 Adds `ext:ref-image-description`, the SEVENTH reference extension: an image
