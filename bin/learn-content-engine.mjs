@@ -6,11 +6,17 @@
 // adding one is a new entry, not another copy of the read/format/exit block.
 // An unknown command falls back to `lint`, whose parser reports it (parity
 // with the pre-table behaviour).
-import { readFileSync, writeFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
 import { parseLintArgs, lintContent, formatReports } from "../dist/cli.js";
 import { parseMigrateArgs, migrateContent, formatMigrateReports } from "../dist/migrate.js";
 import { parseMintArgs, mintStableIds, formatMintReports } from "../dist/mint-stable-ids.js";
+import {
+  buildStableIdInventory,
+  compareStableIdInventories,
+  formatStabilityResult,
+} from "../dist/stable-id-stability.js";
 import {
   parseSuggestWiringArgs,
   suggestWiringContent,
@@ -77,6 +83,63 @@ const COMMANDS = {
 };
 
 const argv = process.argv.slice(2);
+
+// `check-stable-ids` is not a per-file command: it compares the WHOLE repo
+// against its last published state, so it needs git history, which no other
+// command touches. It is handled before the file-command table rather than
+// bent into it. Shipping it here (instead of every content repo copying a
+// script) is what gives the stability promise the same reach as the schema:
+// a repo that re-pins the engine gets the enforcement with it.
+if (argv[0] === "check-stable-ids") {
+  const baseFlagIndex = argv.indexOf("--base");
+  const baseRef = baseFlagIndex === -1 ? "origin/main" : argv[baseFlagIndex + 1];
+  if (!baseRef) {
+    console.error("usage: learn-content-engine check-stable-ids [--base <ref>]");
+    process.exit(2);
+  }
+  const git = (...args) => execFileSync("git", args, { encoding: "utf8" });
+  const isLesson = (path) => path.endsWith(".json") && path.includes("/lessons/");
+  const setOf = (path) => path.split("/").slice(0, 3).join("/");
+  const fileOf = (path) => path.split("/").pop();
+
+  let mergeBase;
+  try {
+    mergeBase = git("merge-base", "HEAD", baseRef).trim();
+  } catch (error) {
+    console.error(`cannot resolve the comparison base '${baseRef}': ${String(error)}`);
+    process.exit(2);
+  }
+
+  const readLessons = (paths, read) =>
+    paths.filter(isLesson).flatMap((path) => {
+      try {
+        return [{ set: setOf(path), filename: fileOf(path), lesson: JSON.parse(read(path)) }];
+      } catch (error) {
+        console.error(`cannot read ${path}: ${String(error)}`);
+        process.exit(2);
+      }
+    });
+
+  const basePaths = git("ls-tree", "-r", "--name-only", mergeBase, "sets/").split("\n").filter(Boolean);
+  const headPaths = git("ls-files", "--cached", "--others", "--exclude-standard", "sets/")
+    .split("\n")
+    .filter((path) => Boolean(path) && existsSync(path));
+
+  const base = buildStableIdInventory(readLessons(basePaths, (path) => git("show", `${mergeBase}:${path}`)));
+  const head = buildStableIdInventory(readLessons(headPaths, (path) => readFileSync(path, "utf8")));
+
+  const result = compareStableIdInventories(base, head);
+  console.log(`base: ${mergeBase.slice(0, 7)} (${baseRef})`);
+  console.log(formatStabilityResult(result));
+  // A run over nothing is not a run: a repo that lists lessons in the base but
+  // yields none in the head is broken, not clean.
+  if (base.lessons.length > 0 && head.lessons.length === 0) {
+    console.log("FAIL: the base carries lessons but the head yields none");
+    process.exit(1);
+  }
+  process.exit(result.violations.length === 0 ? 0 : 1);
+}
+
 const command = COMMANDS[argv[0]] ?? COMMANDS.lint;
 
 const parsed = command.parseArgs(argv);

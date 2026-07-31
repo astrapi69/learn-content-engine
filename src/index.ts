@@ -24,6 +24,17 @@ export {
 // --- Conformance: explicit schema validation against the bundled artifact ---
 export { validateLesson, validateManifest } from "./validate.js";
 export { collectStableIds } from "./stable-ids.js";
+export {
+  buildStableIdInventory,
+  compareStableIdInventories,
+  formatStabilityResult,
+} from "./stable-id-stability.js";
+export type {
+  StabilityResult,
+  StabilityViolation,
+  StableIdElement,
+  StableIdInventory,
+} from "./stable-id-stability.js";
 export type { StableIdDuplicate, StableIdReport } from "./stable-ids.js";
 export type { ValidationIssue, ValidationResult, ValidationSeverity } from "./validate.js";
 

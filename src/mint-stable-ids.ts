@@ -252,9 +252,10 @@ export function mintStableIds(
 export function formatMintReports(
   reports: MintReport[],
   options: { json: boolean; write: boolean },
-): string {
+): { text: string; exitCode: number } {
+  const exitCode = exitCodeFor(reports);
   if (options.json) {
-    return JSON.stringify(
+    return { text: JSON.stringify(
       reports.map((report) => {
         const { newText, ...rest } = report;
         void newText;
@@ -262,7 +263,7 @@ export function formatMintReports(
       }),
       null,
       2,
-    );
+    ), exitCode };
   }
   const lines: string[] = [];
   let mintedTotal = 0;
@@ -276,7 +277,7 @@ export function formatMintReports(
   }
   lines.push(`total: ${mintedTotal} stable_id(s) across ${reports.length} file(s)`);
   if (!options.write) lines.push("dry run - pass --write to apply");
-  return lines.join("\n");
+  return { text: lines.join("\n"), exitCode };
 }
 
 export { exitCodeFor as mintExitCode };
