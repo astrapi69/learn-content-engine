@@ -727,6 +727,24 @@ output.
 > real content, the answer is to report that finding, not to loosen the
 > matching.
 
+## Minting stable ids
+
+The engine#90 retrofit tool. Dry-run by default; `--write` applies:
+
+```shell
+npx learn-content-engine mint-stable-ids sets/en/de-b1/lessons/*.json --write
+```
+
+It inserts a `stable_id` for every exercise and card that lacks one and
+touches NOTHING else: the insertion is byte-offset based (pretty-printed and
+inline-array lesson styles both survive unchanged), existing `stable_id`s are
+kept verbatim, and the tool proves the add-only property on its own output
+before returning it (the result re-parsed must equal the input re-parsed once
+the minted ids are stripped; a file failing that proof is reported and never
+written). That property is what keeps the retrofit a non-event for learner
+progress: old derived keys and new stable ids coexist in one file, so a
+consumer can compute its remap locally.
+
 ## Editor setup
 
 Bind the bundled schema in your editor for autocomplete and inline errors while
