@@ -21,6 +21,8 @@ export type {
   ContentSetEntry,
   ContentSetSource,
   SetStatus,
+  SetAttribution,
+  SetReviewStatus,
   SetVisibility,
 } from "./content.js";
 

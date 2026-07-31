@@ -85,6 +85,25 @@ export interface ContentSetEntry {
    *  with ``"hidden"``. A DISPLAY hint only - never affects engine
    *  validation or conformance. */
   visibility: SetVisibility;
+  /** Three-state review standing (engine#94): ``"authored"`` (hand-written,
+   *  no review required), ``"generated"`` (machine-generated, review
+   *  pending), ``"reviewed"`` (machine-generated and reviewed). Absent or
+   *  out-of-enum manifest values normalize to ``"authored"`` (legacy
+   *  hand-written content). */
+  review_status: SetReviewStatus;
+  /** Content attribution (engine#90): who the set is attributed to, plus
+   *  the bounded derivation chain (oldest first). ``null`` when the
+   *  manifest carries none. Attribution, not authorization. */
+  attribution: SetAttribution | null;
+}
+
+/** Three-state review standing of a set (engine#94). */
+export type SetReviewStatus = "authored" | "generated" | "reviewed";
+
+/** A set's manifest-level attribution block (engine#90). */
+export interface SetAttribution {
+  author: string;
+  derived_from?: { author: string }[];
 }
 
 /** A set's manifest-level book block. Mirrors the manifest \`sets[].book\`

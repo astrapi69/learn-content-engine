@@ -23,6 +23,8 @@ export {
 
 // --- Conformance: explicit schema validation against the bundled artifact ---
 export { validateLesson, validateManifest } from "./validate.js";
+export { collectStableIds } from "./stable-ids.js";
+export type { StableIdDuplicate, StableIdReport } from "./stable-ids.js";
 export type { ValidationIssue, ValidationResult, ValidationSeverity } from "./validate.js";
 
 // --- Extension exercise types (schema 1.7): the registry contract ------------

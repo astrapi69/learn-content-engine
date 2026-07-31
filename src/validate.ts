@@ -30,6 +30,7 @@ import type { ErrorObject, ValidateFunction } from "ajv";
 
 import type { ExtensionRegistry } from "./extensions.js";
 import { describeInvisibleChars, findInvisibleChars } from "./invisible-chars.js";
+import { collectStableIds } from "./stable-ids.js";
 import type { Exercise, Lesson, LessonStep } from "./types/lesson-schema.generated.js";
 
 /** Whether an issue blocks (``error``) or merely advises (``warning``). */
@@ -474,7 +475,29 @@ function semanticIssues(lesson: Lesson, registry: ExtensionRegistry): Validation
   });
   checkUnusedCards(lesson, issues);
   checkInvisibleChars(lesson, issues);
+  checkStableIdDuplicates(lesson, issues);
   return issues;
+}
+
+/** E-STABLE-ID-DUP: a stable_id must be unique across the exercises and
+ *  cards of this lesson (one shared namespace). The set-wide half of the
+ *  engine#90 uniqueness promise lives in the repo gate via
+ *  {@link collectStableIds}; the schema and this rule can only see one
+ *  document. */
+function checkStableIdDuplicates(lesson: Lesson, issues: ValidationIssue[]): void {
+  for (const duplicate of collectStableIds([lesson]).duplicates) {
+    const where = duplicate.locations
+      .map((location) => `${location.kind} '${location.elementId}'`)
+      .join(", ");
+    issues.push(
+      err(
+        "E-STABLE-ID-DUP",
+        "/",
+        `stable_id '${duplicate.stableId}' is used more than once in this lesson (${where}); a stable_id identifies exactly one element`,
+        "rule-catalog",
+      ),
+    );
+  }
 }
 
 const split = (issues: ValidationIssue[]): ValidationResult => {

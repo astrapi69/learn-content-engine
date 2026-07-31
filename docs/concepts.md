@@ -22,7 +22,13 @@ manifest.yaml ──parseManifest──▶ ParsedManifest
    `sets[]` entry into a canonical `ContentSetEntry`: it resolves the language
    pair, applies defaults, computes `update_available`, projects the book
    block, and carries the optional `visibility` hint (`"visible"` unless the set
-   opts out with `"hidden"`). **`setBasePath(parsedSet)`** tells you the
+   opts out with `"hidden"`), the optional three-state `review_status`
+   (`"authored"` unless the manifest says `"generated"` or `"reviewed"`;
+   origin is what makes a set review-worthy, so hand-written sets never share
+   a class with unreviewed machine output, engine#94) and the optional
+   `attribution` block (author plus a bounded derivation chain, engine#90;
+   attribution, not authorization, and the name travels with the set when it
+   is shared). **`setBasePath(parsedSet)`** tells you the
    repo-relative directory holding that set's `lessons/`.
 3. From the set entry you build a **`LessonSetContext`** (`language`,
    `target_language`, `source_language`, `domain`): the context a lesson

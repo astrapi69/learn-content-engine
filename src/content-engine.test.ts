@@ -239,6 +239,64 @@ describe("Content-Engine — canonical set-entry projection", () => {
     expect(entry.visibility).toBe("visible");
   });
 
+  it("projects review_status through to the canonical entry (engine#94)", () => {
+    const entry = asContentSetEntry(
+      SOURCE,
+      {
+        id: "ki-einsteiger",
+        title: "KI",
+        target_language: "de",
+        level: "A1",
+        version: "1.0.0",
+        lesson_count: 1,
+        review_status: "generated",
+      },
+      null,
+    );
+    expect(entry.review_status).toBe("generated");
+  });
+
+  it("defaults review_status to ``authored`` when absent or out of enum (boundary)", () => {
+    const bare = asContentSetEntry(
+      SOURCE,
+      { id: "fr-a1", title: "F", target_language: "fr", level: "A1", version: "1.0.0", lesson_count: 1 },
+      null,
+    );
+    expect(bare.review_status).toBe("authored");
+    const bogus = asContentSetEntry(
+      SOURCE,
+      { id: "fr-a1", title: "F", target_language: "fr", level: "A1", version: "1.0.0", lesson_count: 1, review_status: "verified" },
+      null,
+    );
+    expect(bogus.review_status).toBe("authored");
+  });
+
+  it("projects attribution verbatim and null when absent (engine#90)", () => {
+    const attributed = asContentSetEntry(
+      SOURCE,
+      {
+        id: "fr-a1",
+        title: "F",
+        target_language: "fr",
+        level: "A1",
+        version: "1.0.0",
+        lesson_count: 1,
+        attribution: { author: "Asterios Raptis", derived_from: [{ author: "Jane Doe" }] },
+      },
+      null,
+    );
+    expect(attributed.attribution).toEqual({
+      author: "Asterios Raptis",
+      derived_from: [{ author: "Jane Doe" }],
+    });
+    const bare = asContentSetEntry(
+      SOURCE,
+      { id: "fr-a1", title: "F", target_language: "fr", level: "A1", version: "1.0.0", lesson_count: 1 },
+      null,
+    );
+    expect(bare.attribution).toBeNull();
+  });
+
   it("normalizes an unexpected visibility value to ``visible`` (defensive projection)", () => {
     const entry = asContentSetEntry(
       SOURCE,

@@ -327,6 +327,111 @@ describe("validateLesson — negative: rejection is part of the format", () => {
   });
 });
 
+describe("schema 1.9 — stable_id on exercises and cards (engine#90)", () => {
+  const lessonWithStableIds = (exerciseSid?: string, cardSid?: string) => ({
+    id: "l1",
+    title: "Stable ids",
+    steps: [
+      {
+        id: "s1",
+        type: "exercise",
+        exercise: {
+          id: "e1",
+          type: "free_text",
+          prompt: "p",
+          accept: ["a"],
+          ...(exerciseSid ? { stable_id: exerciseSid } : {}),
+        },
+      },
+    ],
+    cards: [{ id: "c1", front: "f", back: "b", ...(cardSid ? { stable_id: cardSid } : {}) }],
+  });
+
+  it("accepts a lesson whose exercise and card carry well-formed stable_ids", () => {
+    const checked = validateLesson(lessonWithStableIds("ex-m5k2p8qa", "card-m5k2p8qb"));
+    expect(checked.errors).toEqual([]);
+    expect(checked.valid).toBe(true);
+  });
+
+  it("stays optional: a lesson without stable_ids validates unchanged (pre-1.9 content)", () => {
+    expect(validateLesson(lessonWithStableIds()).valid).toBe(true);
+  });
+
+  it("rejects a malformed stable_id (uppercase) via the schema pattern", () => {
+    expect(validateLesson(lessonWithStableIds("EX-M5K2P8QA")).valid).toBe(false);
+  });
+
+  it("boundary: rejects a stable_id shorter than 8 characters", () => {
+    expect(validateLesson(lessonWithStableIds("ex-a1")).valid).toBe(false);
+  });
+
+  it("rejects a duplicate stable_id within one lesson (E-STABLE-ID-DUP)", () => {
+    const duplicated = lessonWithStableIds("dup-m5k2p8qa", "dup-m5k2p8qa");
+    const checked = validateLesson(duplicated);
+    expect(checked.valid).toBe(false);
+    expect(checked.errors.some((issue) => issue.id === "E-STABLE-ID-DUP")).toBe(true);
+  });
+});
+
+describe("schema 1.9 — attribution and review_status on the set entry (engine#90/#94)", () => {
+  const manifestWith = (setExtras: Record<string, unknown>) => ({
+    schema_version: "1.2",
+    name: "M",
+    sets: [
+      {
+        id: "x",
+        title: "X",
+        target_language: "fr",
+        level: "A1",
+        version: "1.0.0",
+        lesson_count: 1,
+        ...setExtras,
+      },
+    ],
+  });
+
+  it("accepts attribution with author and a bounded derivation chain", () => {
+    const checked = validateManifest(
+      manifestWith({
+        attribution: { author: "Asterios Raptis", derived_from: [{ author: "Jane Doe" }] },
+      }),
+    );
+    expect(checked.errors).toEqual([]);
+    expect(checked.valid).toBe(true);
+  });
+
+  it("rejects attribution without an author (attribution is a claim, not a container)", () => {
+    expect(validateManifest(manifestWith({ attribution: { derived_from: [] } })).valid).toBe(false);
+  });
+
+  it("boundary: rejects a derivation chain longer than 8 entries", () => {
+    const chain = Array.from({ length: 9 }, (_, index) => ({ author: `Autor ${index}` }));
+    expect(
+      validateManifest(manifestWith({ attribution: { author: "A", derived_from: chain } })).valid,
+    ).toBe(false);
+  });
+
+  it("boundary: a derivation chain of exactly 8 entries validates", () => {
+    const chain = Array.from({ length: 8 }, (_, index) => ({ author: `Autor ${index}` }));
+    expect(
+      validateManifest(manifestWith({ attribution: { author: "A", derived_from: chain } })).valid,
+    ).toBe(true);
+  });
+
+  it("rejects unknown fields inside attribution (strict object)", () => {
+    expect(
+      validateManifest(manifestWith({ attribution: { author: "A", email: "x@y.z" } })).valid,
+    ).toBe(false);
+  });
+
+  it("accepts every review_status value and rejects an out-of-enum one", () => {
+    for (const status of ["authored", "generated", "reviewed"]) {
+      expect(validateManifest(manifestWith({ review_status: status })).valid).toBe(true);
+    }
+    expect(validateManifest(manifestWith({ review_status: "verified" })).valid).toBe(false);
+  });
+});
+
 describe("validateManifest — retired_ids lock (engine#90 / adaptive-learner#2188)", () => {
   const validSet = {
     id: "x",

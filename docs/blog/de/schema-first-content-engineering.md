@@ -9,11 +9,11 @@ tags: [architecture, schema-design, typescript, content-engineering]
 
 *Wie `learn-content-engine` ein stabiles Kern-Schema behält und trotzdem Raum für pädagogische Erfindung lässt: durch eine harte Linie zwischen dem Vertrag, den es besitzt, und den Regeln, die seine Consumer besitzen.*
 
-`learn-content-engine` · Schema aktuell v1.8 · framework-agnostisches TypeScript
+`learn-content-engine` · Schema aktuell v1.9 · framework-agnostisches TypeScript
 
 ## Das Content-Schema-Dilemma
 
-`learn-content-engine` ist eine framework-agnostische TypeScript-Bibliothek, die Lerninhalte parst und validiert: Sprachkurse zuallererst, wobei ein frei belegbares `domain`-Feld dieselbe Form auch andere Wissensgebiete tragen lässt (Technik-Kurse, Führerschein-Vorbereitung, Psychologie). Sie verwandelt Rohquellen (Lektions-JSON plus eine `manifest.yaml`) in eine kanonische interne Form, und sie ist die einzige Quelle der Wahrheit für das Lektions-Schema, aktuell Version 1.8.
+`learn-content-engine` ist eine framework-agnostische TypeScript-Bibliothek, die Lerninhalte parst und validiert: Sprachkurse zuallererst, wobei ein frei belegbares `domain`-Feld dieselbe Form auch andere Wissensgebiete tragen lässt (Technik-Kurse, Führerschein-Vorbereitung, Psychologie). Sie verwandelt Rohquellen (Lektions-JSON plus eine `manifest.yaml`) in eine kanonische interne Form, und sie ist die einzige Quelle der Wahrheit für das Lektions-Schema, aktuell Version 1.9.
 
 Der Kern ist bewusst klein. Kein Rendering, keine Persistenz, kein Netzwerk; die einzige Laufzeit-Abhängigkeit ist ein YAML-Parser. Was er bietet, ist reine Validierung und Transformation. Dieser Minimalismus ist der Punkt, und er erzwingt eine harte Frage: *Wie entwickelt man ein Content-Schema weiter, ohne jeden Consumer zu brechen, der davon abhängt?*
 
@@ -38,7 +38,7 @@ Einen neuen *Kern*-`ExerciseType` hinzuzufügen ist keine kleine Änderung. Es i
 
 Verfolgen Sie, was ein einzelner Kern-Typ berührt:
 
-- **Schema.** `lesson.schema.json` bekommt einen Enum-Wert und eine Payload-Definition (ein additiver Minor-Sprung, 1.8 auf 1.9).
+- **Schema.** `lesson.schema.json` bekommt einen Enum-Wert und eine Payload-Definition (ein additiver Minor-Sprung, 1.9 auf 1.10).
 - **Typen.** `generate-lesson-types.mjs` regeneriert die Interfaces; jeder Consumer übernimmt die neue Form.
 - **Spiegel.** Zehn Content-Repositories spiegeln das Schema (das offizielle Repo, das Test-/Starter-Repo, das Template und sieben `alc-*`-Domänen-Repos, plus die generierte Kopie der App selbst), und Byte-Paritäts-Gates halten sie ehrlich.
 - **Dispatcher & Renderer.** Der Übungs-Dispatcher der App braucht einen neuen Zweig und eine neue Renderer-Komponente.

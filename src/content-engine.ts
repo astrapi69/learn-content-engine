@@ -34,6 +34,8 @@ import type {
   ContentSetEntry,
   ContentSetSource,
   SetStatus,
+  SetAttribution,
+  SetReviewStatus,
   SetVisibility,
 } from "./types/index.js";
 
@@ -82,6 +84,10 @@ export interface ParsedSet {
   /** Consumer-display hint (#83). ``"hidden"`` keeps the set out of a
    *  consumer app's learner-facing list; absent means ``"visible"``. */
   visibility?: SetVisibility;
+  /** Three-state review standing (engine#94); absent means ``"authored"``. */
+  review_status?: SetReviewStatus;
+  /** Attribution block (engine#90); absent means no attribution claim. */
+  attribution?: SetAttribution | null;
 }
 
 /** A parsed ``manifest.yaml`` document (repo-level or set-level). */
@@ -186,6 +192,11 @@ export function asContentSetEntry(
     status,
     book: asContentSetBook(parsed.book),
     visibility: parsed.visibility === "hidden" ? "hidden" : "visible",
+    review_status:
+      parsed.review_status === "generated" || parsed.review_status === "reviewed"
+        ? parsed.review_status
+        : "authored",
+    attribution: parsed.attribution ?? null,
   };
 }
 
