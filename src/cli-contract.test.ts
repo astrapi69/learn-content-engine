@@ -3,6 +3,7 @@ import { describe, it, expect } from "vitest";
 import { formatReports } from "./cli.js";
 import { formatMigrateReports } from "./migrate.js";
 import { formatMintReports, mintStableIds } from "./mint-stable-ids.js";
+import { formatCoverageResult } from "./stable-id-coverage.js";
 import { formatSuggestWiringReports } from "./suggest-wiring.js";
 
 /**
@@ -42,6 +43,12 @@ const CASES = [
         [{ ...FAILING_REPORT, suggestions: [], manualReview: [], accepted: [] } as never],
         { json: false, write: false, accept: [] },
       ),
+  },
+  {
+    // Not a per-file command, but it reaches the shim through the same
+    // destructuring, so it belongs under the same pin.
+    command: "check-stable-id-coverage",
+    format: () => formatCoverageResult({ covered: 1, total: 2, unminted: ["sets/de/b"] }, 1),
   },
 ] as const;
 

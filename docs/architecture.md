@@ -87,6 +87,16 @@ leaves nine claiming a promise nobody checks. A vendored copy drifts ten ways;
 a command that travels with the pinned release arrives everywhere the schema
 does.
 
+The same argument produced a second command, `check-stable-id-coverage`
+(engine#103). Stability and coverage are two different questions, and the first
+cannot stand in for the second: an unminted set publishes no ids, so it
+violates no stability rule while still being uncovered. Coverage first lived as
+a per-repo script and drifted exactly as predicted, not in its wording but in
+its reach: it judged the covered COUNT against a baseline and never consulted
+the total, so a new unminted set passed. What legitimately stays repo-local is
+the baseline NUMBER, a property of the individual repository. The RULE is
+universal and therefore ships.
+
 The JSON-Schema `$id` is engine-owned
 (`https://astrapi69.github.io/learn-content-engine/schema/…`). The
 TypeScript types (`src/types/lesson-schema.generated.ts`) are generated from the
