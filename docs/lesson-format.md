@@ -772,6 +772,45 @@ them. A copied script reaches the repo that has it and drifts in the rest; a
 command that arrives with the pinned release reaches each repo the moment it
 re-pins, exactly like the validator rules do.
 
+## Checking that every set is minted at all
+
+The gate above answers "does a published id still point at its element?". It
+cannot answer "is every set actually minted?", because a set without any
+`stable_id` publishes nothing and therefore violates nothing. That second
+question is a separate command:
+
+```shell
+npx learn-content-engine check-stable-id-coverage
+```
+
+It reads the root `manifest.yaml`, walks each listed set through its
+`metadata.lessons`, and compares the result against the baseline in
+`schema/stable-id-coverage.txt` (both paths overridable with `--manifest` and
+`--baseline`):
+
+| Rule | Verdict |
+|---|---|
+| `NO_SETS` | the root manifest lists no sets; a run over nothing is never fully covered |
+| `REGRESSION` | fewer sets are minted than the baseline records |
+| `UNDECLARED_RAISE` | more are minted than the baseline records; crossing the line is a deliberate edit |
+| `INCOMPLETE` | a listed set is not fully minted, named by path |
+
+A set counts as covered only when EVERY card and exercise in EVERY listed
+lesson carries a `stable_id`; half a set is half a promise. A set with no
+lessons counts as uncovered for the same reason.
+
+`INCOMPLETE` is the rule the earlier per-repo script lacked (engine#103). That
+script compared the covered count against the baseline and never consulted the
+total, so a NEW unminted set raised the total, left the covered count untouched
+and passed green. The promise that every set carries stable ids would have
+quietly stopped being true, one set at a time, with no run reporting it. All
+failures are reported together rather than one per run, so a repo does not fix
+one number only to meet the next on the following push.
+
+There is deliberately no exemption list for sets that are knowingly unminted.
+Minting is add-only and cheap, so an unminted set is a state to fix before the
+merge, not one to carry.
+
 ## Minting stable ids
 
 The engine#90 retrofit tool. Dry-run by default; `--write` applies:

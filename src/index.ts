@@ -36,6 +36,17 @@ export type {
   StableIdElement,
   StableIdInventory,
 } from "./stable-id-stability.js";
+export {
+  computeStableIdCoverage,
+  formatCoverageResult,
+  gateStableIdCoverage,
+} from "./stable-id-coverage.js";
+export type {
+  CoverageFailure,
+  CoverageSet,
+  CoverageVerdict,
+  StableIdCoverage,
+} from "./stable-id-coverage.js";
 export type { StableIdDuplicate, StableIdReport } from "./stable-ids.js";
 export type { ValidationIssue, ValidationResult, ValidationSeverity } from "./validate.js";
 

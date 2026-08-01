@@ -5,6 +5,43 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [0.17.0] - 2026-08-01
+
+Ships the coverage half of the stable_id promise, so a new unminted set can no
+longer erode it silently.
+
+`check-stable-ids` answers "does a published id still point at its element?".
+It cannot answer "is every set actually minted?", because an unminted set
+publishes no ids and therefore violates nothing. That second question lived as
+a script vendored into ten content repos, and it drifted in reach rather than
+in wording: it compared the covered COUNT against a committed baseline and
+never consulted the total. A new unminted set raised the total, left the count
+untouched and passed green. In `alc-psychology` that produced
+`2 of 3 set(s) fully minted, baseline 2 / OK` - and ecosystem-wide, 47 of 47
+would have become 47 of 48 with nothing reporting it.
+
+The new command `check-stable-id-coverage` reads the root manifest, walks each
+listed set through its `metadata.lessons` and judges four red paths together
+rather than one per run: `NO_SETS`, `REGRESSION`, `UNDECLARED_RAISE`, and the
+missing one, `INCOMPLETE`, which names every listed set that is not fully
+minted. A set counts as covered only when every card and exercise in every
+listed lesson carries a `stable_id`.
+
+New exports: `computeStableIdCoverage`, `gateStableIdCoverage`,
+`formatCoverageResult`, plus the `CoverageSet`, `StableIdCoverage`,
+`CoverageFailure` and `CoverageVerdict` types. Only the baseline NUMBER stays
+repo-local, because that is a property of the individual repository; the rule
+is universal and therefore ships.
+
+Verified against `origin/main` of all ten content repos before release: every
+one is green under the new rule today, 47 covered of 47 listed.
+
+Structural note, and the third instance of it in two days: a proof answers ONE
+question, and it is rarely the one it gets used for. The add-only proof did not
+answer "was everything minted?" (0.16.2), and the coverage ratchet did not
+answer "is every set minted?" (this release). Both looked like the guarantee
+they were standing in for.
+
 ## [0.16.2] - 2026-07-31
 
 Makes an incomplete mint a failure instead of a success.

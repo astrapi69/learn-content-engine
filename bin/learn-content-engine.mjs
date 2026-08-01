@@ -8,10 +8,17 @@
 // with the pre-table behaviour).
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+
+import { parse as parseYaml } from "yaml";
 
 import { parseLintArgs, lintContent, formatReports } from "../dist/cli.js";
 import { parseMigrateArgs, migrateContent, formatMigrateReports } from "../dist/migrate.js";
 import { parseMintArgs, mintStableIds, formatMintReports } from "../dist/mint-stable-ids.js";
+import {
+  computeStableIdCoverage,
+  formatCoverageResult,
+} from "../dist/stable-id-coverage.js";
 import {
   buildStableIdInventory,
   compareStableIdInventories,
@@ -143,6 +150,78 @@ if (argv[0] === "check-stable-ids") {
     process.exit(1);
   }
   process.exit(result.violations.length === 0 ? 0 : 1);
+}
+
+// `check-stable-id-coverage` is the second half of the stable_id promise
+// (engine#103): the stability gate above proves that a PUBLISHED id still
+// points at its element, which an unminted set never violates because it
+// publishes nothing. This one proves that every set listed in the root
+// manifest actually carries ids. It ships here for the same reason the
+// stability half does - ten vendored copies drift, one pinned command does
+// not. Only the baseline NUMBER stays repo-local.
+if (argv[0] === "check-stable-id-coverage") {
+  const flag = (name, fallback) => {
+    const index = argv.indexOf(name);
+    return index === -1 ? fallback : argv[index + 1];
+  };
+  const manifestPath = flag("--manifest", "manifest.yaml");
+  const baselinePath = flag("--baseline", "schema/stable-id-coverage.txt");
+  if (!manifestPath || !baselinePath) {
+    console.error(
+      "usage: learn-content-engine check-stable-id-coverage [--manifest <path>] [--baseline <path>]",
+    );
+    process.exit(2);
+  }
+
+  const readYaml = (path) => {
+    try {
+      return parseYaml(readFileSync(path, "utf8")) ?? {};
+    } catch (error) {
+      console.error(`cannot read ${path}: ${String(error)}`);
+      process.exit(2);
+    }
+  };
+
+  const rootManifest = readYaml(manifestPath);
+  const rootDir = dirname(manifestPath);
+  const coverageSets = (rootManifest.sets ?? [])
+    .filter((entry) => entry?.path)
+    .map((entry) => {
+      const setDir = join(rootDir, entry.path);
+      const setManifest = existsSync(join(setDir, "manifest.yaml"))
+        ? readYaml(join(setDir, "manifest.yaml"))
+        : {};
+      const lessonNames = setManifest.metadata?.lessons ?? [];
+      const lessons = lessonNames.map((name) => {
+        const lessonPath = join(setDir, "lessons", name);
+        if (!existsSync(lessonPath)) {
+          // A listed lesson that is not on disk cannot carry ids. Reporting it
+          // as an unminted set is the honest reading; crashing would hide the
+          // coverage of every other set behind an unrelated bookkeeping error.
+          return { cards: [{ id: name }] };
+        }
+        try {
+          return JSON.parse(readFileSync(lessonPath, "utf8"));
+        } catch (error) {
+          console.error(`cannot read ${lessonPath}: ${String(error)}`);
+          process.exit(2);
+        }
+      });
+      return { set: entry.path, lessons };
+    });
+
+  let baseline = 0;
+  if (existsSync(baselinePath)) {
+    baseline = Number.parseInt(readFileSync(baselinePath, "utf8").trim(), 10);
+    if (Number.isNaN(baseline)) {
+      console.error(`the baseline in ${baselinePath} is not a number`);
+      process.exit(2);
+    }
+  }
+
+  const { text, exitCode } = formatCoverageResult(computeStableIdCoverage(coverageSets), baseline);
+  console.log(text);
+  process.exit(exitCode);
 }
 
 const command = COMMANDS[argv[0]] ?? COMMANDS.lint;
