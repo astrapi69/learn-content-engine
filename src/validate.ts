@@ -67,7 +67,7 @@ function makeIssue(
 }
 const err = (id: string, path: string, message: string, anchor: string): ValidationIssue =>
   makeIssue("error", id, path, message, anchor);
-const warn = (id: string, path: string, message: string, anchor: string): ValidationIssue =>
+export const warn = (id: string, path: string, message: string, anchor: string): ValidationIssue =>
   makeIssue("warning", id, path, message, anchor);
 
 const loadSchema = (fileName: string): object =>

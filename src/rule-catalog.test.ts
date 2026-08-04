@@ -12,10 +12,17 @@ import { describe, it, expect } from "vitest";
 const read = (relativePath: string): string =>
   readFileSync(fileURLToPath(new URL(relativePath, import.meta.url)), "utf8");
 
+// Every module that emits ValidationIssues; a new emitter belongs on this
+// list, or its rule ids escape the catalog check (the gap engine#106 closed:
+// the scan only ever covered validate.ts).
+const ISSUE_EMITTING_SOURCES = ["./validate.ts", "./set-ordering.ts"];
+
 const ruleIdsInSource = (): string[] => {
-  const source = read("./validate.ts");
   const ids = new Set<string>();
-  for (const match of source.matchAll(/"([EW]-[A-Z0-9-]+)"/g)) ids.add(match[1]!);
+  for (const sourceFile of ISSUE_EMITTING_SOURCES) {
+    const source = read(sourceFile);
+    for (const match of source.matchAll(/"([EW]-[A-Z0-9-]+)"/g)) ids.add(match[1]!);
+  }
   return [...ids].sort();
 };
 
