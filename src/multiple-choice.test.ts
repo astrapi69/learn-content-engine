@@ -129,8 +129,13 @@ describe("multiple_choice - schema version + round-trip", () => {
       readFileSync(fileURLToPath(new URL("../schema/lesson.schema.json", import.meta.url)), "utf8"),
     ) as Record<string, unknown>;
     // multiple_choice shipped in 1.6; later additive bumps (e.g. 1.7 extensions)
-    // keep it valid, so pin the floor rather than the exact version.
-    expect(Number(schema["x-schema-version"])).toBeGreaterThanOrEqual(1.6);
+    // keep it valid, so pin the floor rather than the exact version. Compare
+    // (major, minor) as integers: Number("1.10") is 1.1 and would read a
+    // legitimate 1.10 as below the 1.6 floor.
+    const [major, minor] = String(schema["x-schema-version"])
+      .split(".")
+      .map((part) => Number(part));
+    expect(major! > 1 || (major === 1 && minor! >= 6)).toBe(true);
   });
 
   it("round-trips typed onto the canonical object", () => {
