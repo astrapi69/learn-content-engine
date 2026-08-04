@@ -5,6 +5,51 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [Unreleased]
+
+Makes "slug-safe id" a machine-enforced rule instead of prose (engine#105,
+schema 1.10).
+
+Before this change the slug requirement on `lesson.id`, `step.id`,
+`exercise.id` and `card.id` existed only in the `description` text -
+`validateLesson()` accepted ids with spaces, uppercase, umlauts and
+underscores. The reference consumer (adaptive-learner) checks exactly those
+fields plus `card.tags` against its import regex and silently skips any
+lesson that fails, so an engine-conforming generator could produce content
+the app throws away (observed: 2 of 23 lessons of a generated set missing,
+the two with `free_text` / `word_tiles` underscores in the id suffix).
+
+The app rule is now canonical and centralised as `$defs/SlugId`:
+`^[\p{Ll}\p{Nd}]+(-[\p{Ll}\p{Nd}]+)*$` - lowercase Unicode letters and digits
+in hyphen-separated runs. The four id fields reference it as a hard pattern.
+Measured against `origin/main` of all ten content repos first (611 lessons,
+6333 step ids, 4830 exercise ids, 6437 card ids): zero violations in
+published `sets/` content, so the hard pattern invalidates nothing that
+ships. (The only lesson-id hits were the `TEMPLATE-...` placeholder files
+under `templates/`, which no gate validates; renaming them is a follow-up in
+the content repos.)
+
+`card.tags` gets the warning tier instead (`W-ID-NOT-SLUG`, names the
+offending characters per tag): the published corpus still carries 11
+violating tags (`mustn't`, `-er-verb`, `typ-III`, ...). The tag pattern
+hardens in a follow-up once the content is clean. Warnings never block, so
+content-repo gates stay green.
+
+`stable_id` keeps its historical `^[a-z0-9][a-z0-9_-]{7,63}$` pattern:
+published stable_ids are immutable by definition (engine#90), so the
+underscore allowance stays, and the description now names the discrepancy
+explicitly. No published stable_id uses an underscore, and the bundled
+minter only ever emits `[a-z0-9-]`.
+
+Migration note: content whose ids already satisfied the documented
+convention validates unchanged. An id with uppercase, underscores or spaces
+now fails structurally - which is the point: it failed at the consumer
+already, just silently and after distribution.
+
+Also fixes the schema-version floor test comparing `x-schema-version` as a
+decimal number (`Number("1.10")` is `1.1`, reading a legitimate 1.10 as
+below the 1.6 floor).
+
 ## [0.17.0] - 2026-08-01
 
 Ships the coverage half of the stable_id promise, so a new unminted set can no

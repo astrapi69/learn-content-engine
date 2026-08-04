@@ -84,7 +84,7 @@ Everything else is optional.
 
 | Field | Type | Notes |
 |---|---|---|
-| `id` | string, required | Slug-safe, unique within the set. Convention `NN-slug` (e.g. `01-greetings`). |
+| `id` | string, required | [Slug id](#slug-ids), unique within the set. Convention `NN-slug` (e.g. `01-greetings`). |
 | `title` | string, required | Human-readable lesson title. |
 | `steps` | array, required | Ordered theory + exercise steps; at least one. |
 | `cards` | array | The facts the lesson teaches (see [Cards](#cards)). |
@@ -101,6 +101,29 @@ Everything else is optional.
 parent set and injected during parsing; a lesson that declares its own keeps
 them. See [concepts.md](concepts.md#context-inheritance-vs-standalone).
 
+## Slug ids
+
+`lesson.id`, `step.id`, `exercise.id` and `card.id` share one machine-enforced
+shape (schema v1.10, `$defs/SlugId`, engine#105):
+
+```
+^[\p{Ll}\p{Nd}]+(-[\p{Ll}\p{Nd}]+)*$
+```
+
+Lowercase Unicode letters and digits in hyphen-separated runs. No uppercase,
+no underscore, no whitespace, no leading/trailing/double hyphen. Valid:
+`01-greetings`, `a`, `fünf-wörter`. Invalid: `A-b`, `a_b`, `a b`, `-a`, `a-`,
+`a--b`.
+
+This is exactly the regex the reference consumer
+([adaptive-learner](https://github.com/astrapi69/adaptive-learner)) applies on
+import; a lesson whose ids fail it is silently skipped there, so the engine
+rejects it up front instead of letting a schema-conforming generator produce
+content the app throws away. `card.tags` follows the same rule but is warning
+tier for now (`W-ID-NOT-SLUG`, see the [rule catalog](#rule-catalog)).
+`stable_id` keeps its own historical pattern for compatibility (see
+[Stable identity](#stable-identity-stable_id)).
+
 ## Cards
 
 A card is the smallest learnable unit: one term / concept / fact. Exercises
@@ -109,11 +132,11 @@ the lesson's `cards` (referential integrity is enforced).
 
 | Field | Type | Notes |
 |---|---|---|
-| `id` | string, required | Slug-safe, unique within the lesson. |
+| `id` | string, required | [Slug id](#slug-ids), unique within the lesson. |
 | `stable_id` | string \| null | Version-stable identity (schema v1.9, see [Stable identity](#stable-identity-stable_id)). |
 | `front` | string, required | What the learner sees first (usually the target term). |
 | `back` | string, required | What they recall (translation / definition). |
-| `tags` | string[] | Slug-safe tags for filtering. |
+| `tags` | string[] | Tags for filtering; the [slug rule](#slug-ids) applies (warning tier, `W-ID-NOT-SLUG`). |
 | `hint`, `notes` | string \| null | Optional help / footnote. |
 | `difficulty` | 1-5 \| null | Optional difficulty. |
 | `media_type` | `text` \| `code` \| `formula` \| `diagram` \| null | Content kind; drives code-aware rendering. |
@@ -131,7 +154,7 @@ A step is either a **theory** step (`type: "theory"`) or an **exercise** step
 - An exercise step **requires** an `exercise` payload and must **not** carry a
   `body`.
 
-Common step fields: `id` (required, slug-safe), `type` (required), `title`.
+Common step fields: `id` (required, a [slug id](#slug-ids)), `type` (required), `title`.
 
 ### Theory steps
 
@@ -621,6 +644,7 @@ drifting.
 | `W-PIC-DATA-URI` | A `picture_choice` image `src` is an inline `data:` URI (schema v1.8 allows it for consumer-local content, e.g. uploaded images). Repo content should prefer a relative `assets/` path - inline data URIs bloat the lesson JSON and the git history. Advisory only, never blocks. |
 | `W-HINT-LENGTH` | A hint reveals the answer length (e.g. "four letters"). Consumers that display an answer-length indicator make such a hint redundant; on other consumers it gives part of the answer away. |
 | `W-INVISIBLE-CHAR` | The lesson's text carries characters that render as nothing: zero-width spaces, byte-order marks, directional marks, soft hyphens, and control characters that a JSON escape smuggled through (a `\u0007` escape parses into a real one). They are legal JSON and survive every structural check, and no one spots them by reading the file; they usually arrive by pasting from a PDF or a web page. The warning names each codepoint (`U+200B ZERO WIDTH SPACE`), its Unicode name, and where it sits, aggregated once per lesson. Every string is scanned, including `ext_payload`, so extension text is covered without the engine knowing its shape. Deliberately NOT flagged: tab, newline and carriage return (ordinary text, and theory bodies are full of newlines), and `U+00A0` NO-BREAK SPACE / `U+202F` NARROW NO-BREAK SPACE, which render as whitespace and are legitimate typography (French sets one before `?` and `!`). |
+| `W-ID-NOT-SLUG` | A `card.tags` entry fails the [slug rule](#slug-ids) that the id fields enforce as a hard schema pattern (engine#105). The reference consumer checks tags with the SAME regex it applies to ids, so a non-slug tag (`mustn't`, `typ-III`, `-er-verb`) makes the lesson silently skippable on import. Warning tier for now: published content still carries violating tags; once the corpus is clean the tag pattern hardens too. The message names the offending character(s), not just the regex. |
 
 ## Linting
 

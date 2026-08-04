@@ -464,6 +464,53 @@ function checkInvisibleChars(lesson: Lesson, issues: ValidationIssue[]): void {
   if (description) issues.push(warn("W-INVISIBLE-CHAR", "", description, "author-lints"));
 }
 
+/** The canonical slug rule (engine#105): the schema's ``$defs/SlugId`` pattern,
+ *  which in turn mirrors the reference consumer's import check (adaptive-learner,
+ *  ``frontend/src/lib/content/analysis/analysis-to-lesson.ts``, SLUG_RE). The
+ *  slug-id parity test pins schema and app literal to each other. */
+const SLUG_ID_RE = /^[\p{Ll}\p{Nd}]+(-[\p{Ll}\p{Nd}]+)*$/u;
+
+/** Name what makes a value fail {@link SLUG_ID_RE}, character by character, so
+ *  the author sees the exact offender ("space", "uppercase 'Z'") instead of a
+ *  bare regex. */
+function describeSlugOffenders(value: string): string {
+  const offenders = new Set<string>();
+  for (const char of value) {
+    if (/[\p{Ll}\p{Nd}-]/u.test(char)) continue;
+    if (char === " ") offenders.add("space");
+    else if (char === "_") offenders.add("underscore '_'");
+    else if (/\p{Lu}/u.test(char)) offenders.add(`uppercase '${char}'`);
+    else offenders.add(`'${char}'`);
+  }
+  if (value.startsWith("-")) offenders.add("leading hyphen");
+  if (value.endsWith("-")) offenders.add("trailing hyphen");
+  if (value.includes("--")) offenders.add("double hyphen");
+  if (value.length === 0) offenders.add("empty string");
+  return [...offenders].join(", ");
+}
+
+/** W-ID-NOT-SLUG (engine#105): card.tags entries that fail the slug rule. The
+ *  reference consumer checks tags with the SAME regex it applies to ids, so a
+ *  non-slug tag makes the whole lesson silently skippable on import. Warning
+ *  tier (not the schema pattern the id fields got) because the published
+ *  corpus still carries violating tags; the hard pattern follows once the
+ *  content is clean. */
+function checkSlugTags(lesson: Lesson, issues: ValidationIssue[]): void {
+  (lesson.cards ?? []).forEach((card, cardIndex) => {
+    (card.tags ?? []).forEach((tag, tagIndex) => {
+      if (SLUG_ID_RE.test(tag)) return;
+      issues.push(
+        warn(
+          "W-ID-NOT-SLUG",
+          `/cards/${cardIndex}/tags/${tagIndex}`,
+          `tag '${tag}' is not slug-safe (${describeSlugOffenders(tag)}); the reference consumer skips lessons whose tags fail its import check`,
+          "author-lints",
+        ),
+      );
+    });
+  });
+}
+
 /** Semantic + lint pass. Assumes the input is already structurally valid (so the
  *  schema-typed shape is trustworthy). Returns a mixed error/warning list. */
 function semanticIssues(lesson: Lesson, registry: ExtensionRegistry): ValidationIssue[] {
@@ -476,6 +523,7 @@ function semanticIssues(lesson: Lesson, registry: ExtensionRegistry): Validation
   checkUnusedCards(lesson, issues);
   checkInvisibleChars(lesson, issues);
   checkStableIdDuplicates(lesson, issues);
+  checkSlugTags(lesson, issues);
   return issues;
 }
 
