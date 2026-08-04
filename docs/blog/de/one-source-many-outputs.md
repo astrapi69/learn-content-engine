@@ -43,7 +43,7 @@ Drei Dinge bleiben in dem, was Sie schreiben, bewusst getrennt: der **Inhalt** (
 
 Sie müssen dieses JSON nicht von Hand schreiben. Die Referenz-App liefert einen **Lektions-Editor** mit, der dem Wort "einfach" entwachsen ist: der klassische vierstufige Assistent (Metadaten, Karten, Übungen, Speichern & Teilen), ein Buch-Pfad, der eingefügte oder hochgeladene Lehrbuchkapitel in Wissens-Lektionen verwandelt, ein Erweiterungs-Zweig, der selbst benotete Quizze und Diktate ohne JSON autorierbar macht, und ein Bearbeitungsmodus. All das erzeugt Lektionen in demselben kanonischen Schema und kann sogar direkt aus der App einen Pull Request gegen ein Content-Repository öffnen; [Teil 3 der Serie](create-a-lesson-in-the-app.md) geht jeden Pfad durch. Was darüber hinaus **geplant** ist, ist ein reicherer, auf Lehrende zugeschnittener Editor für die schwereren Fälle (größere Sets). Beides ändert das Modell nicht: Die Quelle bleibt der Vertrag, und jeder Editor (einfach oder reich) ist nur ein weiteres Werkzeug, das ihn liest und schreibt.
 
-> **Additiv per Politik.** Das Schema ist versioniert (aktuell 1.9) und wächst nur additiv: Neue Felder sind optional, eine letztes Jahr geschriebene Lektion validiert also heute noch. Sie werden nie gezwungen, Inhalte zu migrieren, nur weil sich das Schema bewegt hat.
+> **Additiv per Politik.** Das Schema ist versioniert (aktuell 1.10) und wächst nur additiv: Neue Felder sind optional, eine letztes Jahr geschriebene Lektion validiert also heute noch. Sie werden nie gezwungen, Inhalte zu migrieren, nur weil sich das Schema bewegt hat.
 
 ## Validierung ist Rechtschreibprüfung für Test-Logik
 
