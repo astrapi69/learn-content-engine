@@ -84,7 +84,7 @@ Everything else is optional.
 
 | Field | Type | Notes |
 |---|---|---|
-| `id` | string, required | [Slug id](#slug-ids), unique within the set. Convention `NN-slug` (e.g. `01-greetings`). |
+| `id` | string, required | [Slug id](#slug-ids), unique within the set. Its lexicographic sort IS the display order (see [Lesson ordering](#lesson-ordering)); zero-padded `NN-slug` prefixes (e.g. `01-greetings`) keep it deterministic. |
 | `title` | string, required | Human-readable lesson title. |
 | `steps` | array, required | Ordered theory + exercise steps; at least one. |
 | `cards` | array | The facts the lesson teaches (see [Cards](#cards)). |
@@ -123,6 +123,30 @@ content the app throws away. `card.tags` follows the same rule but is warning
 tier for now (`W-ID-NOT-SLUG`, see the [rule catalog](#rule-catalog)).
 `stable_id` keeps its own historical pattern for compatibility (see
 [Stable identity](#stable-identity-stable_id)).
+
+## Lesson ordering
+
+The display order of a set's lessons is the **lexicographic sort of their
+ids** - nothing else (engine#106). The reference consumer sorts the stored
+`lessons/<lesson.id>.json` filenames on read and on zip import; the set
+manifest's `metadata.lessons` list only steers which files the downloader
+fetches, never the order anything is displayed in.
+
+The `NN-slug` convention (`01-greetings`, `02-numbers`) is therefore the
+ordering mechanism, not cosmetics, and the prefix must be zero-padded to one
+fixed width per set: without padding, `10-` sorts before `2-`. The same trap
+applies to numbers embedded anywhere in the id - a set named
+`kapitel-1 ... kapitel-17` displays as `kapitel-1, kapitel-10, ...,
+kapitel-2`, which is exactly the observed damage case that motivated this
+section.
+
+Because the engine validates one lesson at a time, the set-level check ships
+as a helper in the `collectStableIds` style: `lessonIdOrderingIssues(ids)`
+returns warning-tier issues (`W-SET-ORDER-MIXED-PREFIX`,
+`W-SET-ORDER-PREFIX-WIDTH`, `W-SET-ORDER-NUMERIC`, see the
+[rule catalog](#rule-catalog)) for the id shapes that guarantee a wrong
+display order. The caller - typically a repo gate - decides which lesson ids
+form the set.
 
 ## Cards
 
@@ -645,6 +669,9 @@ drifting.
 | `W-HINT-LENGTH` | A hint reveals the answer length (e.g. "four letters"). Consumers that display an answer-length indicator make such a hint redundant; on other consumers it gives part of the answer away. |
 | `W-INVISIBLE-CHAR` | The lesson's text carries characters that render as nothing: zero-width spaces, byte-order marks, directional marks, soft hyphens, and control characters that a JSON escape smuggled through (a `\u0007` escape parses into a real one). They are legal JSON and survive every structural check, and no one spots them by reading the file; they usually arrive by pasting from a PDF or a web page. The warning names each codepoint (`U+200B ZERO WIDTH SPACE`), its Unicode name, and where it sits, aggregated once per lesson. Every string is scanned, including `ext_payload`, so extension text is covered without the engine knowing its shape. Deliberately NOT flagged: tab, newline and carriage return (ordinary text, and theory bodies are full of newlines), and `U+00A0` NO-BREAK SPACE / `U+202F` NARROW NO-BREAK SPACE, which render as whitespace and are legitimate typography (French sets one before `?` and `!`). |
 | `W-ID-NOT-SLUG` | A `card.tags` entry fails the [slug rule](#slug-ids) that the id fields enforce as a hard schema pattern (engine#105). The reference consumer checks tags with the SAME regex it applies to ids, so a non-slug tag (`mustn't`, `typ-III`, `-er-verb`) makes the lesson silently skippable on import. Warning tier for now: published content still carries violating tags; once the corpus is clean the tag pattern hardens too. The message names the offending character(s), not just the regex. |
+| `W-SET-ORDER-MIXED-PREFIX` | Set-level ([`lessonIdOrderingIssues`](#lesson-ordering)): some lesson ids carry an `NN-` ordering prefix and some do not. Consumers sort ids lexicographically, so the unprefixed ids land wherever their first character falls - a guaranteed wrong display order. |
+| `W-SET-ORDER-PREFIX-WIDTH` | Set-level: `NN-` prefixes with different digit widths (`1-` next to `01-` or `10-`). Lexicographic sorting puts `10-` before `2-`; zero-pad every prefix to one fixed width. |
+| `W-SET-ORDER-NUMERIC` | Set-level: the lexicographic display order diverges from the numeric reading of the ids (`kapitel-10` displays before `kapitel-2`). This is the shape of the observed damage case (engine#106); zero-pad the embedded numbers. |
 
 ## Linting
 

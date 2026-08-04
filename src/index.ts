@@ -48,6 +48,7 @@ export type {
   StableIdCoverage,
 } from "./stable-id-coverage.js";
 export type { StableIdDuplicate, StableIdReport } from "./stable-ids.js";
+export { lessonIdOrderingIssues } from "./set-ordering.js";
 export type { ValidationIssue, ValidationResult, ValidationSeverity } from "./validate.js";
 
 // --- Extension exercise types (schema 1.7): the registry contract ------------

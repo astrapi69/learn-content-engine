@@ -7,8 +7,38 @@ All notable changes to `learn-content-engine`. The format is inspired by
 
 ## [Unreleased]
 
-Makes "slug-safe id" a machine-enforced rule instead of prose (engine#105,
-schema 1.10).
+### Lesson ordering: corrects a false schema claim and ships the set-level gate (engine#106)
+
+The `lesson.id` description claimed the `NN-slug` prefix was mere convention
+"though the loader does not enforce ordering - it reads the set's manifest
+for the lesson sequence". Verified against the app code and all ten content
+repos: no loader does. The set manifest's `metadata.lessons` list (present
+in all 48 set manifests, riding through the free-form `metadata` block)
+steers only which files the downloader fetches; the display order on every
+consumer surface is the lexicographic sort of the lesson ids (the reference
+consumer sorts `lessons/<lesson.id>.json` filenames on read and on zip
+import). The claim arrived with the EXP-039 schema sync (2026-07-06) and was
+never checked against the loader. Observed damage: a set without prefixes
+displayed as kapitel-1, kapitel-10..17, kapitel-2..9 - unusable, with no
+validation firing.
+
+Both descriptions now state the real semantics (`lesson.id` in
+`lesson.schema.json`; the `metadata` block in `content-manifest.schema.json`,
+which claimed "the loader does not interpret these fields"). Description-only
+schema change: no constraint moved, `x-schema-version` stays 1.10.
+
+Because a wrong order is a property of a SET and the engine validates one
+lesson at a time, the gate ships as a set-level helper in the
+`collectStableIds` style: `lessonIdOrderingIssues(lessonIds)` (new export)
+returns warning-tier issues for the three id shapes that guarantee a wrong
+display order: mixed `NN-` prefix presence (`W-SET-ORDER-MIXED-PREFIX`),
+inconsistent prefix widths (`W-SET-ORDER-PREFIX-WIDTH`), and
+lexicographic-vs-numeric divergence (`W-SET-ORDER-NUMERIC`, the damage-case
+shape). The rule-catalog completeness test now scans every issue-emitting
+module, not just `validate.ts` - the gap that would have let the new codes
+escape the catalog.
+
+### Makes "slug-safe id" a machine-enforced rule instead of prose (engine#105, schema 1.10)
 
 Before this change the slug requirement on `lesson.id`, `step.id`,
 `exercise.id` and `card.id` existed only in the `description` text -
