@@ -47,6 +47,7 @@
     "dist",
     "schema",
     "bin",
+    "python",
     "README.md",
     "LICENSE"
   ],

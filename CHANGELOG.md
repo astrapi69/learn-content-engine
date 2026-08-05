@@ -7,6 +7,38 @@ All notable changes to `learn-content-engine`. The format is inspired by
 
 ## [Unreleased]
 
+### Ships a Python validator helper so both engines apply the slug rule (engine#115)
+
+Schema 1.10 made the slug rule machine-enforced with `\p{Ll}` - valid
+ECMA-262, and not compilable by Python's `re`. The consequence was not a
+rule that quietly stopped working but a dead validator: `check_schema`
+rejected the whole schema and instance validation raised
+`re.PatternError`, so every content repo's `validate_content.py` and its
+whole pytest suite would die on a pin bump. All eleven repos still pin
+0.17.0, which is why nobody saw it until the first bump attempt.
+
+Measured before deciding (all eleven repos at `origin/main`, 582 lessons,
+31 334 identifiers): **158 published identifiers carry non-ASCII lowercase
+letters** - 15 `step.id`, 12 `exercise.id`, 29 `card.id`, 102 tags. That
+refuted the obvious fix: an ASCII-only pattern would invalidate them, and
+repairing it would mean renaming exercise and card ids, moving the very
+identity that `stable_id` exists to hold still.
+
+So the canonical rule stays as it is, and the Python side gains what it
+needs: `python/lce_schema.py` (shipped in the package, not copied into
+eleven repos) swaps the `pattern` keyword for a `regex`-backed
+implementation. Measured alternative rejected on the way: disabling the
+`format` check alone silences the metaschema rejection while instance
+validation still raises - a half fix that looks green until a lesson is
+validated. When `regex` is absent the helper exits loudly rather than
+falling back to a rule that cannot fail.
+
+The suite runs the real Python against the real schema, because a
+TypeScript assertion about a Python file proves nothing about the thing
+that broke. `docs/lesson-format.md` now states why diacritics are allowed
+and carries the measurement, so the next ASCII proposal meets the number
+instead of a bare regex.
+
 ### Release parity gate: tag = release page = npm version (engine#111)
 
 The class "version without publication" had three proven occurrences on

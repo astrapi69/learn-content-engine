@@ -20,6 +20,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # The shipped Python helper (python/lce_schema.py, engine#115) is
+      # verified by running the real Python against the real schema. Without
+      # these libraries those tests SKIP, and a skipped gate looks exactly
+      # like a passing one - so they are installed here on purpose.
+      - name: Set up Python (for the shipped validator helper)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python validator dependencies
+        run: pip install "jsonschema>=4,<5" regex
+
       - name: Lesson-types drift gate (regenerate from schema, expect no diff)
         run: node scripts/generate-lesson-types.mjs --check
 
