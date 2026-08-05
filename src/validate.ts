@@ -30,6 +30,7 @@ import type { ErrorObject, ValidateFunction } from "ajv";
 
 import type { ExtensionRegistry } from "./extensions.js";
 import { describeInvisibleChars, findInvisibleChars } from "./invisible-chars.js";
+import { lessonIdOrderingIssues } from "./set-ordering.js";
 import { collectStableIds } from "./stable-ids.js";
 import type { Exercise, Lesson, LessonStep } from "./types/lesson-schema.generated.js";
 
@@ -579,5 +580,26 @@ export function validateManifest(input: unknown): ValidationResult {
       warnings: [],
     };
   }
-  return { valid: true, errors: [], warnings: [] };
+  return { valid: true, errors: [], warnings: checkManifestLessonOrdering(manifestMetadata) };
+}
+
+/** engine#110: the ordering gate's carrier. A per-set manifest lists its
+ *  lesson files in ``metadata.lessons`` (download discovery); those file
+ *  names minus ``.json`` ARE the lesson ids whose lexicographic sort is the
+ *  display order (engine#106). Running ``lessonIdOrderingIssues`` here means
+ *  every repo gate that already calls ``validateManifest`` carries the check
+ *  after a pure engine pin bump - no per-repo script change. Warning tier,
+ *  never blocks. */
+function checkManifestLessonOrdering(
+  manifestMetadata: Record<string, unknown> | undefined,
+): ValidationIssue[] {
+  const listedLessons = manifestMetadata?.lessons;
+  if (!Array.isArray(listedLessons)) return [];
+  const lessonIds = listedLessons
+    .filter((entry): entry is string => typeof entry === "string")
+    .map((fileName) => fileName.replace(/\.json$/, ""));
+  return lessonIdOrderingIssues(lessonIds).map((issue) => ({
+    ...issue,
+    path: "/metadata/lessons",
+  }));
 }

@@ -150,6 +150,13 @@ returns warning-tier issues (`W-SET-ORDER-MIXED-PREFIX`,
 display order. The caller - typically a repo gate - decides which lesson ids
 form the set.
 
+The helper also has a built-in carrier (engine#110): `validateManifest`
+runs it over a per-set manifest's `metadata.lessons` file list (each entry
+minus `.json` is the lesson id) and attaches the warnings at
+`/metadata/lessons`. Every repo gate that validates its per-set manifests
+therefore carries the ordering check as soon as it pins an engine version
+that ships it - no gate-script change needed.
+
 ## Cards
 
 A card is the smallest learnable unit: one term / concept / fact. Exercises
