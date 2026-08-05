@@ -35,6 +35,9 @@ jobs:
       - name: Lesson-types drift gate (regenerate from schema, expect no diff)
         run: node scripts/generate-lesson-types.mjs --check
 
+      - name: Schema-diagram drift gate (regenerate from schema, expect no diff)
+        run: node scripts/generate-schema-diagrams.mjs --check
+
       - name: Lint
         run: npm run lint
 
