@@ -1,5 +1,17 @@
 # Exploration: discoverability (SEO)
 
+> **Merged (2026-08-05):** the same exploration was produced twice,
+> independently - here and in the app repository. The MERGED and complete
+> version lives in the app:
+> `adaptive-learner/docs/explorations/EXP-049-auffindbarkeit.md`
+> (umbrella issue adaptive-learner#2400; first-slice issues #2403-#2406;
+> architect decisions recorded there). This copy stays for the
+> engine-local part (this repository's Pages metadata, step 2 below) and
+> as the source of the measured table, but it is NOT the complete
+> picture any more - two findings exist only in the merged version (the
+> four divergent set counts in delivered text, and the indexable preview
+> deployment).
+
 Exploration only, no code and no sitemap. Written from this repository, but
 most of the surface it describes belongs to the app and the content repos:
 for those, this document registers a NEED rather than making a decision.
