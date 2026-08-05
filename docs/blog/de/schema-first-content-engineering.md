@@ -40,7 +40,7 @@ Verfolgen Sie, was ein einzelner Kern-Typ berührt:
 
 - **Schema.** `lesson.schema.json` bekommt einen Enum-Wert und eine Payload-Definition (ein additiver Minor-Sprung, 1.9 auf 1.10).
 - **Typen.** `generate-lesson-types.mjs` regeneriert die Interfaces; jeder Consumer übernimmt die neue Form.
-- **Spiegel.** Zehn Content-Repositories spiegeln das Schema (das offizielle Repo, das Test-/Starter-Repo, das Template und sieben `alc-*`-Domänen-Repos, plus die generierte Kopie der App selbst), und Byte-Paritäts-Gates halten sie ehrlich.
+- **Spiegel.** Elf Content-Repositories spiegeln das Schema (das offizielle Repo, das Test-/Starter-Repo, das Template und acht `alc-*`-Domänen-Repos, plus die generierte Kopie der App selbst), und Byte-Paritäts-Gates halten sie ehrlich.
 - **Dispatcher & Renderer.** Der Übungs-Dispatcher der App braucht einen neuen Zweig und eine neue Renderer-Komponente.
 - **i18n.** Elf Sprachkataloge brauchen Anweisungs-Schlüssel, Feedback und Fehlertexte.
 - **Validierung.** `validate.ts` braucht Regeln für die neue Form: Wohlgeformtheit, feldübergreifende Integrität.

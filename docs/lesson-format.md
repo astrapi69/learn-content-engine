@@ -838,7 +838,7 @@ ids are being minted:
 - A head that yields no lessons while the base has them fails too.
 
 A base ref that does not resolve exits 2 rather than comparing against
-nothing. The default `origin/main` fits the ten content repos (all of them
+nothing. The default `origin/main` fits the eleven content repos (all of them
 default to `main`, verified); a repo whose published state lives on another
 branch passes it via `--base`. Note the app repo's opposite convention
 (`develop` is default, `main` is releases) as the reason this is a flag and

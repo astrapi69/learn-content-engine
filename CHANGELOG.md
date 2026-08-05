@@ -84,6 +84,32 @@ needs a DOM even to parse, and a DOMPurify stub is not enough (measured).
 Neither ships - the package `files` list carries `dist`, `schema`, `bin`
 and `python/*.py` only.
 
+## [0.19.2] - 2026-08-05
+
+Documentation refresh after the 0.19.x work, plus the gate that would
+have caught most of it.
+
+Stale, found by sweeping rather than by reading: `README.md` did not list
+`alc-books`, the eleventh content repository; three places (English blog,
+German blog, `lesson-format.md`) still said ten content repositories and
+seven `alc-*` repos; and the README's public-surface table was missing
+two exports, `lessonIdOrderingIssues` (shipped 0.18.0) and
+`isBaseCredible` (shipped 0.16.0).
+
+That last one is the reason for the new gate. The surface table is a
+second place for the same truth and it drifted exactly the way such
+places do: two releases added an export and nobody compared the table to
+the module. The docs gates covered version claims, links and examples;
+the table sat outside all of them. `src/readme-exports.test.ts` now
+checks both directions against the real module namespace - every runtime
+export appears in the table, and the table names nothing the package does
+not export - so a new export cannot ship undocumented. Type exports stay
+out of scope on purpose: they do not exist at runtime, and a hand-kept
+parallel list would recreate the problem.
+
+The German blog carried the same repository count as the English one and
+would have been missed by fixing only the reported instance.
+
 ## [0.19.1] - 2026-08-05
 
 Packaging fix: 0.19.0 shipped `python/__pycache__/lce_schema.cpython-314.pyc`
