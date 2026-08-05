@@ -77,7 +77,7 @@ inherited by the set's lessons unless a lesson declares its own.
 
 ## Schema-version policy (additive)
 
-The lesson schema is versioned (`x-schema-version`, currently `1.7`) and evolves
+The lesson schema is versioned (`x-schema-version`, currently `1.11`) and evolves
 **additively**: new fields are optional, so **older content stays valid under a
 newer schema**. For example, v1.5 added the inline `examples` field; a v1.4
 lesson without `examples` validates unchanged under v1.5. v1.6 added the native

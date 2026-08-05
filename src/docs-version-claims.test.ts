@@ -21,9 +21,30 @@ const SCHEMA_VERSION = (
     }
 )["x-schema-version"];
 
+/** Markdown emphasis that may wrap the version token itself. `currently
+ *  `1.7`` was a stale claim in exactly the gated phrasing, and the gate read
+ *  past it because the pattern had no room for the backticks. */
+const WRAPPED_VERSION = "[`*_]{0,2}v?(\\d+\\.\\d+)[`*_]{0,2}";
+
+/** Every phrasing that asserts the PRESENT schema version. A current-version
+ *  claim written any other way escapes this gate, which is how README.md kept
+ *  "Tracks the lesson schema at v1.7" through four schema bumps. When a new
+ *  phrasing enters the docs, it belongs here AND in SEEDED_STALE_CLAIMS. */
 const CLAIM_PATTERNS = [
-    /currently (?:version )?v?(\d+\.\d+)/g,
-    /aktuell (?:Version )?v?(\d+\.\d+)/g,
+    new RegExp(`currently (?:version )?${WRAPPED_VERSION}`, "g"),
+    new RegExp(`aktuell (?:Version )?${WRAPPED_VERSION}`, "g"),
+    new RegExp(`[Tt]racks the lesson schema at ${WRAPPED_VERSION}`, "g"),
+    new RegExp(`schema at ${WRAPPED_VERSION}`, "g"),
+];
+
+/** One stale example per supported phrasing. A phrasing added without an
+ *  entry here is a pattern nobody proved can fail. */
+const SEEDED_STALE_CLAIMS = [
+    "the schema is currently 0.1",
+    "das Schema ist aktuell 0.1",
+    "the schema is currently `0.1`",
+    "Tracks the lesson schema at **v0.1**.",
+    "pinned to the schema at v0.1",
 ];
 
 function markdownFilesUnder(rootDir: string): string[] {
@@ -62,5 +83,14 @@ describe("current-version claims in the docs", () => {
             }
         }
         expect(wrongClaims, `stale version claims in ${filePath}`).toEqual([]);
+    });
+
+    it.each(SEEDED_STALE_CLAIMS)("catches a stale claim written as %j", (seeded) => {
+        // Negative control per phrasing: a pattern that never fires on a
+        // known-bad string is a rule that cannot fail.
+        const caught = CLAIM_PATTERNS.some((pattern) =>
+            [...seeded.matchAll(pattern)].some((claim) => claim[1] !== SCHEMA_VERSION),
+        );
+        expect(caught, `no pattern catches: ${seeded}`).toBe(true);
     });
 });

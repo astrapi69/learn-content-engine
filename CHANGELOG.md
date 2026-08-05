@@ -40,6 +40,25 @@ Two findings from drawing, both worth more than the pictures:
 
 ## [Unreleased]
 
+### Two stale schema-version claims, and the gate that let one through
+
+`README.md` announced "Tracks the lesson schema at v1.7" while the schema
+was at 1.11, and `docs/concepts.md` said "currently `1.7`". The second one
+is the interesting failure: it is written in exactly the phrasing the
+version-claims gate exists to pin, and the gate read past it because its
+pattern had no room for the backticks around the version.
+
+Both claims corrected, and both holes closed rather than only their
+instances. The patterns now tolerate markdown emphasis around the version
+token, and two further phrasings are registered ("Tracks the lesson schema
+at ...", "schema at ..."). Every supported phrasing now carries a seeded
+stale example as a negative control, so a phrasing added without proof
+that it can fire is visible.
+
+The gate's own documented escape hatch was the root cause: it stated that
+prose claiming the current version must use one of its forms. That is a
+convention, and README.md did not follow it through four schema bumps.
+
 ### The generated diagram did not render, and no gate could tell (engine#117 follow-up)
 
 `docs/schema-diagrams.md` shipped with diagram 1 broken: the generated
