@@ -7,6 +7,23 @@ All notable changes to `learn-content-engine`. The format is inspired by
 
 ## [Unreleased]
 
+### The ordering gate gets a carrier: validateManifest runs it (engine#110)
+
+`lessonIdOrderingIssues` shipped in 0.18.0 with zero callers - the repos'
+gates import only `validateLesson` + `validateManifest`, so adopting the
+check would have cost two steps per repository, ten times (pin bump plus
+an explicit call). Now `validateManifest` runs the check itself over a
+per-set manifest's `metadata.lessons` file list (entry minus `.json` is
+the lesson id, the same reading the coverage command uses) and attaches
+the warnings at `/metadata/lessons`. Repo cost drops to the pure pin
+bump; warnings never block, so no gate turns red by surprise.
+
+Proof against the live corpus (58 manifests across all 10 repos): one
+real find - `alc-psychology/sets/de/psych-intro` lists two-digit AND
+three-digit prefixes (`01-` through `99-` next to `100-` through
+`112-`), so lessons 100+ display between `10-` and `11-` today. Filed
+as a content issue; the warning is doing exactly its job.
+
 ### card.tags joins the hard slug pattern - schema 1.11 (engine#108)
 
 Stage 2 of the slug rule: 0.18.0 hardened the four id fields but left
