@@ -90,6 +90,8 @@ if (!result.valid) console.error(result.errors); // [{ path, message }, …]
 | `collectStableIds` | fn | set-wide `stable_id` view over several lessons: total count + duplicates with locations (the cross-lesson half the schema cannot see) |
 | `buildStableIdInventory`, `compareStableIdInventories`, `formatStabilityResult` | fn | the pure core of the shipped `check-stable-ids` gate: published-state vs head, violations V1-V4 |
 | `computeStableIdCoverage`, `gateStableIdCoverage`, `formatCoverageResult` | fn | the pure core of the shipped `check-stable-id-coverage` gate: how many listed sets are fully minted, judged against the repo-local baseline |
+| `isBaseCredible` | fn | whether a comparison base is a plausible predecessor: an empty history is a broken run, not a clean one (the floor under the stability gate) |
+| `lessonIdOrderingIssues` | fn | set-level ordering check over a set's lesson ids: mixed `NN-` prefixes, inconsistent widths, lexicographic-vs-numeric divergence (`validateManifest` runs it over `metadata.lessons`) |
 | `ContentLesson`, `ContentSetEntry`, `ContentSetBook`, `ContentSetSource`, … | types | the canonical internal format |
 | `ContentLessonInlineExample` | type | one inline worked example (schema v1.5) on a theory step or exercise |
 | `SetReviewStatus`, `SetAttribution` | types | the set entry's review standing (schema v1.9) and attribution block |
@@ -155,8 +157,9 @@ the same validator locally that CI enforces):
   [technology](https://github.com/astrapi69/alc-technology),
   [ai](https://github.com/astrapi69/alc-ai),
   [traffic-knowledge](https://github.com/astrapi69/alc-traffic-knowledge),
-  [dog-training](https://github.com/astrapi69/alc-dog-training) and
-  [die-waehrung-des-geistes](https://github.com/astrapi69/alc-die-waehrung-des-geistes).
+  [dog-training](https://github.com/astrapi69/alc-dog-training),
+  [die-waehrung-des-geistes](https://github.com/astrapi69/alc-die-waehrung-des-geistes)
+  and [books](https://github.com/astrapi69/alc-books) (one set per book).
 
 ## Schema authority
 
