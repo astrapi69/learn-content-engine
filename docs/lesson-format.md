@@ -119,8 +119,10 @@ This is exactly the regex the reference consumer
 ([adaptive-learner](https://github.com/astrapi69/adaptive-learner)) applies on
 import; a lesson whose ids fail it is silently skipped there, so the engine
 rejects it up front instead of letting a schema-conforming generator produce
-content the app throws away. `card.tags` follows the same rule but is warning
-tier for now (`W-ID-NOT-SLUG`, see the [rule catalog](#rule-catalog)).
+content the app throws away. `card.tags` enforces the same rule as a hard
+pattern since schema 1.11 (engine#108; the interim `W-ID-NOT-SLUG` warning
+tier retired with it, because the published corpus is clean and a lint that
+runs only on structurally valid input could never fire again).
 `stable_id` keeps its own historical pattern for compatibility (see
 [Stable identity](#stable-identity-stable_id)).
 
@@ -160,7 +162,7 @@ the lesson's `cards` (referential integrity is enforced).
 | `stable_id` | string \| null | Version-stable identity (schema v1.9, see [Stable identity](#stable-identity-stable_id)). |
 | `front` | string, required | What the learner sees first (usually the target term). |
 | `back` | string, required | What they recall (translation / definition). |
-| `tags` | string[] | Tags for filtering; the [slug rule](#slug-ids) applies (warning tier, `W-ID-NOT-SLUG`). |
+| `tags` | string[] | Tags for filtering; each entry must match the [slug rule](#slug-ids) (hard pattern since schema 1.11, engine#108). |
 | `hint`, `notes` | string \| null | Optional help / footnote. |
 | `difficulty` | 1-5 \| null | Optional difficulty. |
 | `media_type` | `text` \| `code` \| `formula` \| `diagram` \| null | Content kind; drives code-aware rendering. |
@@ -668,7 +670,6 @@ drifting.
 | `W-PIC-DATA-URI` | A `picture_choice` image `src` is an inline `data:` URI (schema v1.8 allows it for consumer-local content, e.g. uploaded images). Repo content should prefer a relative `assets/` path - inline data URIs bloat the lesson JSON and the git history. Advisory only, never blocks. |
 | `W-HINT-LENGTH` | A hint reveals the answer length (e.g. "four letters"). Consumers that display an answer-length indicator make such a hint redundant; on other consumers it gives part of the answer away. |
 | `W-INVISIBLE-CHAR` | The lesson's text carries characters that render as nothing: zero-width spaces, byte-order marks, directional marks, soft hyphens, and control characters that a JSON escape smuggled through (a `\u0007` escape parses into a real one). They are legal JSON and survive every structural check, and no one spots them by reading the file; they usually arrive by pasting from a PDF or a web page. The warning names each codepoint (`U+200B ZERO WIDTH SPACE`), its Unicode name, and where it sits, aggregated once per lesson. Every string is scanned, including `ext_payload`, so extension text is covered without the engine knowing its shape. Deliberately NOT flagged: tab, newline and carriage return (ordinary text, and theory bodies are full of newlines), and `U+00A0` NO-BREAK SPACE / `U+202F` NARROW NO-BREAK SPACE, which render as whitespace and are legitimate typography (French sets one before `?` and `!`). |
-| `W-ID-NOT-SLUG` | A `card.tags` entry fails the [slug rule](#slug-ids) that the id fields enforce as a hard schema pattern (engine#105). The reference consumer checks tags with the SAME regex it applies to ids, so a non-slug tag (`mustn't`, `typ-III`, `-er-verb`) makes the lesson silently skippable on import. Warning tier for now: published content still carries violating tags; once the corpus is clean the tag pattern hardens too. The message names the offending character(s), not just the regex. |
 | `W-SET-ORDER-MIXED-PREFIX` | Set-level ([`lessonIdOrderingIssues`](#lesson-ordering)): some lesson ids carry an `NN-` ordering prefix and some do not. Consumers sort ids lexicographically, so the unprefixed ids land wherever their first character falls - a guaranteed wrong display order. |
 | `W-SET-ORDER-PREFIX-WIDTH` | Set-level: `NN-` prefixes with different digit widths (`1-` next to `01-` or `10-`). Lexicographic sorting puts `10-` before `2-`; zero-pad every prefix to one fixed width. |
 | `W-SET-ORDER-NUMERIC` | Set-level: the lexicographic display order diverges from the numeric reading of the ids (`kapitel-10` displays before `kapitel-2`). This is the shape of the observed damage case (engine#106); zero-pad the embedded numbers. |

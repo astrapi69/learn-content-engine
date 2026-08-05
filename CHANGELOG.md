@@ -5,6 +5,34 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [Unreleased]
+
+### card.tags joins the hard slug pattern - schema 1.11 (engine#108)
+
+Stage 2 of the slug rule: 0.18.0 hardened the four id fields but left
+`card.tags` on the warning tier (`W-ID-NOT-SLUG`) because the published
+corpus still carried 11 violating tags. That cleanup landed
+(adaptive-learner-content#177), and the re-measurement against fresh
+`origin/main` reads 8396 tags, zero violations (predicate proven against
+seeded violations). `Card.tags.items` now references `$defs/SlugId`, so a
+non-slug tag fails structurally with its exact array path - no longer a
+warning a generator can ignore while the reference consumer silently
+skips the lesson.
+
+`W-ID-NOT-SLUG` is retired WITH the hardening, not kept alongside it:
+semantic lints only run on structurally valid input, so after the
+pattern lands the warning could never fire again. A rule that cannot
+fail is worse than no rule (the same reasoning that fixed the
+`formatMintReports` gate in 0.16.0). The character-naming nicety it
+offered is replaced by the schema error's exact `/cards/N/tags/M` path.
+
+`x-schema-version` 1.10 -> 1.11 in both schemas (lesson +
+content-manifest move in lockstep). Migration note: content whose tags
+already satisfied the documented rule validates unchanged; a tag with
+apostrophes, uppercase, underscores or leading hyphens now fails
+structurally - which is the point: it failed at the consumer already,
+just silently and after distribution.
+
 ## [0.18.0] - 2026-08-05
 
 ### Lesson ordering: corrects a false schema claim and ships the set-level gate (engine#106)

@@ -118,23 +118,47 @@ describe("slug ids - boundary values on lesson.id", () => {
   });
 });
 
-describe("card.tags - W-ID-NOT-SLUG warning tier (published tags still violate)", () => {
-  it("warns per violating tag with path and offending character, without blocking", () => {
+describe("card.tags - hard SlugId pattern (engine#108, stage 2 after the content cleanup)", () => {
+  // Reproduction: the two published violation classes from the engine#108
+  // measurement (apostrophe, underscore) now fail structurally, per tag, with
+  // the exact array path - no longer a warning a generator can ignore.
+  it("rejects violating tags with their paths", () => {
     const validation = validateLesson(taggedLesson(["mustn't", "a_b", "verb-present"]));
-    expect(validation.valid).toBe(true);
-    const slugWarnings = validation.warnings.filter((issue) => issue.id === "W-ID-NOT-SLUG");
-    expect(slugWarnings).toHaveLength(2);
-    const paths = slugWarnings.map((issue) => issue.path);
+    expect(validation.valid).toBe(false);
+    const paths = errorPaths(validation);
     expect(paths).toContain("/cards/0/tags/0");
     expect(paths).toContain("/cards/0/tags/1");
-    expect(slugWarnings[0]!.message).toContain("'");
-    expect(slugWarnings[1]!.message).toContain("_");
+    expect(paths).not.toContain("/cards/0/tags/2");
   });
 
-  it("stays silent on slug-clean tags", () => {
+  it("accepts slug-clean tags", () => {
     const validation = validateLesson(taggedLesson(["greeting", "verb-present", "irregular"]));
     expect(validation.valid).toBe(true);
-    expect(validation.warnings.filter((issue) => issue.id === "W-ID-NOT-SLUG")).toEqual([]);
+    expect(validation.errors).toEqual([]);
+  });
+
+  it("accepts an empty tags array and a card without tags", () => {
+    expect(validateLesson(taggedLesson([])).valid).toBe(true);
+    const untagged = taggedLesson([]);
+    delete ((untagged.cards as JsonObject[])[0] as JsonObject).tags;
+    expect(validateLesson(untagged).valid).toBe(true);
+  });
+
+  it("boundary: single-character tag valid, uppercase and leading hyphen invalid", () => {
+    expect(validateLesson(taggedLesson(["a"])).valid).toBe(true);
+    expect(validateLesson(taggedLesson(["typ-III"])).valid).toBe(false);
+    expect(validateLesson(taggedLesson(["-er-verb"])).valid).toBe(false);
+  });
+
+  // The warning tier is retired WITH the hardening: semantic lints only run on
+  // structurally valid input, so after the pattern lands W-ID-NOT-SLUG could
+  // never fire again - a rule that cannot fail is worse than no rule.
+  it("W-ID-NOT-SLUG is gone: no result carries it", () => {
+    for (const tags of [["mustn't"], ["greeting"]]) {
+      const validation = validateLesson(taggedLesson(tags));
+      const allIssues = [...validation.errors, ...validation.warnings];
+      expect(allIssues.filter((issue) => issue.id === "W-ID-NOT-SLUG")).toEqual([]);
+    }
   });
 });
 
@@ -165,6 +189,13 @@ describe("engine rule === app rule (parity pin)", () => {
     const properties = schema.properties as JsonObject;
     const idField = properties.id as JsonObject;
     expect(idField.$ref).toBe("#/$defs/SlugId");
+  });
+
+  it("Card.tags items reference $defs/SlugId (engine#108)", () => {
+    const defs = schema.$defs as JsonObject;
+    const properties = (defs.Card as JsonObject).properties as JsonObject;
+    const tagsField = properties.tags as JsonObject;
+    expect((tagsField.items as JsonObject).$ref).toBe("#/$defs/SlugId");
   });
 });
 
