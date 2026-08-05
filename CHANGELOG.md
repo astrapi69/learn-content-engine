@@ -7,6 +7,20 @@ All notable changes to `learn-content-engine`. The format is inspired by
 
 ## [Unreleased]
 
+### Release parity gate: tag = release page = npm version (engine#111)
+
+The class "version without publication" had three proven occurrences on
+the npm axis (0.1.0, 0.3.0, 0.10.0: tag and release page exist, the
+package was never published) and one on the release-page axis (v0.17.0
+went four days without a page). New gate: the pure comparator
+`checkReleaseParity` (src/release-parity.ts, tested RED-first) with the
+I/O shim `scripts/check-release-parity.mjs` and a workflow that runs on
+every published release, weekly, and on demand. The three historical npm
+gaps are allowlisted, not republished - backfilling would create a state
+that never existed. Live run at introduction: 31 version tags, 31
+release pages, 28 npm versions, OK; failing path proven against a
+mismatched repo (exit 1).
+
 ### card.tags joins the hard slug pattern - schema 1.11 (engine#108)
 
 Stage 2 of the slug rule: 0.18.0 hardened the four id fields but left
