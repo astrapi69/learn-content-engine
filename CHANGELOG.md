@@ -5,7 +5,7 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
-## [Unreleased]
+## [0.19.0] - 2026-08-05
 
 ### Ships a Python validator helper so both engines apply the slug rule (engine#115)
 
