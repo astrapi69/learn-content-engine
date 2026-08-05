@@ -169,9 +169,9 @@
         },
         "tags": {
           "default": [],
-          "description": "Slug-safe tags for SRS filtering ('greeting', 'verb-present', 'irregular').",
+          "description": "Tags for SRS filtering ('greeting', 'verb-present', 'irregular'). Each tag must match $defs/SlugId - the reference consumer checks tags with the same regex it applies to ids and skips lessons whose tags fail (engine#108, hard since schema 1.11 after the published corpus was cleaned).",
           "items": {
-            "type": "string"
+            "$ref": "#/$defs/SlugId"
           },
           "maxItems": 20,
           "title": "Tags",
@@ -1205,5 +1205,5 @@
   ],
   "title": "Lesson",
   "type": "object",
-  "x-schema-version": "1.10"
+  "x-schema-version": "1.11"
 }

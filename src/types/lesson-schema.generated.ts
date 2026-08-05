@@ -60,9 +60,13 @@ export type MediaType = ("text" | "code" | "formula" | "diagram") | null;
  */
 export type Notes = string | null;
 /**
- * Slug-safe tags for SRS filtering ('greeting', 'verb-present', 'irregular').
+ * Slug id: lowercase Unicode letters and digits in hyphen-separated runs (no leading/trailing/double hyphen, no underscore, no uppercase, no whitespace). Exactly the rule the reference consumer (adaptive-learner) enforces on import - an id that fails it is silently skipped there, so the engine rejects it up front (engine#105).
  */
-export type Tags = string[];
+export type SlugId = string;
+/**
+ * Tags for SRS filtering ('greeting', 'verb-present', 'irregular'). Each tag must match $defs/SlugId - the reference consumer checks tags with the same regex it applies to ids and skips lessons whose tags fail (engine#108, hard since schema 1.11 after the published corpus was cleaned).
+ */
+export type Tags = SlugId[];
 /**
  * Phase 52I / v1.35.0 / P-130. Optional list of ``{token, role}`` annotations on the card's ``front``. The cloze generator (52E) uses these to pick a semantically-meaningful blank when available; absent annotations fall through to a position-based heuristic so old content keeps working unchanged.
  */
@@ -100,9 +104,9 @@ export type Domain = string | null;
  */
 export type EstimatedMinutes = number;
 /**
- * Slug id (see $defs/SlugId), unique within the parent set. The display order of a set's lessons is the LEXICOGRAPHIC sort of these ids: consumers sort the stored ``lessons/<id>.json`` filenames (the set manifest's ``metadata.lessons`` list only steers download discovery, never display order). The ``NN-slug`` prefix (e.g. ``01-greetings``) is therefore the ordering mechanism, not cosmetics - zero-pad it to one fixed width per set, or ``10-`` sorts before ``2-`` (engine#106).
+ * Slug id: lowercase Unicode letters and digits in hyphen-separated runs (no leading/trailing/double hyphen, no underscore, no uppercase, no whitespace). Exactly the rule the reference consumer (adaptive-learner) enforces on import - an id that fails it is silently skipped there, so the engine rejects it up front (engine#105).
  */
-export type Id1 = string;
+export type SlugId1 = string;
 /**
  * Extensions this lesson needs, each ``ext:<vendor>-<name>@<major>`` (e.g. ``ext:acme-ordering@1``). A consumer that has not registered a declared extension refuses the lesson loudly (E-EXT-UNSUPPORTED) rather than mis-rendering. Absent / empty on core lessons; additive, so pre-1.7 content validates unchanged.
  */
@@ -216,9 +220,9 @@ export type FromCards = boolean;
  */
 export type Hint2 = string | null;
 /**
- * Slug-safe id, unique within the lesson.
+ * Slug id: lowercase Unicode letters and digits in hyphen-separated runs (no leading/trailing/double hyphen, no underscore, no uppercase, no whitespace). Exactly the rule the reference consumer (adaptive-learner) enforces on import - an id that fails it is silently skipped there, so the engine rejects it up front (engine#105).
  */
-export type Id2 = string;
+export type SlugId2 = string;
 /**
  * engine#90 - schema 1.9 (additive). Author-owned, version-stable identity for progress/SRS joins: once published it NEVER changes, set-wide unique (cross-lesson uniqueness is checked by the repo gate via collectStableIds; the schema sees one document). Opaque mint-once value (lowercase slug, 8-64 chars), NOT derived from content, so answer-text fixes do not move it. Optional: pre-1.9 content validates unchanged. SCOPE: this closes orphaning by slug rename or position shift on the exercise/card level; it does NOT close the element-level case (an answer correction inside a surviving exercise still moves the content-derived element key, engine#91). COMPAT NOTE (engine#105): this pattern predates $defs/SlugId and is deliberately NOT tightened - stable_ids are immutable once published, so the underscore stays allowed here even though SlugId forbids it. For NEW mints prefer the stricter SlugId shape (hyphens only); the bundled mint-stable-ids minter already emits only [a-z0-9-].
  */
@@ -295,9 +299,9 @@ export type ExerciseType = "matching" | "picture_choice" | "free_text" | "word_t
  */
 export type ExtExerciseType = string;
 /**
- * Slug-safe id, unique within the lesson.
+ * Slug id: lowercase Unicode letters and digits in hyphen-separated runs (no leading/trailing/double hyphen, no underscore, no uppercase, no whitespace). Exactly the rule the reference consumer (adaptive-learner) enforces on import - an id that fails it is silently skipped there, so the engine rejects it up front (engine#105).
  */
-export type Id3 = string;
+export type SlugId3 = string;
 /**
  * Set ONLY on synthesised SRS review steps (#673). Carries the source lesson_id the reviewed element belongs to, so the review recorder can address the exact stored ElementError row. Absent on real content lessons. Modeled here (EXP-039) so the schema covers the synthesised-review shape the frontend already emits.
  */
@@ -355,7 +359,7 @@ export interface Lesson {
   description?: Description;
   domain?: Domain;
   estimated_minutes?: EstimatedMinutes;
-  id: Id1;
+  id: SlugId1;
   requires_extensions?: RequiresExtensions;
   resources?: Resources;
   source_language?: SourceLanguage;
@@ -457,7 +461,7 @@ export interface LessonStep {
    * EXERCISE: the exercise payload.
    */
   exercise?: Exercise | null;
-  id: Id3;
+  id: SlugId3;
   review_lesson_id?: ReviewLessonId;
   theory_ref?: TheoryRef;
   title?: Title2;
@@ -512,7 +516,7 @@ export interface Exercise {
   };
   from_cards?: FromCards;
   hint?: Hint2;
-  id: Id2;
+  id: SlugId2;
   stable_id?: StableId1;
   images?: Images;
   multiple?: Multiple;
