@@ -1,0 +1,29 @@
+# Release parity gate (engine#111): every git tag vX.Y.Z must have BOTH the
+# GitHub release page and the npm version X.Y.Z. Runs after each published
+# release, on a weekly heartbeat (a gap like the four-day v0.17.0 window
+# cannot go unnoticed for long), and on demand.
+name: Release parity
+
+on:
+  release:
+    types: [published]
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+jobs:
+  parity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: node scripts/check-release-parity.mjs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
