@@ -115,6 +115,25 @@ no underscore, no whitespace, no leading/trailing/double hyphen. Valid:
 `01-greetings`, `a`, `fünf-wörter`. Invalid: `A-b`, `a_b`, `a b`, `-a`, `a-`,
 `a--b`.
 
+**Diacritics are allowed on purpose, and the rule must stay Unicode-aware.**
+`\p{Ll}` covers `ä`, `í`, `ß` and every other lowercase letter, not just
+`a-z`. This is not decoration: measured across all eleven content repos at
+`origin/main` (582 lessons, 31 334 identifiers), **158 published
+identifiers carry non-ASCII lowercase letters** - 15 `step.id`, 12
+`exercise.id`, 29 `card.id` and 102 `card.tags`, for example
+`ex-match-defining-nondefining-sätze`, `ex-free-veía`, `unregelmäßig`,
+`höflichkeit`. Narrowing the rule to `[a-z0-9]` would invalidate all of
+them, and the only possible repair would be renaming ids that learner
+progress hangs on - the orphaning class this project spent
+[stable identity](#stable-identity-stable_id) closing. Before proposing an
+ASCII-only slug rule, re-run that measurement; the number is the argument
+(engine#115).
+
+The Unicode form costs one thing: Python's built-in `re` cannot compile
+`\p{...}`, so a Python-side validator needs the `regex` package. The engine
+ships `python/lce_schema.py` for exactly that, so both validators apply the
+same rule rather than one of them merely surviving it.
+
 This is exactly the regex the reference consumer
 ([adaptive-learner](https://github.com/astrapi69/adaptive-learner)) applies on
 import; a lesson whose ids fail it is silently skipped there, so the engine
