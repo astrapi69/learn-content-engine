@@ -7,3 +7,7 @@ docs-api/
 .idea/
 .vscode/
 .claude/settings.local.json
+
+# Python bytecode from running the shipped validator helper locally.
+__pycache__/
+*.pyc

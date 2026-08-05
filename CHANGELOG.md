@@ -5,6 +5,19 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [0.19.1] - 2026-08-05
+
+Packaging fix: 0.19.0 shipped `python/__pycache__/lce_schema.cpython-314.pyc`
+- machine-specific bytecode, created by running the test suite before
+packing, and never part of the published contract. `files` now names
+`python/*.py` instead of the whole directory.
+
+Found by verifying the PUBLISHED tarball rather than the local build, and
+the guard that now prevents it measures the same place: the earlier
+packaging test asserted the `files` entry in `package.json`, which
+describes the intent, not the outcome - and the two disagreed exactly
+here.
+
 ## [0.19.0] - 2026-08-05
 
 ### Ships a Python validator helper so both engines apply the slug rule (engine#115)

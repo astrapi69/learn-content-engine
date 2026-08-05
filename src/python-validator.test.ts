@@ -102,11 +102,34 @@ describe.skipIf(!probeAvailable)("shipped Python validator (engine#115)", () => 
 });
 
 describe("packaging (engine#115)", () => {
-  it("ships python/ in the npm package, so consumers read one pinned source", () => {
-    const packageJson = JSON.parse(readFileSync(repoFile("../package.json"), "utf8")) as {
-      files: string[];
-    };
-    expect(packageJson.files).toContain("python");
+  /** The paths npm would actually publish. Measured at the END of the chain:
+   *  asserting the `files` entry in package.json would describe the intent,
+   *  not the outcome - and the two disagreed once already (`files: ["python"]`
+   *  shipped the whole directory including __pycache__). */
+  function packedPaths(): string[] {
+    // --json puts the file list on stdout; the human-readable form writes it
+    // to stderr, where a naive read would see an empty list and pass.
+    const report = JSON.parse(
+      execFileSync("npm", ["pack", "--dry-run", "--json"], {
+        encoding: "utf8",
+        cwd: repoFile(".."),
+        stdio: ["ignore", "pipe", "ignore"],
+      }),
+    ) as Record<string, { files: Array<{ path: string }> }>;
+    const entries = Object.values(report);
+    expect(entries, "npm pack reported no package").toHaveLength(1);
+    return entries[0]!.files.map((entry) => entry.path);
+  }
+
+  it("ships the helper in the npm package, so consumers read one pinned source", () => {
+    expect(packedPaths()).toContain("python/lce_schema.py");
+  });
+
+  it("does not ship Python bytecode - it reached the 0.19.0 tarball once", () => {
+    // Running this suite compiles python/lce_schema.py in place, so
+    // __pycache__ exists on any machine that ran the tests before packing.
+    // It is machine-specific (cpython-3XX) and never part of the contract.
+    expect(packedPaths().filter((path) => /__pycache__|\.pyc$/.test(path))).toEqual([]);
   });
 
   it("the helper fails loudly when regex is missing, never silently", () => {
