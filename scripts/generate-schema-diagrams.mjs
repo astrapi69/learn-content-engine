@@ -46,12 +46,18 @@ const defs = schema.$defs;
 const isRequired = (definition, property) => (definition.required ?? []).includes(property);
 
 /** Mermaid cardinality label for an array property, from the schema's own
- *  bounds. `required` decides whether the low end is 1 or 0. */
+ *  bounds. `required` decides whether the low end is 1 or 0.
+ *
+ *  NOT quoted: a `"` inside a `-->|label|` edge label is a parse error in
+ *  Mermaid's flowchart grammar, and GitHub renders the error box instead of
+ *  the diagram. The committed page shipped that way once, because the drift
+ *  gate proved the file matched the generator and never proved the generator
+ *  emits parseable Mermaid. */
 function arrayCardinality(owner, propertyName) {
   const property = owner.properties[propertyName];
   const low = isRequired(owner, propertyName) ? (property.minItems ?? 1) : 0;
   const high = property.maxItems ?? "*";
-  return `"${low}..${high}"`;
+  return `${low}..${high}`;
 }
 
 function contentStructureDiagram() {
@@ -61,7 +67,7 @@ function contentStructureDiagram() {
   const lessonToCards = arrayCardinality(root, "cards");
   const cardTags = arrayCardinality(defs.Card, "tags");
   const exerciseCardIds = arrayCardinality(defs.Exercise, "card_ids");
-  const stepHasExercise = isRequired(step, "exercise") ? '"1"' : '"0..1"';
+  const stepHasExercise = isRequired(step, "exercise") ? "1" : "0..1";
   return [
     "```mermaid",
     "graph TD",

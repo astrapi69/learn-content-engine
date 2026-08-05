@@ -38,6 +38,13 @@ jobs:
       - name: Schema-diagram drift gate (regenerate from schema, expect no diff)
         run: node scripts/generate-schema-diagrams.mjs --check
 
+      # Drift and validity are different questions. The drift gate proves the
+      # page matches the generator; this proves the generator emits Mermaid
+      # that actually parses. A quoted cardinality label shipped once with
+      # every gate green, and GitHub rendered an error box.
+      - name: Mermaid syntax gate (every diagram in the docs must parse)
+        run: node scripts/check-diagram-syntax.mjs
+
       - name: Lint
         run: npm run lint
 
