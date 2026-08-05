@@ -36,11 +36,11 @@ graph TD
     LessonStep[LessonStep]
     Exercise[Exercise]
     Card[Card]
-    Lesson -->|steps "1..*"| LessonStep
-    Lesson -->|cards "0..*"| Card
-    LessonStep -->|exercise "0..1"| Exercise
-    Exercise -.->|card_ids "0..50", by id| Card
-    Card -->|tags "0..20"| Tag[["tag (SlugId)"]]
+    Lesson -->|steps 1..*| LessonStep
+    Lesson -->|cards 0..*| Card
+    LessonStep -->|exercise 0..1| Exercise
+    Exercise -.->|card_ids 0..50, by id| Card
+    Card -->|tags 0..20| Tag[["tag (SlugId)"]]
 ```
 
 Solid arrows are containment: the child object is nested in the parent

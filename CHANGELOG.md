@@ -38,6 +38,33 @@ Two findings from drawing, both worth more than the pictures:
   which the schema knows only as a pattern, never as an enumeration. The
   diagram now makes that split visible.
 
+## [Unreleased]
+
+### The generated diagram did not render, and no gate could tell (engine#117 follow-up)
+
+`docs/schema-diagrams.md` shipped with diagram 1 broken: the generated
+cardinality label came out as `-->|steps "1..*"|`, and a `"` inside a
+flowchart edge label is a parse error, so GitHub rendered an error box
+where the diagram should be.
+
+Every gate was green, because the drift check asks whether the committed
+page matches the generator and never asks whether the generator emits
+Mermaid that parses. Those are different questions, and the difference is
+the whole failure: the page was faithfully generated and unreadable.
+
+Fixed at the source (no quotes in edge labels) and closed with a gate that
+measures the right thing: `scripts/check-diagram-syntax.mjs` parses every
+Mermaid block in `docs/` and `README.md` with the real Mermaid parser, in
+CI and in `make sync-types-check`. It refuses to pass on zero blocks, and
+it covers hand-written diagrams too, which nothing else would have caught.
+Negative control: reintroducing the quoted label turns it red with the
+exact parse error.
+
+Cost, stated plainly: `mermaid` and `jsdom` join devDependencies. Mermaid
+needs a DOM even to parse, and a DOMPurify stub is not enough (measured).
+Neither ships - the package `files` list carries `dist`, `schema`, `bin`
+and `python/*.py` only.
+
 ## [0.19.1] - 2026-08-05
 
 Packaging fix: 0.19.0 shipped `python/__pycache__/lce_schema.cpython-314.pyc`

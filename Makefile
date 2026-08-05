@@ -54,6 +54,7 @@ sync-types: ## Regenerate src/types/lesson-schema.generated.ts from schema/lesso
 sync-types-check: ## Exit non-zero if the generated lesson types drift from the schema
 	node scripts/generate-lesson-types.mjs --check
 	node scripts/generate-schema-diagrams.mjs --check
+	node scripts/check-diagram-syntax.mjs
 
 # ─── Conformance (on-demand, needs network) ──────────────────────────
 
