@@ -7,6 +7,29 @@ All notable changes to `learn-content-engine`. The format is inspired by
 
 ## [Unreleased]
 
+### Source files are text to every tool again (engine#135)
+
+`src/stable-id-stability.ts` carried four RAW NUL bytes as key
+separators in template literals - a correct separator choice expressed
+the wrong way. A raw control byte flips the file to "binary" for grep
+and friends, and a binary file makes every search in it SILENT; silence
+is indistinguishable from "no hit", so the engine#131 source inventory
+missed exactly the file with the decisive text (fail-open, found by a
+read counter-probe). The separator now lives as an escape sequence
+(same runtime value, the file is text again), and the raw BEL byte a
+doc comment in `invisible-chars.test.ts` carried instead of showing its
+escape is spelled `U+0007`.
+
+The gate that keeps it fixed: `src/source-text-purity.test.ts` scans
+every source file (`src/**/*.ts`, `bin`, `scripts`) for raw control
+bytes outside tab/newline, with a seeded negative control and the
+checked quantity asserted - the same character class the engine lints
+in content (`W-INVISIBLE-CHAR`), now enforced on its own sources.
+RED-first: the gate flagged the known file AND surfaced the BEL byte no
+inventory had ever seen; writing the gate itself reproduced the trap (a
+raw NUL slipped into the seeded fixture and made the new file silently
+unsearchable) - the fixture now constructs the byte from its escape.
+
 ## [0.21.0] - 2026-08-06
 
 ### retired_ids unlocked: E-RETIRED-IDS-LOCKED removed (engine#131)
