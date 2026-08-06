@@ -7,6 +7,16 @@ All notable changes to `learn-content-engine`. The format is inspired by
 
 ## [Unreleased]
 
+### Docs
+
+- Three places still described `domain` as free-form after the 0.20.0
+  vocabulary contract (README "What this is NOT", the EN and DE
+  schema-first blog): fixed, and the docs-claims gate now rejects the
+  phrasing in both languages (seeded negative controls, engine#127
+  follow-up). `docs/validation.md`'s Manifests section now documents the
+  two warning-tier vocabulary lints `validateManifest` carries since
+  0.20.0.
+
 ## [0.20.0] - 2026-08-06
 
 ### Controlled vocabulary for domain and level (engine#127)

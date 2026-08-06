@@ -94,3 +94,36 @@ describe("current-version claims in the docs", () => {
         expect(caught, `no pattern catches: ${seeded}`).toBe(true);
     });
 });
+
+/** Prose that calls `domain` free-form asserts the pre-0.20.0 state; since
+ *  engine#127 the field carries the known-values-plus-other vocabulary
+ *  (`KNOWN_CONTENT_DOMAINS`). Other fields may legitimately be free-form
+ *  (`ai_validation`), so the patterns bind to the `domain` token. */
+const FREE_FORM_DOMAIN_PATTERNS = [
+    /free-form\s+`?domain`?/gi,
+    /frei belegbare\w*\s+`?domain`?/gi,
+];
+
+const SEEDED_FREE_FORM_CLAIMS = [
+    "a free-form `domain` field",
+    "ein frei belegbares `domain`-Feld",
+];
+
+describe("free-form domain claims in the docs (engine#127)", () => {
+    const docFiles = ["README.md", ...markdownFilesUnder("docs")];
+
+    it.each(docFiles)("%s does not call `domain` free-form", (filePath) => {
+        const prose = readFileSync(filePath, "utf-8");
+        const staleClaims = FREE_FORM_DOMAIN_PATTERNS.flatMap((pattern) =>
+            [...prose.matchAll(pattern)].map((claim) => claim[0]),
+        );
+        expect(staleClaims, `pre-0.20.0 domain claim in ${filePath}`).toEqual([]);
+    });
+
+    it.each(SEEDED_FREE_FORM_CLAIMS)("catches a stale claim written as %j", (seeded) => {
+        const caught = FREE_FORM_DOMAIN_PATTERNS.some(
+            (pattern) => [...seeded.matchAll(pattern)].length > 0,
+        );
+        expect(caught, `no pattern catches: ${seeded}`).toBe(true);
+    });
+});
