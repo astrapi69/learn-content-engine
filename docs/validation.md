@@ -146,6 +146,14 @@ manifest schema. A set missing a required field (`id`, `title`,
 `target_language`, `level`, `version`, `lesson_count`) is rejected; a set with
 neither `language` nor `target_language` fails on the missing `target_language`.
 
+Since 0.20.0 `validateManifest` also carries two author lints in `warnings`
+(never blocking, like the lesson lints in Layer 3): `W-DOMAIN-UNKNOWN` for a
+`domain` outside the known vocabulary (`KNOWN_CONTENT_DOMAINS`), and
+`W-LEVEL-UNKNOWN` for a `level` that is neither a CEFR band (`A1`..`C2`,
+case-insensitive) nor, for a non-language set, the explicit `none` sentinel.
+The contract lives in
+[content domains](lesson-format.md#content-domains).
+
 ## Quality minimums artifact
 
 Besides the two JSON-Schemas the package ships
