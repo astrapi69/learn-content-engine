@@ -535,6 +535,53 @@ describe("validateManifest — retired_ids unlocked (engine#131; adaptive-learne
     expect(validateManifest(manifest).valid).toBe(true);
   });
 
+  it("E-RETIRED-IDS-TYPE: a retired_ids that is not a list is rejected (type error)", () => {
+    const manifest = {
+      schema_version: "1.2",
+      name: "Broken",
+      sets: [validSet],
+      metadata: { retired_ids: "old-card-1" },
+    };
+    const result = validateManifest(manifest);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((issue) => issue.id === "E-RETIRED-IDS-TYPE")).toBe(true);
+  });
+
+  it("E-RETIRED-IDS-TYPE: a list with a non-string entry is rejected (multi-element fixture)", () => {
+    const manifest = {
+      schema_version: "1.2",
+      name: "Broken",
+      sets: [validSet],
+      metadata: { retired_ids: ["old-card-1", 3] },
+    };
+    expect(validateManifest(manifest).valid).toBe(false);
+  });
+
+  it("W-RETIRED-IDS-DUP: duplicates inside the list draw an author lint, never block", () => {
+    const manifest = {
+      schema_version: "1.2",
+      name: "Duplicated",
+      sets: [validSet],
+      metadata: { retired_ids: ["old-card-1", "old-exercise-2", "old-card-1"] },
+    };
+    const result = validateManifest(manifest);
+    expect(result.valid).toBe(true);
+    const duplicateLint = result.warnings.find((issue) => issue.id === "W-RETIRED-IDS-DUP");
+    expect(duplicateLint?.message).toContain("old-card-1");
+  });
+
+  it("boundary: a clean multi-entry list draws neither the type error nor the duplicate lint", () => {
+    const manifest = {
+      schema_version: "1.2",
+      name: "Clean",
+      sets: [validSet],
+      metadata: { retired_ids: ["old-card-1", "old-exercise-2"] },
+    };
+    const result = validateManifest(manifest);
+    expect(result.valid).toBe(true);
+    expect(result.warnings.filter((issue) => issue.id === "W-RETIRED-IDS-DUP")).toEqual([]);
+  });
+
   it("regression guard: E-RETIRED-IDS-LOCKED never comes back, even amid mixed metadata", () => {
     const manifest = {
       schema_version: "1.2",

@@ -30,6 +30,33 @@ stays the expectation for existing entries. Removal RED-first: the
 unlocked tests failed against the lock before the rule was removed; the
 regression guard keeps the rule id from coming back.
 
+The unlock is only complete with the stability core (the follow-up cut,
+same engine#131 - the first cut left V1 treating every disappearance as
+a violation, so a correctly declared retirement would still have gone
+red in every content repo's gate):
+
+- **V1 unlock**: a base id missing from the head is legal exactly when
+  the head's set declares it in `metadata.retired_ids`; the message now
+  names the way out ("declare the retirement or restore the element")
+  instead of the old lock.
+- **V5 (new)**: a published retirement is never un-declared - an id that
+  leaves the `retired_ids` list is a violation (add-only, like the ids
+  themselves).
+- **V6 (new)**: retired-yet-alive is a contradiction - a consumer
+  resolves the id as living and would silently ignore the retirement.
+- **Scope cut, named deliberately**: the retired-yet-alive ERROR lives
+  in the stability core, not in `validateManifest` - only the core sees
+  the lesson inventory. The manifest validator keeps what one manifest
+  can prove: `E-RETIRED-IDS-TYPE` (the list must be strings) and
+  `W-RETIRED-IDS-DUP` (duplicate entries, warning tier).
+- The `check-stable-ids` CLI reads each tree's set manifests (base via
+  git, head from the working tree) and feeds the declared retirements to
+  the comparison; `checked` now reports base/head retired counts so a
+  run that never read the manifests stays visible (test contract).
+- Multi-element fixtures throughout (two retired with one alive, two
+  removed with one declared): a one-element fixture cannot show a
+  multi-element bug.
+
 ### Docs
 
 - Three places still described `domain` as free-form after the 0.20.0
