@@ -567,6 +567,16 @@ joins. The contract:
 - **Optional.** Pre-v1.9 content validates unchanged; the requirement for the
   shipped content repos lives in their quality gate, not in the schema
   (additive by policy).
+- **Deliberate retirement (`metadata.retired_ids`).** Removing a published
+  element is declared, not silent: its identity (the `stable_id`; the author
+  slug for pre-stable_id rows) goes into the manifest's
+  `metadata.retired_ids` list. The list was locked (`E-RETIRED-IDS-LOCKED`)
+  until the consumer consequence was decided AND shipped; both happened
+  (adaptive-learner#2188: progress rows for retired ids are ARCHIVED - out
+  of review planning and due counts, history kept - and the user is told
+  once, with a count), so the lock was removed (engine#131). Add-only stays
+  the expectation for existing entries: a published retirement is never
+  un-declared.
 
 Scope and limit of this stage: it closes orphaning caused by slug renames and
 position shifts on the exercise and card level. It does NOT close the case
@@ -684,7 +694,6 @@ drifting.
 | `E-SCHEMA` | Structural schema violation (missing required field, wrong type, bad enum value). |
 | `E-UNKNOWN-FIELD` | An unknown field is present (the schema is strict, `additionalProperties: false`). |
 | `E-STABLE-ID-DUP` | A `stable_id` is used more than once within one lesson (exercises and cards share one namespace). Set-wide uniqueness is the repo gate's job via `collectStableIds`. |
-| `E-RETIRED-IDS-LOCKED` | A manifest `metadata.retired_ids` list is present. The deliberate-deletion list of the planned stability gate (engine#90) is locked until adaptive-learner#2188 defines the app-side consequence of retiring an id; until then add-only retrofits retire nothing. The lock is removed deliberately once #2188 is decided. |
 | `E-STEP-THEORY-BODY` | A [theory step](#steps) has no `body`. |
 | `E-STEP-THEORY-EXERCISE` | A theory step also carries an `exercise`. |
 | `E-STEP-EXERCISE-PAYLOAD` | An exercise step has no `exercise` payload. |

@@ -493,7 +493,7 @@ describe("engine#127 — domain vocabulary + level lints (warnings, never block)
   });
 });
 
-describe("validateManifest — retired_ids lock (engine#90 / adaptive-learner#2188)", () => {
+describe("validateManifest — retired_ids unlocked (engine#131; adaptive-learner#2188 decided AND shipped)", () => {
   const validSet = {
     id: "x",
     title: "X",
@@ -503,29 +503,29 @@ describe("validateManifest — retired_ids lock (engine#90 / adaptive-learner#21
     lesson_count: 1,
   };
 
-  it("rejects a manifest whose metadata carries retired_ids (E-RETIRED-IDS-LOCKED)", () => {
+  it("accepts a manifest whose metadata declares retired_ids (deliberate retirement)", () => {
     const manifest = {
       schema_version: "1.2",
-      name: "Locked",
+      name: "Retiring",
       sets: [validSet],
       metadata: { retired_ids: ["old-card-1"] },
     };
     const result = validateManifest(manifest);
-    expect(result.valid).toBe(false);
-    expect(result.errors.some((issue) => issue.id === "E-RETIRED-IDS-LOCKED")).toBe(true);
+    expect(result.valid).toBe(true);
+    expect(result.errors).toEqual([]);
   });
 
-  it("boundary: an EMPTY retired_ids list is locked too (presence is the signal)", () => {
+  it("boundary: an EMPTY retired_ids list is valid too (presence no longer signals anything)", () => {
     const manifest = {
       schema_version: "1.2",
-      name: "Locked",
+      name: "Retiring",
       sets: [validSet],
       metadata: { retired_ids: [] },
     };
-    expect(validateManifest(manifest).valid).toBe(false);
+    expect(validateManifest(manifest).valid).toBe(true);
   });
 
-  it("keeps other free-form metadata untouched by the lock", () => {
+  it("keeps other free-form metadata untouched, as before the unlock", () => {
     const manifest = {
       schema_version: "1.2",
       name: "Fine",
@@ -535,17 +535,20 @@ describe("validateManifest — retired_ids lock (engine#90 / adaptive-learner#21
     expect(validateManifest(manifest).valid).toBe(true);
   });
 
-  it("the lock message names the deciding issue, so the gate points at the open decision", () => {
+  it("regression guard: E-RETIRED-IDS-LOCKED never comes back, even amid mixed metadata", () => {
     const manifest = {
       schema_version: "1.2",
-      name: "Locked",
+      name: "Retiring",
       sets: [validSet],
-      metadata: { retired_ids: ["a"] },
+      metadata: {
+        author: "Asterios Raptis",
+        retired_ids: ["old-card-1", "old-exercise-2"],
+        lessons: ["01-intro.json"],
+      },
     };
-    const locked = validateManifest(manifest).errors.find(
-      (issue) => issue.id === "E-RETIRED-IDS-LOCKED",
-    );
-    expect(locked?.message).toContain("adaptive-learner#2188");
+    const validation = validateManifest(manifest);
+    expect(validation.valid).toBe(true);
+    expect(validation.errors.some((issue) => issue.id === "E-RETIRED-IDS-LOCKED")).toBe(false);
   });
 });
 
