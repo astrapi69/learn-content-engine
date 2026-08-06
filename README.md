@@ -92,6 +92,11 @@ if (!result.valid) console.error(result.errors); // [{ path, message }, …]
 | `computeStableIdCoverage`, `gateStableIdCoverage`, `formatCoverageResult` | fn | the pure core of the shipped `check-stable-id-coverage` gate: how many listed sets are fully minted, judged against the repo-local baseline |
 | `isBaseCredible` | fn | whether a comparison base is a plausible predecessor: an empty history is a broken run, not a clean one (the floor under the stability gate) |
 | `lessonIdOrderingIssues` | fn | set-level ordering check over a set's lesson ids: mixed `NN-` prefixes, inconsistent widths, lexicographic-vs-numeric divergence (`validateManifest` runs it over `metadata.lessons`) |
+| `KNOWN_CONTENT_DOMAINS` | const | the canonical domain vocabulary of the known-values-plus-other contract (engine#127); consumers group their subject facet on it instead of keeping a copy |
+| `CEFR_LEVELS` | const | the CEFR proficiency bands (`A1`..`C2`) a language set declares as its `level` |
+| `LEVEL_NONE` | const | the explicit no-level sentinel (`"none"`) a deliberately level-less non-language set declares (engine#127) |
+| `isKnownContentDomain` | fn | whether a `domain` value is in the canonical vocabulary (case-insensitive; absent counts as the `language` default) - the `W-DOMAIN-UNKNOWN` lint's predicate |
+| `isKnownLevel` | fn | whether a `level` is a CEFR band or, for a non-language set, the `none` sentinel - the `W-LEVEL-UNKNOWN` lint's predicate |
 | `ContentLesson`, `ContentSetEntry`, `ContentSetBook`, `ContentSetSource`, … | types | the canonical internal format |
 | `ContentLessonInlineExample` | type | one inline worked example (schema v1.5) on a theory step or exercise |
 | `SetReviewStatus`, `SetAttribution` | types | the set entry's review standing (schema v1.9) and attribution block |

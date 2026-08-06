@@ -28,6 +28,7 @@ import { fileURLToPath } from "node:url";
 import { Ajv2020 } from "ajv/dist/2020.js";
 import type { ErrorObject, ValidateFunction } from "ajv";
 
+import { KNOWN_CONTENT_DOMAINS, isKnownContentDomain, isKnownLevel } from "./content-domains.js";
 import type { ExtensionRegistry } from "./extensions.js";
 import { describeInvisibleChars, findInvisibleChars } from "./invisible-chars.js";
 import { lessonIdOrderingIssues } from "./set-ordering.js";
@@ -580,7 +581,52 @@ export function validateManifest(input: unknown): ValidationResult {
       warnings: [],
     };
   }
-  return { valid: true, errors: [], warnings: checkManifestLessonOrdering(manifestMetadata) };
+  return {
+    valid: true,
+    errors: [],
+    warnings: [
+      ...checkManifestLessonOrdering(manifestMetadata),
+      ...checkManifestDomainVocabulary(normalized),
+    ],
+  };
+}
+
+/** engine#127: the "known values + other" vocabulary lints. Both are
+ *  warnings - unknown values stay VALID (additive contract, no break to
+ *  published content), but silent fragmentation of the subject facet
+ *  (nine live domain values, two overlapping pairs) and free-text level
+ *  junk (``a0``, ``einsteiger``, ``reflexion``) get flagged at authoring
+ *  time. Vocabulary source: ``content-domains.ts``. */
+function checkManifestDomainVocabulary(normalized: unknown): ValidationIssue[] {
+  const manifestSets = (normalized as { sets?: unknown }).sets;
+  if (!Array.isArray(manifestSets)) return [];
+  const issues: ValidationIssue[] = [];
+  manifestSets.forEach((rawSet, setIndex) => {
+    if (typeof rawSet !== "object" || rawSet === null) return;
+    const setEntry = rawSet as { domain?: unknown; level?: unknown };
+    const domain = typeof setEntry.domain === "string" ? setEntry.domain : undefined;
+    if (domain !== undefined && !isKnownContentDomain(domain)) {
+      issues.push(
+        warn(
+          "W-DOMAIN-UNKNOWN",
+          `/sets/${setIndex}/domain`,
+          `domain '${domain}' is outside the known vocabulary (${KNOWN_CONTENT_DOMAINS.join(", ")}); it stays valid ('other' contract), but consumers cannot group it with existing subjects - prefer a known domain or accept the fragmentation deliberately`,
+          "content-domains",
+        ),
+      );
+    }
+    if (typeof setEntry.level === "string" && !isKnownLevel(domain, setEntry.level)) {
+      issues.push(
+        warn(
+          "W-LEVEL-UNKNOWN",
+          `/sets/${setIndex}/level`,
+          `level '${setEntry.level}' is neither a CEFR band (A1..C2) nor, for a non-language set, the explicit 'none' sentinel; a level facet would offer it as a category`,
+          "content-domains",
+        ),
+      );
+    }
+  });
+  return issues;
 }
 
 /** engine#110: the ordering gate's carrier. A per-set manifest lists its

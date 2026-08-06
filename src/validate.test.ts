@@ -432,6 +432,67 @@ describe("schema 1.9 — attribution and review_status on the set entry (engine#
   });
 });
 
+describe("engine#127 — domain vocabulary + level lints (warnings, never block)", () => {
+  const manifestWith = (setExtras: Record<string, unknown>) => ({
+    schema_version: "1.2",
+    name: "M",
+    sets: [
+      {
+        id: "x",
+        title: "X",
+        target_language: "fr",
+        level: "A1",
+        version: "1.0.0",
+        lesson_count: 1,
+        ...setExtras,
+      },
+    ],
+  });
+  const warningIds = (checked: ValidationResult): string[] =>
+    checked.warnings.map((issue) => issue.id);
+
+  it("flags an unknown domain with W-DOMAIN-UNKNOWN and stays valid ('other' contract)", () => {
+    const checked = validateManifest(manifestWith({ domain: "gardening" }));
+    expect(checked.valid).toBe(true);
+    const unknownDomain = checked.warnings.find((issue) => issue.id === "W-DOMAIN-UNKNOWN");
+    expect(unknownDomain).toBeDefined();
+    expect(unknownDomain?.path).toBe("/sets/0/domain");
+    expect(unknownDomain?.severity).toBe("warning");
+    expect(unknownDomain?.message).toContain("gardening");
+  });
+
+  it("draws no domain warning for known domains or the absent default", () => {
+    expect(warningIds(validateManifest(manifestWith({ domain: "psychology" })))).not.toContain(
+      "W-DOMAIN-UNKNOWN",
+    );
+    expect(warningIds(validateManifest(manifestWith({})))).not.toContain("W-DOMAIN-UNKNOWN");
+  });
+
+  it("flags the live junk level values with W-LEVEL-UNKNOWN and stays valid", () => {
+    const checked = validateManifest(manifestWith({ level: "a0" }));
+    expect(checked.valid).toBe(true);
+    const unknownLevel = checked.warnings.find((issue) => issue.id === "W-LEVEL-UNKNOWN");
+    expect(unknownLevel).toBeDefined();
+    expect(unknownLevel?.path).toBe("/sets/0/level");
+    expect(unknownLevel?.message).toContain("a0");
+  });
+
+  it("accepts the explicit no-level sentinel for a non-language set only", () => {
+    expect(
+      warningIds(validateManifest(manifestWith({ domain: "psychology", level: "none" }))),
+    ).not.toContain("W-LEVEL-UNKNOWN");
+    expect(warningIds(validateManifest(manifestWith({ level: "none" })))).toContain(
+      "W-LEVEL-UNKNOWN",
+    );
+  });
+
+  it("accepts CEFR case-insensitively (a lowercase a1 is not junk)", () => {
+    expect(warningIds(validateManifest(manifestWith({ level: "a1" })))).not.toContain(
+      "W-LEVEL-UNKNOWN",
+    );
+  });
+});
+
 describe("validateManifest — retired_ids lock (engine#90 / adaptive-learner#2188)", () => {
   const validSet = {
     id: "x",

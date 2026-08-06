@@ -25,6 +25,13 @@ export {
 export { validateLesson, validateManifest } from "./validate.js";
 export { collectStableIds } from "./stable-ids.js";
 export {
+  CEFR_LEVELS,
+  KNOWN_CONTENT_DOMAINS,
+  LEVEL_NONE,
+  isKnownContentDomain,
+  isKnownLevel,
+} from "./content-domains.js";
+export {
   buildStableIdInventory,
   compareStableIdInventories,
   formatStabilityResult,
