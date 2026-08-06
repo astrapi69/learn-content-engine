@@ -7,6 +7,29 @@ All notable changes to `learn-content-engine`. The format is inspired by
 
 ## [Unreleased]
 
+### retired_ids unlocked: E-RETIRED-IDS-LOCKED removed (engine#131)
+
+The lock was set with an explicit trigger recorded on
+adaptive-learner#2188: it falls when the app-side consequence of
+retiring an id is decided AND shipped. Both happened on 2026-08-06:
+
+- **Decided** (architect, 2026-07-31): progress rows for retired ids are
+  ARCHIVED - not deleted, not orphaned. They leave review planning and
+  due counts; history stays. The user is told once, on update, with a
+  count.
+- **Shipped** (adaptive-learner PR #2458, after the stable_id key switch
+  in PR #2455 closed adaptive-learner#2130): the app consumes
+  `metadata.retired_ids` on set update in both storage modes, declared
+  retirement is non-breaking in the update guard.
+
+`validateManifest` therefore accepts `metadata.retired_ids` again (empty
+or filled); the rule is gone from the catalog, and the stable-identity
+contract documents the retirement semantics instead: entries match the
+exercise/card identity (`stable_id`, author-slug fallback), add-only
+stays the expectation for existing entries. Removal RED-first: the
+unlocked tests failed against the lock before the rule was removed; the
+regression guard keeps the rule id from coming back.
+
 ### Docs
 
 - Three places still described `domain` as free-form after the 0.20.0
