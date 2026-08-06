@@ -88,7 +88,7 @@ if (!result.valid) console.error(result.errors); // [{ path, message }, …]
 | `validateLesson` | fn | validate a lesson against the bundled schema + semantic rules → `ValidationResult` |
 | `validateManifest` | fn | validate a manifest against the bundled schema (legacy alias normalized) |
 | `collectStableIds` | fn | set-wide `stable_id` view over several lessons: total count + duplicates with locations (the cross-lesson half the schema cannot see) |
-| `buildStableIdInventory`, `compareStableIdInventories`, `formatStabilityResult` | fn | the pure core of the shipped `check-stable-ids` gate: published-state vs head, violations V1-V4 |
+| `buildStableIdInventory`, `compareStableIdInventories`, `formatStabilityResult` | fn | the pure core of the shipped `check-stable-ids` gate: published-state vs head, violations V1-V6 (V5/V6 read each tree's declared `retired_ids`, engine#131) |
 | `computeStableIdCoverage`, `gateStableIdCoverage`, `formatCoverageResult` | fn | the pure core of the shipped `check-stable-id-coverage` gate: how many listed sets are fully minted, judged against the repo-local baseline |
 | `isBaseCredible` | fn | whether a comparison base is a plausible predecessor: an empty history is a broken run, not a clean one (the floor under the stability gate) |
 | `lessonIdOrderingIssues` | fn | set-level ordering check over a set's lesson ids: mixed `NN-` prefixes, inconsistent widths, lexicographic-vs-numeric divergence (`validateManifest` runs it over `metadata.lessons`) |

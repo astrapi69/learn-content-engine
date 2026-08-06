@@ -3,6 +3,7 @@ import { describe, it, expect } from "vitest";
 import {
   buildStableIdInventory,
   compareStableIdInventories,
+  formatStabilityResult,
   isBaseCredible,
   type StableIdInventory,
 } from "./stable-id-stability.js";
@@ -103,7 +104,14 @@ describe("compareStableIdInventories", () => {
   it("reports the checked quantities so a run over nothing stays visible", () => {
     const empty = inventory([], []);
     const result = compareStableIdInventories(empty, empty);
-    expect(result.checked).toEqual({ baseIds: 0, headIds: 0, baseLessons: 0, headLessons: 0 });
+    expect(result.checked).toEqual({
+      baseIds: 0,
+      headIds: 0,
+      baseLessons: 0,
+      headLessons: 0,
+      baseRetired: 0,
+      headRetired: 0,
+    });
   });
 });
 
@@ -111,24 +119,30 @@ describe("isBaseCredible", () => {
   it("a base carrying lessons is credible, minted or not (the mint wave case)", () => {
     // During a mint wave the base legitimately has lessons but ZERO stable_ids
     // while the head has many. That must pass, or no mint PR could ever land.
-    expect(isBaseCredible({ baseIds: 0, headIds: 42, baseLessons: 12, headLessons: 12 }).credible).toBe(true);
+    expect(isBaseCredible({ baseIds: 0, headIds: 42, baseLessons: 12, headLessons: 12, baseRetired: 0, headRetired: 0 }).credible).toBe(true);
   });
 
   it("a base with NO lessons while the head has them is not a credible predecessor", () => {
     // The dangerous shape: an empty or unrelated ref yields no previous ids,
     // so nothing can be violated and the gate would report green exactly when
     // it is needed most.
-    const verdict = isBaseCredible({ baseIds: 0, headIds: 42, baseLessons: 0, headLessons: 12 });
+    const verdict = isBaseCredible({ baseIds: 0, headIds: 42, baseLessons: 0, headLessons: 12, baseRetired: 0, headRetired: 0 });
     expect(verdict.credible).toBe(false);
     expect(verdict.reason).toContain("no lessons");
   });
 
   it("an empty base with an empty head is credible (nothing to compare, nothing claimed)", () => {
-    expect(isBaseCredible({ baseIds: 0, headIds: 0, baseLessons: 0, headLessons: 0 }).credible).toBe(true);
+    expect(
+      isBaseCredible({ baseIds: 0, headIds: 0, baseLessons: 0, headLessons: 0, baseRetired: 0, headRetired: 0 })
+        .credible,
+    ).toBe(true);
   });
 
   it("boundary: a single base lesson is enough to make the base credible", () => {
-    expect(isBaseCredible({ baseIds: 0, headIds: 5, baseLessons: 1, headLessons: 3 }).credible).toBe(true);
+    expect(
+      isBaseCredible({ baseIds: 0, headIds: 5, baseLessons: 1, headLessons: 3, baseRetired: 0, headRetired: 0 })
+        .credible,
+    ).toBe(true);
   });
 });
 
@@ -158,5 +172,140 @@ describe("buildStableIdInventory", () => {
     const built = buildStableIdInventory([{ set: "sets/de/a", filename: "01.json", lesson: bare }]);
     expect(built.elements).toEqual([]);
     expect(built.lessons).toHaveLength(1);
+  });
+});
+
+/**
+ * retired_ids in the stability core (engine#131). The lock
+ * (E-RETIRED-IDS-LOCKED) fell after the consumer consequence shipped
+ * (adaptive-learner#2188); the core now reads each tree's declared
+ * retirements: a declared disappearance is legal (V1 unlock), a published
+ * retirement never un-declares (V5), and retired-yet-alive is a
+ * contradiction (V6). Multi-element fixtures on purpose: a bug in handling
+ * several entries needs two to exist.
+ */
+describe("compareStableIdInventories - retired_ids (engine#131)", () => {
+  const twoIdBase: StableIdInventory = {
+    elements: [
+      { set: "sets/de/a", stableId: "ex-aaaa0001", kind: "exercise", type: "free_text", lesson: "01.json" },
+      { set: "sets/de/a", stableId: "ex-aaaa0002", kind: "exercise", type: "cloze", lesson: "01.json" },
+    ],
+    lessons: [{ set: "sets/de/a", filename: "01.json" }],
+  };
+
+  it("V1 unlock: two ids gone, ONE declared retired - exactly the undeclared one violates", () => {
+    const head: StableIdInventory = {
+      elements: [],
+      lessons: [{ set: "sets/de/a", filename: "01.json" }],
+      retired: [{ set: "sets/de/a", stableId: "ex-aaaa0001" }],
+    };
+    const result = compareStableIdInventories(twoIdBase, head);
+    expect(result.violations.map((violation) => violation.rule)).toEqual(["V1"]);
+    expect(result.violations[0]?.message).toContain("ex-aaaa0002");
+    expect(result.violations[0]?.message).toContain("retired_ids");
+  });
+
+  it("V1 boundary: a retirement declared in a DIFFERENT set does not legalize the disappearance", () => {
+    const head: StableIdInventory = {
+      elements: [
+        { set: "sets/de/a", stableId: "ex-aaaa0002", kind: "exercise", type: "cloze", lesson: "01.json" },
+      ],
+      lessons: [{ set: "sets/de/a", filename: "01.json" }],
+      retired: [{ set: "sets/de/b", stableId: "ex-aaaa0001" }],
+    };
+    expect(compareStableIdInventories(twoIdBase, head).violations.map((v) => v.rule)).toEqual(["V1"]);
+  });
+
+  it("V5: a published retirement never un-declares - two retired in base, one dropped", () => {
+    const base: StableIdInventory = {
+      elements: [],
+      lessons: [{ set: "sets/de/a", filename: "01.json" }],
+      retired: [
+        { set: "sets/de/a", stableId: "ex-aaaa0001" },
+        { set: "sets/de/a", stableId: "ex-aaaa0002" },
+      ],
+    };
+    const head: StableIdInventory = {
+      elements: [],
+      lessons: [{ set: "sets/de/a", filename: "01.json" }],
+      retired: [{ set: "sets/de/a", stableId: "ex-aaaa0002" }],
+    };
+    const result = compareStableIdInventories(base, head);
+    expect(result.violations.map((violation) => violation.rule)).toEqual(["V5"]);
+    expect(result.violations[0]?.message).toContain("ex-aaaa0001");
+  });
+
+  it("V6: two retired, ONE still alive - exactly the alive one is the contradiction", () => {
+    const head: StableIdInventory = {
+      elements: [
+        { set: "sets/de/a", stableId: "ex-aaaa0001", kind: "exercise", type: "free_text", lesson: "01.json" },
+      ],
+      lessons: [{ set: "sets/de/a", filename: "01.json" }],
+      retired: [
+        { set: "sets/de/a", stableId: "ex-aaaa0001" },
+        { set: "sets/de/a", stableId: "ex-aaaa0002" },
+      ],
+    };
+    const base: StableIdInventory = {
+      elements: [],
+      lessons: [],
+      retired: [
+        { set: "sets/de/a", stableId: "ex-aaaa0001" },
+        { set: "sets/de/a", stableId: "ex-aaaa0002" },
+      ],
+    };
+    const result = compareStableIdInventories(base, head);
+    expect(result.violations.map((violation) => violation.rule)).toEqual(["V6"]);
+    expect(result.violations[0]?.message).toContain("ex-aaaa0001");
+  });
+
+  it("clean retirement round-trip: declared, gone, still declared - no violation", () => {
+    const head: StableIdInventory = {
+      elements: [
+        { set: "sets/de/a", stableId: "ex-aaaa0002", kind: "exercise", type: "cloze", lesson: "01.json" },
+      ],
+      lessons: [{ set: "sets/de/a", filename: "01.json" }],
+      retired: [{ set: "sets/de/a", stableId: "ex-aaaa0001" }],
+    };
+    expect(compareStableIdInventories(twoIdBase, head).violations).toEqual([]);
+  });
+
+  it("inventories without a retired list behave exactly as before (back-compat)", () => {
+    const head: StableIdInventory = {
+      elements: [],
+      lessons: [{ set: "sets/de/a", filename: "01.json" }],
+    };
+    const result = compareStableIdInventories(twoIdBase, head);
+    expect(result.violations.map((violation) => violation.rule)).toEqual(["V1", "V1"]);
+  });
+});
+
+describe("checked quantities cover the retired lists (test contract, engine#131)", () => {
+  it("counts base and head retirements, so a run that never read the manifests is visible", () => {
+    const base: StableIdInventory = {
+      elements: [],
+      lessons: [["sets/de/a", "01.json"]].map(([set, filename]) => ({ set: set!, filename: filename! })),
+      retired: [
+        { set: "sets/de/a", stableId: "ex-aaaa0001" },
+        { set: "sets/de/a", stableId: "ex-aaaa0002" },
+      ],
+    };
+    const head: StableIdInventory = {
+      elements: [],
+      lessons: [{ set: "sets/de/a", filename: "01.json" }],
+      retired: [
+        { set: "sets/de/a", stableId: "ex-aaaa0001" },
+        { set: "sets/de/a", stableId: "ex-aaaa0002" },
+      ],
+    };
+    const result = compareStableIdInventories(base, head);
+    expect(result.checked.baseRetired).toBe(2);
+    expect(result.checked.headRetired).toBe(2);
+  });
+
+  it("formatStabilityResult reports the retired quantities", () => {
+    const emptyInventory: StableIdInventory = { elements: [], lessons: [] };
+    const rendered = formatStabilityResult(compareStableIdInventories(emptyInventory, emptyInventory));
+    expect(rendered).toContain("retired");
   });
 });

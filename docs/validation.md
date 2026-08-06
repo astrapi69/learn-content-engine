@@ -154,6 +154,15 @@ case-insensitive) nor, for a non-language set, the explicit `none` sentinel.
 The contract lives in
 [content domains](lesson-format.md#content-domains).
 
+Since 0.21.0 a manifest may declare `metadata.retired_ids` (deliberate
+retirement, unlocked in engine#131). The validator checks what one manifest
+can prove: `E-RETIRED-IDS-TYPE` rejects a list that is not made of strings,
+and `W-RETIRED-IDS-DUP` flags duplicate entries (never blocks). Everything
+that needs the lesson inventory - an undeclared disappearance, un-declaring
+a published retirement, retired-yet-alive - lives in the stability gate
+(`V1`/`V5`/`V6`, see
+[stable identity](lesson-format.md#stable-identity-stable_id)).
+
 ## Quality minimums artifact
 
 Besides the two JSON-Schemas the package ships

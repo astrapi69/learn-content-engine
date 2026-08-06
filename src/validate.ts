@@ -563,18 +563,66 @@ export function validateManifest(input: unknown): ValidationResult {
   // was locked behind E-RETIRED-IDS-LOCKED until the app-side consequence of
   // retiring an id was decided AND shipped; both happened (archive, not
   // delete or orphan - adaptive-learner#2188, PR #2458), so the lock was
-  // removed deliberately (engine#131). The list is free-form metadata again;
-  // its entries match the exercise/card identity (stable_id, author-slug
-  // fallback), and add-only stays the expectation for existing entries.
+  // removed deliberately (engine#131). Entries match the exercise/card
+  // identity (stable_id, author-slug fallback); add-only for existing
+  // entries and the retired-yet-alive contradiction are the stability
+  // core's checks (V5/V6) - only IT sees the lesson inventory. This
+  // validator keeps what a single manifest can prove: the list's shape.
   const manifestMetadata = (normalized as { metadata?: Record<string, unknown> }).metadata;
+  if (manifestMetadata && "retired_ids" in manifestMetadata) {
+    const retiredIds = manifestMetadata["retired_ids"];
+    const isStringList =
+      Array.isArray(retiredIds) && retiredIds.every((entry) => typeof entry === "string");
+    if (!isStringList) {
+      return {
+        valid: false,
+        errors: [
+          err(
+            "E-RETIRED-IDS-TYPE",
+            "/metadata/retired_ids",
+            "'retired_ids' must be a list of strings (each entry the stable_id - author slug for pre-stable_id elements - of a retired exercise or card)",
+            "stable-identity-stable_id",
+          ),
+        ],
+        warnings: [],
+      };
+    }
+  }
   return {
     valid: true,
     errors: [],
     warnings: [
       ...checkManifestLessonOrdering(manifestMetadata),
       ...checkManifestDomainVocabulary(normalized),
+      ...checkRetiredIdsDuplicates(manifestMetadata),
     ],
   };
+}
+
+/** engine#131: author lint on the retirement list. Duplicates never block -
+ *  the retirement itself still works - but they are author noise that hides
+ *  a real edit (usually a copy-paste of the previous entry). */
+function checkRetiredIdsDuplicates(
+  manifestMetadata: Record<string, unknown> | undefined,
+): ValidationIssue[] {
+  const retiredIds = manifestMetadata?.["retired_ids"];
+  if (!Array.isArray(retiredIds)) return [];
+  const seenIds = new Set<string>();
+  const duplicateIds = new Set<string>();
+  for (const entry of retiredIds) {
+    if (typeof entry !== "string") continue;
+    if (seenIds.has(entry)) duplicateIds.add(entry);
+    seenIds.add(entry);
+  }
+  if (duplicateIds.size === 0) return [];
+  return [
+    warn(
+      "W-RETIRED-IDS-DUP",
+      "/metadata/retired_ids",
+      `retired_ids lists ${[...duplicateIds].map((entry) => `'${entry}'`).join(", ")} more than once; a retirement is declared once - the duplicate usually hides a mis-edited entry`,
+      "stable-identity-stable_id",
+    ),
+  ];
 }
 
 /** engine#127: the "known values + other" vocabulary lints. Both are

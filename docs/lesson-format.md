@@ -569,14 +569,19 @@ joins. The contract:
   (additive by policy).
 - **Deliberate retirement (`metadata.retired_ids`).** Removing a published
   element is declared, not silent: its identity (the `stable_id`; the author
-  slug for pre-stable_id rows) goes into the manifest's
+  slug for pre-stable_id rows) goes into the set manifest's
   `metadata.retired_ids` list. The list was locked (`E-RETIRED-IDS-LOCKED`)
   until the consumer consequence was decided AND shipped; both happened
   (adaptive-learner#2188: progress rows for retired ids are ARCHIVED - out
   of review planning and due counts, history kept - and the user is told
-  once, with a count), so the lock was removed (engine#131). Add-only stays
-  the expectation for existing entries: a published retirement is never
-  un-declared.
+  once, with a count), so the lock was removed (engine#131). The contract is
+  enforced in two places: `validateManifest` checks what one manifest can
+  prove (`E-RETIRED-IDS-TYPE`: a list of strings; `W-RETIRED-IDS-DUP`:
+  duplicate entries), and the stability gate checks what needs the lesson
+  inventory (`V1`: an undeclared disappearance still violates; `V5`: a
+  published retirement is never un-declared; `V6`: retired-yet-alive is a
+  contradiction - see
+  [Checking stable identity across versions](#checking-stable-identity-across-versions)).
 
 Scope and limit of this stage: it closes orphaning caused by slug renames and
 position shifts on the exercise and card level. It does NOT close the case
@@ -694,6 +699,7 @@ drifting.
 | `E-SCHEMA` | Structural schema violation (missing required field, wrong type, bad enum value). |
 | `E-UNKNOWN-FIELD` | An unknown field is present (the schema is strict, `additionalProperties: false`). |
 | `E-STABLE-ID-DUP` | A `stable_id` is used more than once within one lesson (exercises and cards share one namespace). Set-wide uniqueness is the repo gate's job via `collectStableIds`. |
+| `E-RETIRED-IDS-TYPE` | Manifest-level ([stable identity](#stable-identity-stable_id)): `metadata.retired_ids` is present but not a list of strings. Each entry is the identity of a retired exercise or card (`stable_id`, author slug for pre-stable_id elements); a malformed list would make the consumer silently skip the retirement (engine#131). |
 | `E-STEP-THEORY-BODY` | A [theory step](#steps) has no `body`. |
 | `E-STEP-THEORY-EXERCISE` | A theory step also carries an `exercise`. |
 | `E-STEP-EXERCISE-PAYLOAD` | An exercise step has no `exercise` payload. |
@@ -738,6 +744,7 @@ drifting.
 | `W-SET-ORDER-MIXED-PREFIX` | Set-level ([`lessonIdOrderingIssues`](#lesson-ordering)): some lesson ids carry an `NN-` ordering prefix and some do not. Consumers sort ids lexicographically, so the unprefixed ids land wherever their first character falls - a guaranteed wrong display order. |
 | `W-SET-ORDER-PREFIX-WIDTH` | Set-level: `NN-` prefixes with different digit widths (`1-` next to `01-` or `10-`). Lexicographic sorting puts `10-` before `2-`; zero-pad every prefix to one fixed width. |
 | `W-SET-ORDER-NUMERIC` | Set-level: the lexicographic display order diverges from the numeric reading of the ids (`kapitel-10` displays before `kapitel-2`). This is the shape of the observed damage case (engine#106); zero-pad the embedded numbers. |
+| `W-RETIRED-IDS-DUP` | Manifest-level ([stable identity](#stable-identity-stable_id)): `metadata.retired_ids` lists the same id more than once. The retirement still works, but the duplicate usually hides a mis-edited entry (engine#131). |
 | `W-DOMAIN-UNKNOWN` | Manifest-level ([content domains](#content-domains)): a set's `domain` is outside the known vocabulary (`KNOWN_CONTENT_DOMAINS`). It stays valid - the contract is known values plus other - but consumers cannot group it with existing subjects, so the registry's subject facet fragments. Prefer a known domain, or accept the fragmentation deliberately (engine#127). |
 | `W-LEVEL-UNKNOWN` | Manifest-level ([content domains](#content-domains)): a set's `level` is neither a CEFR band (`A1`..`C2`, case-insensitive) nor, for a non-language set, the explicit `none` sentinel. A consumer's level facet would offer the free-text value (`a0`, `einsteiger`, `reflexion` are live examples) as a category (engine#127). |
 
@@ -860,10 +867,12 @@ It compares the working tree against the merge base with `--base` (default
 
 | Rule | Violation |
 |---|---|
-| `V1` | a published `stable_id` disappeared (retiring one is locked until the consumer side defines what happens to the learner progress behind it) |
+| `V1` | a published `stable_id` disappeared WITHOUT being declared in its set's `metadata.retired_ids` (declared retirement is the legal way out since engine#131; the consumer archives the learner progress behind it, adaptive-learner#2188) |
 | `V2` | a `stable_id` is used more than once inside one set (the same id in two different sets is fine) |
 | `V3` | a `stable_id` now points at another kind or exercise type (id reuse) |
 | `V4` | a lesson FILE vanished while its set survived (the filename is the lesson's identity for progress joins) |
+| `V5` | a `retired_id` left the set's `retired_ids` list (a published retirement is never un-declared; add-only, like the ids themselves) |
+| `V6` | a `retired_id` is declared retired but still present in the set (a consumer resolves it as living, so the retirement would be silently ignored) |
 
 Editing content under a constant id passes, and that is the entire point.
 

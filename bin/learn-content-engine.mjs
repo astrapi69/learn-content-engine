@@ -128,13 +128,42 @@ if (argv[0] === "check-stable-ids") {
       }
     });
 
+  // Each set manifest's metadata.retired_ids feeds the V1/V5/V6 checks
+  // (engine#131). Read loudly: a manifest that fails to parse would
+  // otherwise silently drop the tree's declared retirements, and the
+  // comparison would report V1 for every legally retired id.
+  const isSetManifest = (path) =>
+    path.split("/").length === 4 && (path.endsWith("/manifest.yaml") || path.endsWith("/manifest.yml"));
+  const readRetired = (paths, read) =>
+    paths.filter(isSetManifest).flatMap((path) => {
+      try {
+        const manifest = parseYaml(read(path));
+        const retiredIds = manifest?.metadata?.retired_ids;
+        if (!Array.isArray(retiredIds)) return [];
+        return retiredIds
+          .filter((entry) => typeof entry === "string" && entry !== "")
+          .map((stableId) => ({ set: setOf(path), stableId }));
+      } catch (error) {
+        console.error(`cannot read ${path}: ${String(error)}`);
+        process.exit(2);
+      }
+    });
+
   const basePaths = git("ls-tree", "-r", "--name-only", mergeBase, "sets/").split("\n").filter(Boolean);
   const headPaths = git("ls-files", "--cached", "--others", "--exclude-standard", "sets/")
     .split("\n")
     .filter((path) => Boolean(path) && existsSync(path));
 
-  const base = buildStableIdInventory(readLessons(basePaths, (path) => git("show", `${mergeBase}:${path}`)));
-  const head = buildStableIdInventory(readLessons(headPaths, (path) => readFileSync(path, "utf8")));
+  const readBaseFile = (path) => git("show", `${mergeBase}:${path}`);
+  const readHeadFile = (path) => readFileSync(path, "utf8");
+  const base = {
+    ...buildStableIdInventory(readLessons(basePaths, readBaseFile)),
+    retired: readRetired(basePaths, readBaseFile),
+  };
+  const head = {
+    ...buildStableIdInventory(readLessons(headPaths, readHeadFile)),
+    retired: readRetired(headPaths, readHeadFile),
+  };
 
   const result = compareStableIdInventories(base, head);
   console.log(`base: ${mergeBase.slice(0, 7)} (${baseRef})`);
