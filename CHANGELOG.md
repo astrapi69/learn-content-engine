@@ -7,6 +7,68 @@ All notable changes to `learn-content-engine`. The format is inspired by
 
 ## [Unreleased]
 
+## [0.20.0] - 2026-08-06
+
+### Controlled vocabulary for domain and level (engine#127)
+
+The registered consumer need (astrapi69/adaptive-learner#2335): a
+controlled vocabulary for `domain` and an explicit level for
+non-language sets - additive and optional, like `review_status` in
+engine#94. A hard enum would invalidate published content, so the
+contract is **known values + other**, carried by the engine:
+
+- New exports: `KNOWN_CONTENT_DOMAINS` (the canonical grouping
+  vocabulary: `language` plus the ten registry domains),
+  `CEFR_LEVELS`, `LEVEL_NONE` (`"none"`, the explicit no-level
+  sentinel for non-language sets), `isKnownContentDomain`,
+  `isKnownLevel`. Consumers read these instead of keeping copies.
+- Two author lints in `validateManifest`, warning tier, never block:
+  `W-DOMAIN-UNKNOWN` (a domain outside the vocabulary - valid, but
+  named, so the subject facet does not fragment silently) and
+  `W-LEVEL-UNKNOWN` (a level that is neither CEFR, case-insensitive,
+  nor - for a non-language set - the `none` sentinel; live junk this
+  catches: `a0`, `einsteiger`, `reflexion`).
+- The overlapping live domain pairs (`programming`/`software`,
+  `ai`/`technology`) are both known; consolidating them stays a
+  content-repo decision the engine does not force.
+- Schema `domain`/`level` descriptions document the contract (no
+  structural change, no schema version bump); docs gain a
+  "Content domains" section, the rule catalog the two new rows.
+
+### Docs
+
+- Discoverability (SEO) exploration for the docs site (engine#124).
+
+## [0.19.2] - 2026-08-05
+
+Documentation refresh after the 0.19.x work, plus the gate that would
+have caught most of it.
+
+Stale, found by sweeping rather than by reading: `README.md` did not list
+`alc-books`, the eleventh content repository; three places (English blog,
+German blog, `lesson-format.md`) still said ten content repositories and
+seven `alc-*` repos; and the README's public-surface table was missing
+two exports, `lessonIdOrderingIssues` (shipped 0.18.0) and
+`isBaseCredible` (shipped 0.16.0).
+
+That last one is the reason for the new gate. The surface table is a
+second place for the same truth and it drifted exactly the way such
+places do: two releases added an export and nobody compared the table to
+the module. The docs gates covered version claims, links and examples;
+the table sat outside all of them. `src/readme-exports.test.ts` now
+checks both directions against the real module namespace - every runtime
+export appears in the table, and the table names nothing the package does
+not export - so a new export cannot ship undocumented. Type exports stay
+out of scope on purpose: they do not exist at runtime, and a hand-kept
+parallel list would recreate the problem.
+
+The German blog carried the same repository count as the English one and
+would have been missed by fixing only the reported instance.
+
+
+The three subsections below shipped in 0.19.2 but sat under a stale
+`[Unreleased]` header until 0.20.0 - re-headed here, content unchanged.
+
 ### Four schema diagrams, two of them generated and drift-gated (engine#117)
 
 `docs/schema-diagrams.md` shows the format as pictures: content
@@ -38,7 +100,6 @@ Two findings from drawing, both worth more than the pictures:
   which the schema knows only as a pattern, never as an enumeration. The
   diagram now makes that split visible.
 
-## [Unreleased]
 
 ### Two stale schema-version claims, and the gate that let one through
 
@@ -83,32 +144,6 @@ Cost, stated plainly: `mermaid` and `jsdom` join devDependencies. Mermaid
 needs a DOM even to parse, and a DOMPurify stub is not enough (measured).
 Neither ships - the package `files` list carries `dist`, `schema`, `bin`
 and `python/*.py` only.
-
-## [0.19.2] - 2026-08-05
-
-Documentation refresh after the 0.19.x work, plus the gate that would
-have caught most of it.
-
-Stale, found by sweeping rather than by reading: `README.md` did not list
-`alc-books`, the eleventh content repository; three places (English blog,
-German blog, `lesson-format.md`) still said ten content repositories and
-seven `alc-*` repos; and the README's public-surface table was missing
-two exports, `lessonIdOrderingIssues` (shipped 0.18.0) and
-`isBaseCredible` (shipped 0.16.0).
-
-That last one is the reason for the new gate. The surface table is a
-second place for the same truth and it drifted exactly the way such
-places do: two releases added an export and nobody compared the table to
-the module. The docs gates covered version claims, links and examples;
-the table sat outside all of them. `src/readme-exports.test.ts` now
-checks both directions against the real module namespace - every runtime
-export appears in the table, and the table names nothing the package does
-not export - so a new export cannot ship undocumented. Type exports stay
-out of scope on purpose: they do not exist at runtime, and a hand-kept
-parallel list would recreate the problem.
-
-The German blog carried the same repository count as the English one and
-would have been missed by fixing only the reported instance.
 
 ## [0.19.1] - 2026-08-05
 
