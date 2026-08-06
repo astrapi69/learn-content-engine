@@ -1,0 +1,18 @@
+# This repo is an npm package; this file exists ONLY to configure the
+# manuscript-tools prose gate (make prose-check, pinned in CI). ms-check
+# resolves [tool.manuscript-tools] from the closest pyproject.toml - having
+# our own here also stops a stray parent-directory config from leaking in.
+#
+# Active rules after the disables: no-dashes (the STYLE.md em-dash ban) and
+# no-invisible-chars (the W-INVISIBLE-CHAR class, applied to our own prose -
+# it found a raw U+0000 in a proposal's code example on its first run).
+# Disabled because they are wrong for this corpus: the docs are mostly
+# English Markdown with tables and code blocks, so German quote style,
+# double-space and formatting heuristics fire on legitimate text.
+[tool.manuscript-tools]
+disable = [
+  "no-double-spaces",
+  "non-german-quotes",
+  "broken-formatting",
+  "no-repeated-words",
+]
