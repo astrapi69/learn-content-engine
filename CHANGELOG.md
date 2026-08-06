@@ -7,6 +7,8 @@ All notable changes to `learn-content-engine`. The format is inspired by
 
 ## [Unreleased]
 
+## [0.21.0] - 2026-08-06
+
 ### retired_ids unlocked: E-RETIRED-IDS-LOCKED removed (engine#131)
 
 The lock was set with an explicit trigger recorded on
