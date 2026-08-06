@@ -184,7 +184,7 @@ describe("W-INVISIBLE-CHAR", () => {
 
 /**
  * Control characters were the gap in the first cut. They are escaped in the
- * JSON source (````), so ``JSON.parse`` hands back a real control
+ * JSON source (``U+0007``), so ``JSON.parse`` hands back a real control
  * character that every structural check accepts. Verified before writing
  * this: such a lesson validated clean and produced no warning at all.
  *
