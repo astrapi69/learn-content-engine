@@ -7,6 +7,33 @@ All notable changes to `learn-content-engine`. The format is inspired by
 
 ## [Unreleased]
 
+### Prose gate: manuscript-tools ms-check over docs/ + README
+
+The sibling library `manuscript-tools` (PyPI, pinned 0.11.0) already
+carries the invisible-characters check this engine's lint was seeded
+from, plus the em-dash ban the blog STYLE rules demand - so the docs
+prose is now gated by it instead of by convention. `make prose-check`
+(and CI) runs `ms-check` with two rules active (`no-dashes`,
+`no-invisible-chars`; the German-prose and whitespace heuristics are
+disabled via `pyproject.toml` because they are wrong for an English
+Markdown corpus). Guards learned today, applied here: the gate proves
+the file set is non-empty before trusting a green run (`ms-check` exits
+0 on an empty set, manuscript-tools#9), `STYLE.md` is excluded because
+it SHOWS the banned characters, and the CHANGELOG stays out because old
+entries describe a point in time.
+
+The gate earned its keep on its first measured run: a raw U+0000 sat in
+a code example of `docs/proposals/author-ergonomics-app-track.md` (a
+join separator quoted as the real byte instead of its escape - the same
+pattern engine#135 removed from the sources, third instance today). Now
+spelled as the escape. Seeded probes: an em-dash and a zero-width space
+each turn the gate red; an empty docs set trips the floor.
+
+The comparison also went the other way: manuscript-tools' checker and
+sanitizer are both blind to the C1 control range `U+0080-U+009F` (the
+cp1252-mojibake class this engine's lint covers); reported as
+manuscript-tools#11.
+
 ### Source files are text to every tool again (engine#135)
 
 `src/stable-id-stability.ts` carried four RAW NUL bytes as key

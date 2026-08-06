@@ -32,6 +32,17 @@ jobs:
       - name: Install Python validator dependencies
         run: pip install "jsonschema>=4,<5" regex
 
+      # Prose gate (make prose-check): ms-check over docs/ + README with the
+      # rule set from pyproject.toml - em-dashes (the STYLE.md ban) and
+      # invisible characters (the W-INVISIBLE-CHAR class, applied to our own
+      # prose; its first run found a raw U+0000 in a proposal code example).
+      # Pinned like every other gate dependency: a floating linter version is
+      # a gate whose rules change under the repo.
+      - name: Prose gate (manuscript-tools ms-check)
+        run: |
+          pip install manuscript-tools==0.11.0
+          make prose-check
+
       - name: Lesson-types drift gate (regenerate from schema, expect no diff)
         run: node scripts/generate-lesson-types.mjs --check
 

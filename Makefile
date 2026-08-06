@@ -61,6 +61,16 @@ sync-types-check: ## Exit non-zero if the generated lesson types drift from the 
 conformance-real: build ## Clone all public content repos (read-only) and run every set + lesson through the full engine pipeline
 	node scripts/conformance-real.mjs
 
+prose-check: ## Prose gate over docs/ + README (ms-check: em-dashes, invisible chars)
+	@# Floor first: ms-check exits 0 on an empty file set (manuscript-tools#9,
+	@# fails open), so the gate proves the set is non-empty before trusting a
+	@# green run. STYLE.md is excluded on purpose: it SHOWS the banned
+	@# characters. CHANGELOG stays out: old entries describe a point in time.
+	@test "$$(find docs -name '*.md' ! -name 'STYLE.md' | wc -l)" -ge 10 \
+		|| { echo "prose-check: docs/ yields fewer than 10 markdown files - wrong directory?"; exit 2; }
+	ms-check docs --exclude "blog/STYLE.md" --exclude "blog/de/STYLE.md"
+	ms-check README.md
+
 # ─── Package ─────────────────────────────────────────────────────────
 
 pack-dry: build ## Show publish contents of the tarball without publishing
