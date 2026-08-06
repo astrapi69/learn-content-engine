@@ -639,6 +639,36 @@ absent keeps every pre-existing manifest valid):
   it becomes visible. Distinct from `book` (source material), repo-level
   `metadata.author` (repo operator) and the lesson-level `contributed_by`.
 
+## Content domains
+
+The set fields `domain` and `level` stay free strings in the schema (an
+enum would break published content; additive-only is the contract, like
+`review_status` in engine#94). The vocabulary contract lives in the
+engine instead (engine#127):
+
+- **`domain` - known values plus other.** `KNOWN_CONTENT_DOMAINS`
+  (exported, with `isKnownContentDomain`) is the canonical grouping
+  vocabulary: `language` (the default), `knowledge`, `programming`,
+  `software`, `psychology`, `math`, `ai`, `technology`, `philosophy`,
+  `dog-training`, `traffic-knowledge`. Any other value stays VALID but
+  draws `W-DOMAIN-UNKNOWN`: a consumer's subject facet cannot group it
+  with existing subjects, so every ad-hoc value fragments the registry a
+  little further. The two overlapping pairs already in the wild
+  (`programming`/`software`, `ai`/`technology`) are both known;
+  consolidating them is a content-repo decision the engine does not
+  force.
+- **`level` - CEFR or the explicit `none` sentinel.** Language sets
+  declare a CEFR band (`A1`..`C2`, case-insensitive). A non-language set
+  declares a CEFR band too, or `level: "none"` (`LEVEL_NONE`) when it is
+  deliberately level-less - so a consumer's level facet can distinguish
+  "no level, on purpose" from free-text junk. Anything else draws
+  `W-LEVEL-UNKNOWN` (live junk examples: `a0`, `einsteiger`,
+  `reflexion`).
+
+Consumers should read `KNOWN_CONTENT_DOMAINS` / `CEFR_LEVELS` /
+`LEVEL_NONE` from the engine instead of maintaining their own copies -
+one vocabulary, one source.
+
 ## Rule catalog
 
 `validateLesson` returns `{ valid, errors, warnings }`. **Errors** block (`valid`
@@ -699,6 +729,8 @@ drifting.
 | `W-SET-ORDER-MIXED-PREFIX` | Set-level ([`lessonIdOrderingIssues`](#lesson-ordering)): some lesson ids carry an `NN-` ordering prefix and some do not. Consumers sort ids lexicographically, so the unprefixed ids land wherever their first character falls - a guaranteed wrong display order. |
 | `W-SET-ORDER-PREFIX-WIDTH` | Set-level: `NN-` prefixes with different digit widths (`1-` next to `01-` or `10-`). Lexicographic sorting puts `10-` before `2-`; zero-pad every prefix to one fixed width. |
 | `W-SET-ORDER-NUMERIC` | Set-level: the lexicographic display order diverges from the numeric reading of the ids (`kapitel-10` displays before `kapitel-2`). This is the shape of the observed damage case (engine#106); zero-pad the embedded numbers. |
+| `W-DOMAIN-UNKNOWN` | Manifest-level ([content domains](#content-domains)): a set's `domain` is outside the known vocabulary (`KNOWN_CONTENT_DOMAINS`). It stays valid - the contract is known values plus other - but consumers cannot group it with existing subjects, so the registry's subject facet fragments. Prefer a known domain, or accept the fragmentation deliberately (engine#127). |
+| `W-LEVEL-UNKNOWN` | Manifest-level ([content domains](#content-domains)): a set's `level` is neither a CEFR band (`A1`..`C2`, case-insensitive) nor, for a non-language set, the explicit `none` sentinel. A consumer's level facet would offer the free-text value (`a0`, `einsteiger`, `reflexion` are live examples) as a category (engine#127). |
 
 ## Linting
 
