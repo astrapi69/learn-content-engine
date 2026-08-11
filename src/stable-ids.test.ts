@@ -62,3 +62,66 @@ describe("collectStableIds", () => {
     expect(report.duplicates).toHaveLength(1);
   });
 });
+
+/** A lesson with one exercise carrying sub-elements of every kind, each
+ *  taking an optional stable_id - the fixture shape engine#91 Phase 2 adds. */
+const lessonWithSubElements = (
+  pairIds: (string | undefined)[] = [],
+  blankIds: (string | undefined)[] = [],
+  optionIds: (string | undefined)[] = [],
+) => ({
+  id: "l1",
+  title: "l1",
+  steps: [
+    {
+      id: "s0",
+      type: "exercise",
+      exercise: {
+        id: "e0",
+        type: "matching",
+        prompt: "p",
+        pairs: pairIds.map((sid, index) => ({
+          left: `l${index}`,
+          right: `r${index}`,
+          ...(sid ? { stable_id: sid } : {}),
+        })),
+        blanks: blankIds.map((sid, index) => ({
+          accept: [`a${index}`],
+          ...(sid ? { stable_id: sid } : {}),
+        })),
+        options: optionIds.map((sid, index) => ({
+          text: `t${index}`,
+          ...(sid ? { stable_id: sid } : {}),
+        })),
+      },
+    },
+  ],
+  cards: [],
+});
+
+describe("collectStableIds — pairs/blanks/options (engine#91 Phase 2)", () => {
+  it("counts pair, blank and option stable_ids alongside exercises and cards", () => {
+    const report = collectStableIds([
+      lessonWithSubElements(["pair-aaaa0001"], ["blank-aaaa0001"], ["opt-aaaa0001"]),
+    ]);
+    expect(report.total).toBe(3);
+    expect(report.duplicates).toEqual([]);
+  });
+
+  it("reports a duplicate stable_id shared between a pair and a blank (one shared namespace)", () => {
+    const report = collectStableIds([lessonWithSubElements(["dup-aaaa0001"], ["dup-aaaa0001"])]);
+    expect(report.duplicates).toHaveLength(1);
+    expect(report.duplicates[0]?.locations).toHaveLength(2);
+  });
+
+  it("ignores pairs/blanks/options without a stable_id (optional field)", () => {
+    const report = collectStableIds([lessonWithSubElements([undefined], [undefined], [undefined])]);
+    expect(report.total).toBe(0);
+    expect(report.duplicates).toEqual([]);
+  });
+
+  it("boundary: the same option stable_id twice within one exercise is a duplicate", () => {
+    const report = collectStableIds([lessonWithSubElements([], [], ["opt-aaaa0001", "opt-aaaa0001"])]);
+    expect(report.duplicates).toHaveLength(1);
+  });
+});

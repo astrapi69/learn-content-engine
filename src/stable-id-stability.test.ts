@@ -20,7 +20,13 @@ import {
  */
 
 const inventory = (
-  entries: [set: string, stableId: string, kind: "exercise" | "card", type: string, lesson: string][],
+  entries: [
+    set: string,
+    stableId: string,
+    kind: "exercise" | "card" | "pair" | "blank" | "option",
+    type: string,
+    lesson: string,
+  ][],
   lessons: [set: string, filename: string][] = [],
 ): StableIdInventory => ({
   elements: entries.map(([set, stableId, kind, type, lesson]) => ({
@@ -172,6 +178,56 @@ describe("buildStableIdInventory", () => {
     const built = buildStableIdInventory([{ set: "sets/de/a", filename: "01.json", lesson: bare }]);
     expect(built.elements).toEqual([]);
     expect(built.lessons).toHaveLength(1);
+  });
+
+  it("collects pair, blank and option stable_ids too (engine#91 Phase 2)", () => {
+    const withSubElements = {
+      id: "l1",
+      title: "L",
+      steps: [
+        {
+          id: "s1",
+          type: "exercise",
+          exercise: {
+            id: "e1",
+            type: "matching",
+            prompt: "p",
+            pairs: [{ left: "a", right: "b", stable_id: "pair-aaaa0001" }],
+            blanks: [{ accept: ["a"], stable_id: "blank-aaaa0001" }],
+            options: [{ text: "a", stable_id: "opt-aaaa0001" }],
+          },
+        },
+      ],
+    };
+    const built = buildStableIdInventory([{ set: "sets/de/a", filename: "01.json", lesson: withSubElements }]);
+    const kinds = built.elements.map((element) => element.kind).sort();
+    expect(kinds).toEqual(["blank", "option", "pair"]);
+    expect(built.elements.find((element) => element.kind === "pair")?.stableId).toBe("pair-aaaa0001");
+    expect(built.elements.find((element) => element.kind === "blank")?.stableId).toBe("blank-aaaa0001");
+    expect(built.elements.find((element) => element.kind === "option")?.stableId).toBe("opt-aaaa0001");
+  });
+});
+
+describe("compareStableIdInventories — pair/blank/option kinds share V1-V4 generically (engine#91 Phase 2)", () => {
+  const pairInventory = inventory([["sets/de/a", "pair-aaaa0001", "pair", "matching", "01.json"]]);
+
+  it("V1: a published pair stable_id disappearing undeclared is a violation", () => {
+    const head = inventory([], []);
+    const result = compareStableIdInventories(pairInventory, head);
+    expect(result.violations.map((violation) => violation.rule)).toEqual(["V1"]);
+  });
+
+  it("V3: the same id moving from pair to blank kind is a violation (reuse)", () => {
+    const head = inventory([["sets/de/a", "pair-aaaa0001", "blank", "matching", "01.json"]]);
+    expect(compareStableIdInventories(pairInventory, head).violations.map((v) => v.rule)).toContain("V3");
+  });
+
+  it("V2: a duplicate shared between a pair and a blank in the same set is a violation", () => {
+    const head = inventory([
+      ["sets/de/a", "dup-aaaa0001", "pair", "matching", "01.json"],
+      ["sets/de/a", "dup-aaaa0001", "blank", "matching", "01.json"],
+    ]);
+    expect(compareStableIdInventories(inventory([]), head).violations.map((v) => v.rule)).toContain("V2");
   });
 });
 

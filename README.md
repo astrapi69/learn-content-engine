@@ -12,7 +12,7 @@ network, storage, or UI code - you supply the bytes and keep fetch +
 persistence. The bundled, strict JSON-Schema makes it a self-contained **format
 reference**: you can author and validate lessons without the application the
 format originated in ([Adaptive Learner](https://github.com/astrapi69/adaptive-learner)).
-Tracks the lesson schema, currently **v1.11**.
+Tracks the lesson schema, currently **v1.12**.
 
 ## Install
 

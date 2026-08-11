@@ -20,8 +20,15 @@ const STABLE_ID_PATTERN = /^[a-z0-9][a-z0-9_-]{7,63}$/;
 /** Deterministic minter for tests. */
 const minter = (() => {
   let counter = 0;
-  return (kind: "exercise" | "card"): string =>
-    `${kind === "card" ? "card" : "ex"}-test${String(++counter).padStart(4, "0")}`;
+  const prefix: Record<"exercise" | "card" | "pair" | "blank" | "option", string> = {
+    exercise: "ex",
+    card: "card",
+    pair: "pair",
+    blank: "blank",
+    option: "opt",
+  };
+  return (kind: "exercise" | "card" | "pair" | "blank" | "option"): string =>
+    `${prefix[kind]}-test${String(++counter).padStart(4, "0")}`;
 })();
 
 const PRETTY = `{
@@ -260,6 +267,119 @@ describe("mintStableIds: completeness is asserted, not assumed", () => {
     const report = mintStableIds(partiallyMinted, "01-demo.json", minter);
     expect(report.eligible).toBe(1);
     expect(report.minted).toBe(1);
+  });
+});
+
+describe("mintStableIds: pairs/blanks/options (engine#91 Phase 2)", () => {
+  const PRETTY_SUB = `{
+  "id": "03-sub",
+  "title": "Sub-elements",
+  "cards": [],
+  "steps": [
+    {
+      "id": "s1",
+      "type": "exercise",
+      "exercise": {
+        "id": "m1",
+        "type": "matching",
+        "prompt": "p",
+        "pairs": [
+          { "left": "a", "right": "b" },
+          { "left": "c", "right": "d" }
+        ]
+      }
+    },
+    {
+      "id": "s2",
+      "type": "exercise",
+      "exercise": {
+        "id": "c1",
+        "type": "cloze",
+        "cloze_mode": "type",
+        "prompt": "p",
+        "sentence": "___ ___",
+        "blanks": [
+          { "accept": ["x"] },
+          { "accept": ["y"] }
+        ]
+      }
+    },
+    {
+      "id": "s3",
+      "type": "exercise",
+      "exercise": {
+        "id": "mc1",
+        "type": "multiple_choice",
+        "prompt": "p",
+        "options": [
+          { "text": "a", "correct": true },
+          { "text": "b" }
+        ]
+      }
+    }
+  ]
+}
+`;
+
+  const INLINE_SUB = `{
+  "id": "04-sub-inline",
+  "title": "Sub-elements inline",
+  "cards": [],
+  "steps": [
+    { "id": "s1", "type": "exercise", "exercise": { "id": "m1", "type": "matching", "prompt": "p", "pairs": [{ "left": "a", "right": "b" }] } }
+  ]
+}
+`;
+
+  it("mints every pair, blank and option alongside exercises/cards", () => {
+    const report = mintStableIds(PRETTY_SUB, "03-sub.json", minter);
+    expect(report.ok).toBe(true);
+    expect(report.eligible).toBe(9);
+    expect(report.minted).toBe(9);
+    const after = JSON.parse(report.newText ?? "") as {
+      steps: {
+        exercise: { pairs?: { stable_id?: string }[]; blanks?: { stable_id?: string }[]; options?: { stable_id?: string }[] };
+      }[];
+    };
+    expect(after.steps[0]!.exercise.pairs!.every((pair) => pair.stable_id)).toBe(true);
+    expect(after.steps[1]!.exercise.blanks!.every((blank) => blank.stable_id)).toBe(true);
+    expect(after.steps[2]!.exercise.options!.every((option) => option.stable_id)).toBe(true);
+  });
+
+  it("stays add-only: everything except the new stable_ids is byte-identical modulo formatting", () => {
+    const report = mintStableIds(PRETTY_SUB, "03-sub.json", minter);
+    const strip = (text: string) =>
+      JSON.parse(
+        JSON.stringify(JSON.parse(text), (key, value) => (key === "stable_id" ? undefined : value)),
+      );
+    expect(strip(report.newText ?? "")).toEqual(strip(PRETTY_SUB));
+  });
+
+  it("inline style: inserts inline and keeps the one-line object", () => {
+    const report = mintStableIds(INLINE_SUB, "04-sub-inline.json", minter);
+    expect(report.ok).toBe(true);
+    expect(report.minted).toBe(2);
+    const after = report.newText ?? "";
+    expect(after.split("\n").length).toBe(INLINE_SUB.split("\n").length);
+    expect(after).toContain('"right": "b", "stable_id": "');
+  });
+
+  it("the minted lesson passes validateLesson under schema 1.12", () => {
+    const report = mintStableIds(PRETTY_SUB, "03-sub.json", minter);
+    const checked = validateLesson(JSON.parse(report.newText ?? ""));
+    expect(checked.errors).toEqual([]);
+    expect(checked.valid).toBe(true);
+  });
+
+  it("keeps an existing sub-element stable_id verbatim and only mints the rest", () => {
+    const partiallyMinted = PRETTY_SUB.replace(
+      '{ "left": "a", "right": "b" }',
+      '{ "left": "a", "right": "b", "stable_id": "pair-vorhanden1" }',
+    );
+    const report = mintStableIds(partiallyMinted, "03-sub.json", minter);
+    expect(report.eligible).toBe(8);
+    expect(report.minted).toBe(8);
+    expect(report.newText).toContain('"pair-vorhanden1"');
   });
 });
 

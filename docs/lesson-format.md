@@ -587,10 +587,41 @@ Scope and limit of this stage: it closes orphaning caused by slug renames and
 position shifts on the exercise and card level. It does NOT close the case
 that actually occurred (adaptive-learner#2161): an answer correction inside a
 surviving exercise still moves the content-derived element key and orphans
-exactly that element. That remainder is reduced, not closed, and is currently
-covered only by the app-side update guard (the stopgap from
-adaptive-learner#2128) until engine#91 or an app-side element-key decision
-closes it.
+exactly that element. The app shipped a partial mitigation
+(adaptive-learner#2308, "Weg C"): at update time it diffs the old and new
+ordered element-key lists and offers to carry progress over when the mapping
+is unambiguous (measured 186 of 190 moved slots, adaptive-learner#2301). The
+remaining case - a slot the mapping cannot disambiguate - is what element-level
+stable identity closes (below).
+
+### Element-level stable identity (`pairs[].stable_id`, `blanks[].stable_id`, `options[].stable_id`)
+
+Since schema v1.12 (additive, engine#91) a MATCHING pair, a CLOZE blank and a
+MULTIPLE_CHOICE option may each carry their own `stable_id`, one level below
+the exercise. Same contract as the exercise/card field above (mint once,
+never changes, opaque, NOT derived from content) with two differences:
+
+- **Stricter pattern.** These are brand-new fields with no pre-1.9 content to
+  grandfather, so they reference `$defs/SlugId` directly (lowercase letters
+  and digits in hyphen-separated runs only - no underscore, unlike the
+  legacy-tolerant exercise/card pattern).
+- **Shared namespace.** A pair/blank/option `stable_id` lives in the SAME
+  per-set uniqueness space as exercise and card ids (`E-STABLE-ID-DUP` within
+  one lesson, `collectStableIds` across a set) - one flat namespace, not a
+  second one, so the minter's `pair-`/`blank-`/`opt-` prefixes are a
+  readability convention, not an enforcement boundary.
+
+Optional, additive: content without it validates unchanged, and the stability
+gate's V1-V4 rules (`check-stable-ids`) already cover these kinds generically
+- no new rule numbers, since a pair/blank/option element is just another
+`kind` in the same inventory.
+
+This closes the SCHEMA half of engine#91: a pair/blank/option now HAS an
+identity that survives an answer-text correction. Nothing consumes it yet -
+the app's `element-keys.ts` (which derives its comparison keys from
+`pair.left`, `blank.accept[0]`, and the sorted correct-option text) and its
+`remap-plan.ts` update-guard logic would need to prefer this field when
+present, tracked as follow-up app-side work, not part of this schema change.
 
 ## Manifest format
 
@@ -890,6 +921,10 @@ It compares the working tree against the merge base with `--base` (default
 | `V5` | a `retired_id` left the set's `retired_ids` list (a published retirement is never un-declared; add-only, like the ids themselves) |
 | `V6` | a `retired_id` is declared retired but still present in the set (a consumer resolves it as living, so the retirement would be silently ignored) |
 
+`kind` in these rules covers `exercise`, `card`, and, since schema v1.12
+(engine#91), `pair`, `blank` and `option` - the same six rules, not six more,
+since a sub-element is just another kind in the same inventory.
+
 Editing content under a constant id passes, and that is the entire point.
 
 Two floors keep a green run meaningful, because this gate matters most while
@@ -978,6 +1013,13 @@ the minted ids are stripped; a file failing that proof is reported and never
 written). That property is what keeps the retrofit a non-event for learner
 progress: old derived keys and new stable ids coexist in one file, so a
 consumer can compute its remap locally.
+
+Since schema v1.12 (engine#91) the same run also mints every MATCHING pair,
+CLOZE blank and MULTIPLE_CHOICE option that lacks a `stable_id` (`pair-`,
+`blank-`, `opt-` prefixes). These have no `"id"` member to anchor on, so the
+insertion lands as the object's last member, right before its closing brace -
+the same style already used when a card or exercise's `"id"` happens to be
+its last member.
 
 ## Editor setup
 
