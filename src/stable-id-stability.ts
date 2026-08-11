@@ -21,7 +21,7 @@ export interface StableIdElement {
   /** Repo-relative set directory, e.g. ``sets/de/psych-intro``. */
   set: string;
   stableId: string;
-  kind: "exercise" | "card";
+  kind: "exercise" | "card" | "pair" | "blank" | "option";
   /** Exercise type, or ``"card"`` for cards (part of the reuse check). */
   type: string;
   /** Lesson FILE name; the filename is the lesson's identity. */
@@ -75,7 +75,15 @@ export function buildStableIdInventory(lessons: LessonInput[]): StableIdInventor
     files.push({ set, filename });
     const lesson = (raw ?? {}) as {
       cards?: { stable_id?: unknown }[];
-      steps?: { exercise?: { type?: unknown; stable_id?: unknown } }[];
+      steps?: {
+        exercise?: {
+          type?: unknown;
+          stable_id?: unknown;
+          pairs?: { stable_id?: unknown }[];
+          blanks?: { stable_id?: unknown }[];
+          options?: { stable_id?: unknown }[];
+        };
+      }[];
     };
     for (const card of lesson.cards ?? []) {
       if (typeof card?.stable_id === "string" && card.stable_id !== "") {
@@ -84,14 +92,22 @@ export function buildStableIdInventory(lessons: LessonInput[]): StableIdInventor
     }
     for (const step of lesson.steps ?? []) {
       const exercise = step?.exercise;
-      if (exercise && typeof exercise.stable_id === "string" && exercise.stable_id !== "") {
-        elements.push({
-          set,
-          stableId: exercise.stable_id,
-          kind: "exercise",
-          type: typeof exercise.type === "string" ? exercise.type : "?",
-          lesson: filename,
-        });
+      if (!exercise) continue;
+      const type = typeof exercise.type === "string" ? exercise.type : "?";
+      if (typeof exercise.stable_id === "string" && exercise.stable_id !== "") {
+        elements.push({ set, stableId: exercise.stable_id, kind: "exercise", type, lesson: filename });
+      }
+      const subElements: ["pair" | "blank" | "option", { stable_id?: unknown }[] | undefined][] = [
+        ["pair", exercise.pairs],
+        ["blank", exercise.blanks],
+        ["option", exercise.options],
+      ];
+      for (const [kind, list] of subElements) {
+        for (const entry of list ?? []) {
+          if (typeof entry?.stable_id === "string" && entry.stable_id !== "") {
+            elements.push({ set, stableId: entry.stable_id, kind, type, lesson: filename });
+          }
+        }
       }
     }
   }

@@ -373,6 +373,58 @@ describe("schema 1.9 — stable_id on exercises and cards (engine#90)", () => {
   });
 });
 
+describe("schema 1.12 — stable_id on pairs/blanks/options (engine#91 Phase 2)", () => {
+  const matchingWith = (pairStableId?: string) => {
+    const lesson = clone(conf("matching"));
+    const pairs = ((lesson.steps as JsonObject[])[0]!.exercise as JsonObject).pairs as JsonObject[];
+    if (pairStableId) pairs[0]!.stable_id = pairStableId;
+    return lesson;
+  };
+
+  const clozeWith = (blankStableId?: string) => {
+    const lesson = clone(conf("cloze_type"));
+    const blanks = ((lesson.steps as JsonObject[])[0]!.exercise as JsonObject).blanks as JsonObject[];
+    if (blankStableId !== undefined) blanks[0]!.stable_id = blankStableId;
+    return lesson;
+  };
+
+  const multipleChoiceWith = (optionStableId?: string) => {
+    const lesson = clone(conf("multiple_choice_single"));
+    const options = ((lesson.steps as JsonObject[])[0]!.exercise as JsonObject).options as JsonObject[];
+    if (optionStableId) options[0]!.stable_id = optionStableId;
+    return lesson;
+  };
+
+  it("accepts a well-formed stable_id on a matching pair, a cloze blank and a multiple_choice option", () => {
+    expect(validateLesson(matchingWith("pair-m5k2p8qa")).valid).toBe(true);
+    expect(validateLesson(clozeWith("blank-m5k2p8qa")).valid).toBe(true);
+    expect(validateLesson(multipleChoiceWith("opt-m5k2p8qa")).valid).toBe(true);
+  });
+
+  it("stays optional: pairs/blanks/options without stable_id validate unchanged", () => {
+    expect(validateLesson(matchingWith()).valid).toBe(true);
+    expect(validateLesson(clozeWith()).valid).toBe(true);
+    expect(validateLesson(multipleChoiceWith()).valid).toBe(true);
+  });
+
+  it("rejects a malformed sub-element stable_id (underscore - the strict SlugId shape, hyphens only)", () => {
+    expect(validateLesson(matchingWith("pair_m5k2p8qa")).valid).toBe(false);
+  });
+
+  it("boundary: rejects an empty-string sub-element stable_id", () => {
+    expect(validateLesson(clozeWith("")).valid).toBe(false);
+  });
+
+  it("rejects a duplicate stable_id shared between a pair and a blank in one lesson (E-STABLE-ID-DUP)", () => {
+    const lesson = matchingWith("dup-m5k2p8qa");
+    const pairs = ((lesson.steps as JsonObject[])[0]!.exercise as JsonObject).pairs as JsonObject[];
+    pairs[1]!.stable_id = "dup-m5k2p8qa";
+    const checked = validateLesson(lesson);
+    expect(checked.valid).toBe(false);
+    expect(checked.errors.some((issue) => issue.id === "E-STABLE-ID-DUP")).toBe(true);
+  });
+});
+
 describe("schema 1.9 — attribution and review_status on the set entry (engine#90/#94)", () => {
   const manifestWith = (setExtras: Record<string, unknown>) => ({
     schema_version: "1.2",

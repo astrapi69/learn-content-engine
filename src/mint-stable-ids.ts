@@ -49,7 +49,15 @@ export function parseMintArgs(argv: string[]): MintArgs | { error: string } {
 }
 
 /** Mints one id; injectable for deterministic tests. */
-export type StableIdMinter = (kind: "exercise" | "card") => string;
+export type StableIdMinter = (kind: "exercise" | "card" | "pair" | "blank" | "option") => string;
+
+const MINT_PREFIX: Record<"exercise" | "card" | "pair" | "blank" | "option", string> = {
+  exercise: "ex",
+  card: "card",
+  pair: "pair",
+  blank: "blank",
+  option: "opt",
+};
 
 /** Default minter: opaque, time-seeded, unique within the process. */
 export const defaultMinter: StableIdMinter = (() => {
@@ -61,15 +69,21 @@ export const defaultMinter: StableIdMinter = (() => {
     const salt = Math.floor(Math.random() * 1296)
       .toString(36)
       .padStart(2, "0");
-    return `${kind === "card" ? "card" : "ex"}-${time}${seq}${salt}`;
+    return `${MINT_PREFIX[kind]}-${time}${seq}${salt}`;
   };
 })();
 
 interface InsertionTarget {
-  kind: "exercise" | "card";
-  /** Byte offset just after the closing quote of the `"id"` member value. */
-  afterIdValue: number;
-  /** Indentation of the `"id"` line (for line-style insertion). */
+  kind: "exercise" | "card" | "pair" | "blank" | "option";
+  /** Card/exercise: byte offset just after the closing quote of the `"id"`
+   *  member value. Pair/blank/option (no `"id"` member to anchor on): byte
+   *  offset of the object's own closing `}` - same "insert before the
+   *  closing brace" style already used below for a card/exercise whose `id`
+   *  happens to be the last member. */
+  anchor: "afterIdValue" | "beforeCloseBrace";
+  position: number;
+  /** Indentation of the anchor line (for line-style insertion; unused for
+   *  `beforeCloseBrace`, which always inserts inline like an id-last-member). */
   indent: string;
 }
 
@@ -83,12 +97,25 @@ interface InsertionTarget {
 function findTargets(raw: string): InsertionTarget[] {
   const lesson = JSON.parse(raw) as {
     cards?: { stable_id?: string }[];
-    steps?: { exercise?: { stable_id?: string } }[];
+    steps?: {
+      exercise?: {
+        stable_id?: string;
+        pairs?: { stable_id?: string }[];
+        blanks?: { stable_id?: string }[];
+        options?: { stable_id?: string }[];
+      };
+    }[];
   };
   const wantsCard = (lesson.cards ?? []).map((card) => !card.stable_id);
   const wantsExercise = (lesson.steps ?? []).map((step) =>
     step.exercise ? !step.exercise.stable_id : false,
   );
+  const subFlags = (list?: { stable_id?: string }[]) => (list ?? []).map((entry) => !entry?.stable_id);
+  const wantsSub = (lesson.steps ?? []).map((step) => ({
+    pair: subFlags(step.exercise?.pairs),
+    blank: subFlags(step.exercise?.blanks),
+    option: subFlags(step.exercise?.options),
+  }));
 
   const targets: InsertionTarget[] = [];
   type Frame = { container: "object" | "array"; key: string | number | null; index: number };
@@ -97,12 +124,15 @@ function findTargets(raw: string): InsertionTarget[] {
   let expectKey = false;
   let position = 0;
 
+  const currentNames = (): (string | number | null)[] =>
+    stack
+      .filter((frame) => frame.container === "object" || frame.container === "array")
+      .map((frame) => frame.key);
+
   const pathMatches = (): { kind: "exercise" | "card"; ordinal: number } | null => {
     // stack shape for a card object:    [{obj root}, {key cards -> array}, {array idx}]
     // for an exercise object: [{obj root}, {key steps}, {array idx}, {key exercise}]
-    const names = stack
-      .filter((frame) => frame.container === "object" || frame.container === "array")
-      .map((frame) => frame.key);
+    const names = currentNames();
     if (names.length === 3 && names[1] === "cards" && typeof names[2] === "number") {
       return { kind: "card", ordinal: names[2] };
     }
@@ -113,6 +143,33 @@ function findTargets(raw: string): InsertionTarget[] {
       names[3] === "exercise"
     ) {
       return { kind: "exercise", ordinal: names[2] };
+    }
+    return null;
+  };
+
+  const SUB_KEY_TO_KIND = { pairs: "pair", blanks: "blank", options: "option" } as const;
+
+  /** Matches while the scanner is INSIDE a pair/blank/option object, i.e.
+   *  stack shape [{root}, {steps}, {N}, {exercise}, {pairs|blanks|options}, {M}]
+   *  - checked at the object's closing `}`, before it is popped. */
+  const subElementPathMatches = ():
+    | { kind: "pair" | "blank" | "option"; exerciseOrdinal: number; subOrdinal: number }
+    | null => {
+    const names = currentNames();
+    if (
+      names.length === 6 &&
+      names[1] === "steps" &&
+      typeof names[2] === "number" &&
+      names[3] === "exercise" &&
+      typeof names[4] === "string" &&
+      names[4] in SUB_KEY_TO_KIND &&
+      typeof names[5] === "number"
+    ) {
+      return {
+        kind: SUB_KEY_TO_KIND[names[4] as keyof typeof SUB_KEY_TO_KIND],
+        exerciseOrdinal: names[2],
+        subOrdinal: names[5],
+      };
     }
     return null;
   };
@@ -154,7 +211,7 @@ function findTargets(raw: string): InsertionTarget[] {
             if (wanted) {
               const lineStart = raw.lastIndexOf("\n", start) + 1;
               const indent = /^[ \t]*/.exec(raw.slice(lineStart, start))?.[0] ?? "";
-              targets.push({ kind: match.kind, afterIdValue: position, indent });
+              targets.push({ kind: match.kind, anchor: "afterIdValue", position, indent });
             }
           }
         }
@@ -174,7 +231,20 @@ function findTargets(raw: string): InsertionTarget[] {
     } else if (char === "[") {
       stack.push({ container: "array", key: pendingKey ?? indexOfParent(stack), index: 0 });
       pendingKey = null;
-    } else if (char === "}" || char === "]") {
+    } else if (char === "}") {
+      // Checked BEFORE the pop: subElementPathMatches() reads the frame for
+      // the object that is about to close, which is still on the stack here.
+      const subMatch = subElementPathMatches();
+      if (subMatch && wantsSub[subMatch.exerciseOrdinal]?.[subMatch.kind][subMatch.subOrdinal]) {
+        // Anchor right after the last member's VALUE, like the id-anchored
+        // targets do - not at `}` itself, which would leave any whitespace
+        // between the value and the brace stranded before the inserted comma.
+        let insertAt = position;
+        while (insertAt > 0 && /\s/.test(raw.charAt(insertAt - 1))) insertAt -= 1;
+        targets.push({ kind: subMatch.kind, anchor: "beforeCloseBrace", position: insertAt, indent: "" });
+      }
+      stack.pop();
+    } else if (char === "]") {
       stack.pop();
     } else if (char === ",") {
       const top = stack[stack.length - 1];
@@ -202,13 +272,30 @@ function findTargets(raw: string): InsertionTarget[] {
 function countEligible(raw: string): number {
   const lesson = JSON.parse(raw) as {
     cards?: { stable_id?: string }[];
-    steps?: { exercise?: { stable_id?: string } }[];
+    steps?: {
+      exercise?: {
+        stable_id?: string;
+        pairs?: { stable_id?: string }[];
+        blanks?: { stable_id?: string }[];
+        options?: { stable_id?: string }[];
+      };
+    }[];
   };
   const cards = (lesson.cards ?? []).filter((card) => !card?.stable_id).length;
   const exercises = (lesson.steps ?? []).filter(
     (step) => step?.exercise && !step.exercise.stable_id,
   ).length;
-  return cards + exercises;
+  const countUnminted = (list?: { stable_id?: string }[]) =>
+    (list ?? []).filter((entry) => !entry?.stable_id).length;
+  const subElements = (lesson.steps ?? []).reduce(
+    (sum, step) =>
+      sum +
+      countUnminted(step?.exercise?.pairs) +
+      countUnminted(step?.exercise?.blanks) +
+      countUnminted(step?.exercise?.options),
+    0,
+  );
+  return cards + exercises + subElements;
 }
 
 /** Strip every `stable_id` member from a parsed structure (for the proof). */
@@ -266,25 +353,33 @@ export function mintStableIds(
 
   let newText = "";
   let cursor = 0;
-  for (const target of targets.sort((a, b) => a.afterIdValue - b.afterIdValue)) {
-    newText += rawJson.slice(cursor, target.afterIdValue);
+  for (const target of targets.sort((a, b) => a.position - b.position)) {
+    newText += rawJson.slice(cursor, target.position);
     const stableId = minter(target.kind);
-    const behind = rawJson.slice(target.afterIdValue);
+    if (target.anchor === "beforeCloseBrace") {
+      // Pair/blank/option: no `"id"` member to anchor on, so `position` is
+      // the object's own closing `}` and the insertion is always inline,
+      // exactly like the "id is the last member" case below.
+      newText += `, "stable_id": "${stableId}"`;
+      cursor = target.position;
+      continue;
+    }
+    const behind = rawJson.slice(target.position);
     if (/^,\s*\n/.test(behind)) {
       // line style: keep the id line as-is and add one full stable_id line
       // beneath it, indented like the id line. The original comma is consumed
       // and re-emitted before the insertion so the added line ends with the
       // comma the following member needs.
       newText += `,\n${target.indent}"stable_id": "${stableId}",`;
-      cursor = target.afterIdValue + 1;
+      cursor = target.position + 1;
     } else if (behind.startsWith(",")) {
       // inline style: `{ "id": "x", ... }` gains `, "stable_id": "..."` in place.
       newText += `, "stable_id": "${stableId}"`;
-      cursor = target.afterIdValue;
+      cursor = target.position;
     } else {
       // id is the last member: append before the closing brace.
       newText += `, "stable_id": "${stableId}"`;
-      cursor = target.afterIdValue;
+      cursor = target.position;
     }
   }
   newText += rawJson.slice(cursor);

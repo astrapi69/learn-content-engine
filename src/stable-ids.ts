@@ -10,7 +10,7 @@
 
 interface StableIdLocation {
   lessonId: string;
-  kind: "exercise" | "card";
+  kind: "exercise" | "card" | "pair" | "blank" | "option";
   elementId: string;
 }
 
@@ -63,13 +63,35 @@ export function collectStableIds(lessons: unknown[]): StableIdReport {
     }
     const steps = Array.isArray(lesson.steps) ? lesson.steps : [];
     for (const stepInput of steps) {
-      const step = (stepInput ?? {}) as { exercise?: { id?: unknown; stable_id?: unknown } };
+      const step = (stepInput ?? {}) as {
+        exercise?: {
+          id?: unknown;
+          stable_id?: unknown;
+          pairs?: unknown;
+          blanks?: unknown;
+          options?: unknown;
+        };
+      };
       if (!step.exercise) continue;
-      record(step.exercise.stable_id, {
-        lessonId,
-        kind: "exercise",
-        elementId: typeof step.exercise.id === "string" ? step.exercise.id : "?",
-      });
+      const exerciseId = typeof step.exercise.id === "string" ? step.exercise.id : "?";
+      record(step.exercise.stable_id, { lessonId, kind: "exercise", elementId: exerciseId });
+
+      const subElements: ["pair" | "blank" | "option", unknown][] = [
+        ["pair", step.exercise.pairs],
+        ["blank", step.exercise.blanks],
+        ["option", step.exercise.options],
+      ];
+      for (const [kind, list] of subElements) {
+        if (!Array.isArray(list)) continue;
+        list.forEach((entryInput: unknown, index: number) => {
+          const entry = (entryInput ?? {}) as { stable_id?: unknown };
+          record(entry.stable_id, {
+            lessonId,
+            kind,
+            elementId: `${exerciseId}.${kind}s[${index}]`,
+          });
+        });
+      }
     }
   }
 

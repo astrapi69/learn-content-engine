@@ -7,6 +7,40 @@ All notable changes to `learn-content-engine`. The format is inspired by
 
 ## [Unreleased]
 
+### Element-level stable identity: pairs, blanks, options (engine#91 Phase 2)
+
+`stable_id` (engine#90) closed orphaning at the exercise/card level, but not
+the case that actually occurred (adaptive-learner#2161): an answer-text
+correction inside a surviving exercise still moves the content-derived key
+of one MATCHING pair, CLOZE blank or MULTIPLE_CHOICE option, orphaning that
+element's learner row. The app's mitigation (adaptive-learner#2308, "Weg C")
+covers 186 of 190 measured moved slots (adaptive-learner#2301) by diffing
+ordered content-derived key lists at update time; the remaining ambiguous
+slots need a real identity, not a better diff.
+
+`Pair`, `ClozeBlank` and `MultipleChoiceOption` gain an optional `stable_id`
+(`$defs/SlugId` - hyphens only, no legacy underscore grandfathering, unlike
+the exercise/card field). Shares the SAME per-set uniqueness namespace as
+exercise/card ids (`E-STABLE-ID-DUP`, `collectStableIds`) - one flat space,
+distinct `pair-`/`blank-`/`opt-` minter prefixes for readability, not a
+second namespace. The stability gate's V1-V4 rules already cover the new
+kinds generically (no new rule numbers): `buildStableIdInventory` just walks
+one more level.
+
+`mint-stable-ids` mints these too. They have no `"id"` member to anchor the
+insertion on (unlike exercise/card), so it lands as the object's last member
+before the closing brace - the same style already used when a card/exercise
+`"id"` happens to be last.
+
+`x-schema-version` `1.11` -> `1.12` in both schemas (lesson + content-manifest
+move in lockstep, established convention). Additive: content without the new
+fields validates unchanged.
+
+Scope: this ships the identity primitive and tooling only. App-side
+consumption (`element-keys.ts` preferring the new field, `remap-plan.ts`
+using id-based matching) is separate follow-up work, the same split as
+engine#90 vs. adaptive-learner#2130/#2455.
+
 ### Prose gate: manuscript-tools ms-check over docs/ + README
 
 The sibling library `manuscript-tools` (PyPI, pinned 0.11.0) already

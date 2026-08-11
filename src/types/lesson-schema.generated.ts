@@ -192,6 +192,10 @@ export type Hint1 = string | null;
  */
 export type Placeholder = string | null;
 /**
+ * engine#91 - schema 1.12 (additive). Element-level counterpart to the exercise/card stable_id (engine#90): identifies THIS blank for progress/SRS joins below the exercise level, so an answer-text correction (moving `accept[0]`) does not orphan its learner row. Once published it NEVER changes. Shares the SAME per-set stable_id namespace as card/exercise ids (checked the same way: collectStableIds set-wide, the schema's E-STABLE-ID-DUP rule per-document). Opaque mint-once value, NOT derived from content. Optional: content without it validates unchanged. Uses the strict $defs/SlugId shape (hyphens only) - unlike the card/exercise field, this is a brand-new field with no legacy underscore-bearing ids to grandfather.
+ */
+export type StableId1 = SlugId | null;
+/**
  * Cards this exercise drills. SRS feedback after a wrong answer schedules these cards for review.
  */
 export type CardIds = string[];
@@ -226,7 +230,7 @@ export type SlugId2 = string;
 /**
  * engine#90 - schema 1.9 (additive). Author-owned, version-stable identity for progress/SRS joins: once published it NEVER changes, set-wide unique (cross-lesson uniqueness is checked by the repo gate via collectStableIds; the schema sees one document). Opaque mint-once value (lowercase slug, 8-64 chars), NOT derived from content, so answer-text fixes do not move it. Optional: pre-1.9 content validates unchanged. SCOPE: this closes orphaning by slug rename or position shift on the exercise/card level; it does NOT close the element-level case (an answer correction inside a surviving exercise still moves the content-derived element key, engine#91). COMPAT NOTE (engine#105): this pattern predates $defs/SlugId and is deliberately NOT tightened - stable_ids are immutable once published, so the underscore stays allowed here even though SlugId forbids it. For NEW mints prefer the stricter SlugId shape (hyphens only); the bundled mint-stable-ids minter already emits only [a-z0-9-].
  */
-export type StableId1 = string | null;
+export type StableId2 = string | null;
 /**
  * PICTURE_CHOICE: list of {src, label, is_correct?} options. Exactly one entry MUST include 'is_correct': 'true'. ``src`` is a relative path inside the set's ``assets/`` directory.
  */
@@ -256,6 +260,10 @@ export type Options = MultipleChoiceOption[] | null;
  */
 export type Correct = boolean;
 /**
+ * engine#91 - schema 1.12 (additive). Element-level counterpart to the exercise/card stable_id (engine#90): identifies THIS option for progress/SRS joins below the exercise level. Once published it NEVER changes. Shares the SAME per-set stable_id namespace as card/exercise ids (checked the same way: collectStableIds set-wide, the schema's E-STABLE-ID-DUP rule per-document). Opaque mint-once value, NOT derived from content. Optional: content without it validates unchanged. Uses the strict $defs/SlugId shape (hyphens only) - unlike the card/exercise field, this is a brand-new field with no legacy underscore-bearing ids to grandfather.
+ */
+export type StableId3 = SlugId | null;
+/**
  * The option text shown to the learner. Unique within the exercise - the text IS the option, so a duplicate would be ambiguous.
  */
 export type Text = string;
@@ -271,6 +279,10 @@ export type Left = string;
  * The right-column item this pairs with.
  */
 export type Right = string;
+/**
+ * engine#91 - schema 1.12 (additive). Element-level counterpart to the exercise/card stable_id (engine#90): identifies THIS pair for progress/SRS joins below the exercise level, so an answer-text correction (moving `left`/`right`) does not orphan its learner row. Once published it NEVER changes. Shares the SAME per-set stable_id namespace as card/exercise ids (checked the same way: collectStableIds set-wide, the schema's E-STABLE-ID-DUP rule per-document). Opaque mint-once value, NOT derived from content. Optional: content without it validates unchanged. Uses the strict $defs/SlugId shape (hyphens only) - unlike the card/exercise field, this is a brand-new field with no legacy underscore-bearing ids to grandfather.
+ */
+export type StableId4 = SlugId | null;
 /**
  * The question text shown to the learner.
  */
@@ -517,7 +529,7 @@ export interface Exercise {
   from_cards?: FromCards;
   hint?: Hint2;
   id: SlugId2;
-  stable_id?: StableId1;
+  stable_id?: StableId2;
   images?: Images;
   multiple?: Multiple;
   options?: Options;
@@ -550,6 +562,7 @@ export interface ClozeBlank {
   accept: Accept1;
   hint?: Hint1;
   placeholder?: Placeholder;
+  stable_id?: StableId1;
 }
 /**
  * One image option in a PICTURE_CHOICE exercise.
@@ -582,6 +595,7 @@ export interface PictureImage {
  */
 export interface MultipleChoiceOption {
   correct?: Correct;
+  stable_id?: StableId3;
   text: Text;
 }
 /**
@@ -598,4 +612,5 @@ export interface MultipleChoiceOption {
 export interface Pair {
   left: Left;
   right: Right;
+  stable_id?: StableId4;
 }
