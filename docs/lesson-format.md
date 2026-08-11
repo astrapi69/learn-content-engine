@@ -618,8 +618,8 @@ top-level field: `name`. Each set requires `id`, `title`, `target_language`
       "path": "sets/en/fr-a1",
       "tags": ["french", "a1"],
       "book": {
-        "title": "Assimil French",
-        "author": "Anthony Bulger"
+        "title": "French Made Easy",
+        "author": "Asterios Raptis"
       }
     }
   ]
