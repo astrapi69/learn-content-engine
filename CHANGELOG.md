@@ -7,6 +7,8 @@ All notable changes to `learn-content-engine`. The format is inspired by
 
 ## [Unreleased]
 
+## [0.22.0] - 2026-08-11
+
 ### Element-level stable identity: pairs, blanks, options (engine#91 Phase 2)
 
 `stable_id` (engine#90) closed orphaning at the exercise/card level, but not
