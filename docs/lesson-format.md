@@ -618,8 +618,8 @@ top-level field: `name`. Each set requires `id`, `title`, `target_language`
       "path": "sets/en/fr-a1",
       "tags": ["french", "a1"],
       "book": {
-        "title": "Assimil French",
-        "author": "Anthony Bulger"
+        "title": "French Made Easy",
+        "author": "Asterios Raptis"
       }
     }
   ]
@@ -629,6 +629,22 @@ top-level field: `name`. Each set requires `id`, `title`, `target_language`
 The set's `path` is the repo-relative directory holding its `lessons/` folder;
 it defaults to `sets/{id}` when omitted. See
 [concepts.md](concepts.md) for how set context flows into each lesson.
+
+**`schema_version` vs `x-schema-version`:** two independent counters that
+live in the same schema file (`content-manifest.schema.json`), easy to
+conflate. `schema_version` (the manifest field above) is what a repo stamps
+into its own `manifest.yaml`; the manifest schema_version field currently
+defaults to `1.6`, and only moves when the manifest's FIELD SET changes (a
+new set-entry key, a renamed one). `x-schema-version` is the schema FILE's
+own revision counter (see [schema-version
+policy](concepts.md#schema-version-policy-additive)) - it bumps on every
+change to the schema definition, including description-only edits. For
+example, engine#127 (the domain/level vocabulary contract) only reworded
+field descriptions, touched no field, and left `schema_version`'s default at
+`1.6` - yet it still bumped `x-schema-version`. When comparing your pin
+against a new engine release, `x-schema-version` tells you the schema
+DEFINITION moved; `schema_version` tells you whether your MANIFESTS need a
+field update.
 
 Three optional set-entry fields carry consumer-facing metadata (all additive,
 absent keeps every pre-existing manifest valid):

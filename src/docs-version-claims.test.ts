@@ -14,27 +14,65 @@ import {describe, expect, it} from "vitest";
  * scope: only the "currently ..." forms assert the PRESENT version, so
  * only they are pinned. Prose that states the current version must use
  * such a form to stay under this gate.
+ *
+ * Two INDEPENDENT current-version numbers exist (docs/lesson-format.md
+ * "schema_version vs x-schema-version"): the LESSON schema's own revision
+ * counter (`x-schema-version`, bumps on every schema-file edit, including
+ * description-only ones) and the MANIFEST schema_version field's declared
+ * default (bumps only when the manifest's field set changes). Each claim
+ * pattern below is pinned against whichever of the two it actually asserts,
+ * not a single shared constant - conflating them would flag a correct
+ * manifest-schema_version claim as stale (or worse, let it drift unnoticed,
+ * which is exactly the bug adaptive-learner#2554 shipped for two months).
  */
-const SCHEMA_VERSION = (
+const LESSON_SCHEMA_VERSION = (
     JSON.parse(readFileSync("schema/lesson.schema.json", "utf-8")) as {
         "x-schema-version": string;
     }
 )["x-schema-version"];
+
+const MANIFEST_SCHEMA_VERSION = (
+    JSON.parse(readFileSync("schema/content-manifest.schema.json", "utf-8")) as {
+        properties: {schema_version: {default: string}};
+    }
+).properties.schema_version.default;
 
 /** Markdown emphasis that may wrap the version token itself. `currently
  *  `1.7`` was a stale claim in exactly the gated phrasing, and the gate read
  *  past it because the pattern had no room for the backticks. */
 const WRAPPED_VERSION = "[`*_]{0,2}v?(\\d+\\.\\d+)[`*_]{0,2}";
 
-/** Every phrasing that asserts the PRESENT schema version. A current-version
- *  claim written any other way escapes this gate, which is how README.md kept
- *  "Tracks the lesson schema at v1.7" through four schema bumps. When a new
- *  phrasing enters the docs, it belongs here AND in SEEDED_STALE_CLAIMS. */
+/** Word gap that survives Markdown's own line wrapping. A literal `" "`
+ *  only matches a real space - it silently misses a claim whose prose
+ *  happened to wrap onto the next line right between two of its words
+ *  (found while adding the `manifest schema_version` pattern below: the
+ *  docs source wrapped "currently" and "defaults" onto separate lines,
+ *  and the gate reported zero claims instead of catching the corrupted
+ *  test value). `\s` matches `\n` in JS regexes, so this closes the gap
+ *  for every pattern, not just the new one. */
+const GAP = "\\s+";
+
+/** Every phrasing that asserts the PRESENT schema version, each paired with
+ *  the number it actually asserts (lesson `x-schema-version` vs manifest
+ *  `schema_version`). A current-version claim written any other way escapes
+ *  this gate, which is how README.md kept "Tracks the lesson schema at
+ *  v1.7" through four schema bumps. When a new phrasing enters the docs, it
+ *  belongs here AND in SEEDED_STALE_CLAIMS. */
 const CLAIM_PATTERNS = [
-    new RegExp(`currently (?:version )?${WRAPPED_VERSION}`, "g"),
-    new RegExp(`aktuell (?:Version )?${WRAPPED_VERSION}`, "g"),
-    new RegExp(`[Tt]racks the lesson schema at ${WRAPPED_VERSION}`, "g"),
-    new RegExp(`schema at ${WRAPPED_VERSION}`, "g"),
+    {pattern: new RegExp(`currently${GAP}(?:version${GAP})?${WRAPPED_VERSION}`, "g"), expected: LESSON_SCHEMA_VERSION},
+    {pattern: new RegExp(`aktuell${GAP}(?:Version${GAP})?${WRAPPED_VERSION}`, "g"), expected: LESSON_SCHEMA_VERSION},
+    {
+        pattern: new RegExp(`[Tt]racks${GAP}the${GAP}lesson${GAP}schema${GAP}at${GAP}${WRAPPED_VERSION}`, "g"),
+        expected: LESSON_SCHEMA_VERSION,
+    },
+    {pattern: new RegExp(`schema${GAP}at${GAP}${WRAPPED_VERSION}`, "g"), expected: LESSON_SCHEMA_VERSION},
+    {
+        pattern: new RegExp(
+            `manifest${GAP}schema_version${GAP}field${GAP}currently${GAP}defaults${GAP}to${GAP}${WRAPPED_VERSION}`,
+            "g",
+        ),
+        expected: MANIFEST_SCHEMA_VERSION,
+    },
 ];
 
 /** One stale example per supported phrasing. A phrasing added without an
@@ -45,6 +83,7 @@ const SEEDED_STALE_CLAIMS = [
     "the schema is currently `0.1`",
     "Tracks the lesson schema at **v0.1**.",
     "pinned to the schema at v0.1",
+    "the manifest schema_version field currently defaults to 0.1",
 ];
 
 function markdownFilesUnder(rootDir: string): string[] {
@@ -66,7 +105,7 @@ describe("current-version claims in the docs", () => {
             return (
                 count +
                 CLAIM_PATTERNS.reduce(
-                    (perFile, pattern) => perFile + [...prose.matchAll(pattern)].length,
+                    (perFile, {pattern}) => perFile + [...prose.matchAll(pattern)].length,
                     0,
                 )
             );
@@ -77,9 +116,9 @@ describe("current-version claims in the docs", () => {
     it.each(docFiles)("%s claims only the current schema version", (filePath) => {
         const prose = readFileSync(filePath, "utf-8");
         const wrongClaims: string[] = [];
-        for (const pattern of CLAIM_PATTERNS) {
+        for (const {pattern, expected} of CLAIM_PATTERNS) {
             for (const claim of prose.matchAll(pattern)) {
-                if (claim[1] !== SCHEMA_VERSION) wrongClaims.push(claim[0]);
+                if (claim[1] !== expected) wrongClaims.push(claim[0]);
             }
         }
         expect(wrongClaims, `stale version claims in ${filePath}`).toEqual([]);
@@ -88,8 +127,8 @@ describe("current-version claims in the docs", () => {
     it.each(SEEDED_STALE_CLAIMS)("catches a stale claim written as %j", (seeded) => {
         // Negative control per phrasing: a pattern that never fires on a
         // known-bad string is a rule that cannot fail.
-        const caught = CLAIM_PATTERNS.some((pattern) =>
-            [...seeded.matchAll(pattern)].some((claim) => claim[1] !== SCHEMA_VERSION),
+        const caught = CLAIM_PATTERNS.some(({pattern, expected}) =>
+            [...seeded.matchAll(pattern)].some((claim) => claim[1] !== expected),
         );
         expect(caught, `no pattern catches: ${seeded}`).toBe(true);
     });

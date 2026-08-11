@@ -22,9 +22,9 @@ sets:
       - a1
     cover_image: covers/fr-a1.png
     book:
-      title: Assimil Französisch
-      author: Anthony Bulger
-      url: https://example.test/assimil-fr
+      title: Französisch leicht gemacht
+      author: Asterios Raptis
+      url: https://example.test/fr-course
       asin: B0000FR001
   # Legacy set: only the pre-v1.2 ``language`` alias, no source_language,
   # no domain -> the engine must default source to ``en`` and domain to

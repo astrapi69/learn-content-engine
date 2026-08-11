@@ -79,9 +79,9 @@ describe("Content-Engine round-trip — manifest to canonical set entries", () =
     expect(frA1.domain).toBe("language");
     expect(setBasePath(manifest!.sets![0]!)).toBe("sets/de/fr-a1");
     expect(frA1.book).toEqual({
-      title: "Assimil Französisch",
-      author: "Anthony Bulger",
-      url: "https://example.test/assimil-fr",
+      title: "Französisch leicht gemacht",
+      author: "Asterios Raptis",
+      url: "https://example.test/fr-course",
       asin: "B0000FR001",
     });
   });
