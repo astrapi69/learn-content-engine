@@ -90,3 +90,9 @@ The schema's **canonical source is this engine** (as of v0.6.0); consumers
 [schema authority](architecture.md#schema-authority-this-engine)). That authority
 (not a runtime dependency on any particular consumer) is what lets you treat
 this engine as the format reference.
+
+`x-schema-version` versions the LESSON schema. The MANIFEST schema
+(`content-manifest.schema.json`) carries its own, independent pair of
+version numbers - see [`schema_version` vs
+`x-schema-version`](lesson-format.md#manifest-format) in the manifest format
+section for why they are not the same number.
