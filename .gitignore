@@ -11,3 +11,4 @@ docs-api/
 # Python bytecode from running the shipped validator helper locally.
 __pycache__/
 *.pyc
+python/__pycache__/*
