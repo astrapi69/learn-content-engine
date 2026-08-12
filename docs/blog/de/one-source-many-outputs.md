@@ -39,11 +39,11 @@ sets:
 
 Die Engine verwandelt das an genau einer Grenze in kanonische Objekte (Rohquelle zu kanonischem Modell) und sonst nichts. Die `sets[]` des Manifests werden `ContentSetEntry`-Projektionen; das JSON jeder Lektion wird eine `ContentLesson`. Das Set ist autoritativ für die Dinge, die eine Lektion nicht wiederholen sollte: Eine Lektion erbt `target_language`, `source_language` und Domäne ihres Sets, sofern sie nichts anderes sagt. Autorieren Sie das Paar einmal; der Kontext fließt nach unten.
 
-Drei Dinge bleiben in dem, was Sie schreiben, bewusst getrennt: der **Inhalt** (die Frage, die Karten), die **richtige Antwort** (welche Optionen stimmen, welcher Text akzeptiert wird) und alles über **Darstellung und Bewertungs-Politik**: wie gerendert wird, wie Punkte berechnet werden, wie Teilpunkte funktionieren. Sie autorieren die ersten beiden. Das Dritte wird nachgelagert entschieden, von derjenigen Ausgabe, die die Lektion gerade konsumiert. Diese Trennung ist, was eine Quelle mehrere Ausgaben speisen lässt, ohne sich selbst zu widersprechen.
+Drei Dinge bleiben in dem, was Sie schreiben, bewusst getrennt: der **Inhalt** (die Frage, die Karten), die **richtige Antwort** (welche Optionen stimmen, welcher Text akzeptiert wird) und alles über **Darstellung und Bewertungs-Prinzip**: wie gerendert wird, wie Punkte berechnet werden, wie Teilpunkte funktionieren. Sie autorieren die ersten beiden. Das Dritte wird nachgelagert entschieden, von derjenigen Ausgabe, die die Lektion gerade konsumiert. Diese Trennung ist, was eine Quelle mehrere Ausgaben speisen lässt, ohne sich selbst zu widersprechen.
 
 Sie müssen dieses JSON nicht von Hand schreiben. Die Referenz-App liefert einen **Lektions-Editor** mit, der dem Wort "einfach" entwachsen ist: der klassische vierstufige Assistent (Metadaten, Karten, Übungen, Speichern & Teilen), ein Buch-Pfad, der eingefügte oder hochgeladene Lehrbuchkapitel in Wissens-Lektionen verwandelt, ein Erweiterungs-Zweig, der selbst benotete Quizze und Diktate ohne JSON autorierbar macht, und ein Bearbeitungsmodus. All das erzeugt Lektionen in demselben kanonischen Schema und kann sogar direkt aus der App einen Pull Request gegen ein Content-Repository öffnen; [Teil 3 der Serie](create-a-lesson-in-the-app.md) geht jeden Pfad durch. Was darüber hinaus **geplant** ist, ist ein reicherer, auf Lehrende zugeschnittener Editor für die schwereren Fälle (größere Sets). Beides ändert das Modell nicht: Die Quelle bleibt der Vertrag, und jeder Editor (einfach oder reich) ist nur ein weiteres Werkzeug, das ihn liest und schreibt.
 
-> **Additiv per Politik.** Das Schema ist versioniert (aktuell 1.12) und wächst nur additiv: Neue Felder sind optional, eine letztes Jahr geschriebene Lektion validiert also heute noch. Sie werden nie gezwungen, Inhalte zu migrieren, nur weil sich das Schema bewegt hat.
+> **Additiv als Prinzip.** Das Schema ist versioniert (aktuell 1.12) und wächst nur additiv: Neue Felder sind optional, eine letztes Jahr geschriebene Lektion validiert also heute noch. Sie werden nie gezwungen, Inhalte zu migrieren, nur weil sich das Schema bewegt hat.
 
 ## Validierung ist Rechtschreibprüfung für Test-Logik
 
@@ -82,7 +82,7 @@ Sobald die Quelle kanonisch und gültig ist, ist jede Ausgabe eine Projektion da
 
 ### Die App: interaktiv, mit Gedächtnis
 
-Der Referenz-Consumer, eine Lern-App, rendert jeden Übungstyp für den Bildschirm und treibt die verteilte Wiederholung: Sie verfolgt, wie sich ein Lernender auf jeder Karte schlägt, und plant Wiederholungen entsprechend. Die Lektion trägt den Inhalt und die richtigen Antworten; die App besitzt das Rendering und die Planungs-Politik. Dieselbe Lektion, die ein gedruckter Test wird, wird hier eine durchtippbare Übung, ohne zweite Kopie.
+Der Referenz-Consumer, eine Lern-App, rendert jeden Übungstyp für den Bildschirm und treibt die verteilte Wiederholung: Sie verfolgt, wie sich ein Lernender auf jeder Karte schlägt, und plant Wiederholungen entsprechend. Die Lektion trägt den Inhalt und die richtigen Antworten; die App besitzt das Rendering und das Planungs-Prinzip. Dieselbe Lektion, die ein gedruckter Test wird, wird hier eine durchtippbare Übung, ohne zweite Kopie.
 
 ### Der gedruckte Test: für das Klassenzimmer
 
