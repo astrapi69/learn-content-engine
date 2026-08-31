@@ -7,6 +7,20 @@ All notable changes to `learn-content-engine`. The format is inspired by
 
 ## [Unreleased]
 
+### `explanation`: post-answer "why" on any exercise (idea 5)
+
+A fifth language-learning exercise idea surfaced a gap the existing "extra
+text" fields do not cover: `hint` is shown on demand before/during answering,
+`examples` are worked examples shown before answering that must not spoil it,
+and neither fits "explain the French word-order rule AFTER the learner
+answers". `Exercise` gains an optional `explanation` (Markdown, max 1000
+chars, mirrors `hint`'s shape) - not restricted to any exercise type, like
+`hint` itself.
+
+`x-schema-version` `1.12` -> `1.13` in both schemas (lesson + content-manifest
+move in lockstep, established convention). Additive: content without the new
+field validates unchanged.
+
 ## [0.22.0] - 2026-08-11
 
 ### Element-level stable identity: pairs, blanks, options (engine#91 Phase 2)
