@@ -7,6 +7,18 @@ All notable changes to `learn-content-engine`. The format is inspired by
 
 ## [Unreleased]
 
+### Three new reference extensions: audio-choice, audio-tiles, speak-and-record
+
+Three language-learning exercise ideas surfaced as gaps against the existing
+reference extensions (engine#68's audio/image-stimulus precedent): a gapped
+sentence with audio options (`ext:ref-audio-choice`), a spoken sentence built
+as a translation from word tiles (`ext:ref-audio-tiles`), and an ungraded
+speak-and-record activity (`ext:ref-speak-and-record`). All three follow the
+established self-contained-`ext_payload` shape (no core-schema change, no
+card reference); `ref-speak-and-record` is the first reference extension with
+no grade function, since a recording has nothing to check it against. See
+`docs/extensions.md` for the payload rules and reference lessons.
+
 ### `explanation`: post-answer "why" on any exercise (idea 5)
 
 A fifth language-learning exercise idea surfaced a gap the existing "extra

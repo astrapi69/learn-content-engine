@@ -507,6 +507,188 @@ view there) and grades the typed answer against EVERY `accept` entry (trim +
 case-fold; a production consumer would reuse its free-text matcher for typo
 tolerance).
 
+## Example extension: `ext:ref-audio-choice`
+
+`src/examples/ext-ref-audio-choice/` works out the audio multiple-choice case:
+a gapped sentence with N audio options, one of which fills the gap ("listen to
+the words, pick the one that fits"). The flat core schema has no audio-option
+choice type: `images` is `picture_choice`'s visual twin (an exactly-one-correct
+OPTION list), `multiple_choice`'s options carry text only, and `free_text`
+carries no media. So instead of a core-schema change it is modelled as a
+SINGLE ext exercise whose `ext_payload` carries the gapped sentence plus the
+audio options.
+
+The payload is deliberately SELF-CONTAINED: no card reference, everything the
+consumer needs sits in `ext_payload`. The engine validates only the SHAPE of
+`sentence` and each option's `audio`, plus an exactly-one-correct contract
+mirrored from core `picture_choice`'s own `E-PIC-ONE-CORRECT` rule. There is
+deliberately NO label/text field on an option: a visible word next to its
+audio would spoil a listening exercise the same way alt-text would spoil an
+image one.
+
+Payload rules (engine half `refAudioChoiceExtension`):
+
+| Id | Rule |
+|---|---|
+| `E-EXT-REFAUDIOCHOICE-SHAPE` | `ext_payload` must carry `sentence` (string) and `options` (at least 2 entries, each `{audio: string, is_correct?: "true"}`). |
+| `E-EXT-REFAUDIOCHOICE-SENTENCE` | `sentence` is non-empty and contains the gap marker `___`. |
+| `E-EXT-REFAUDIOCHOICE-AUDIO` | Every option's `audio` is non-empty. |
+| `E-EXT-REFAUDIOCHOICE-CORRECT` | Exactly one option is marked `is_correct: "true"`. |
+
+A reference lesson on an existing topic (dog training), validated by the doc
+gate:
+
+```json
+{
+  "id": "hunde-audio-wahl",
+  "title": "Hundetraining: Hoerauswahl",
+  "requires_extensions": ["ext:ref-audio-choice@1"],
+  "steps": [
+    {
+      "id": "s1",
+      "type": "exercise",
+      "exercise": {
+        "id": "e1",
+        "type": "ext:ref-audio-choice",
+        "prompt": "Hoere die Woerter und waehle das passende Kommando.",
+        "ext_payload": {
+          "sentence": "Der Hund soll ___.",
+          "options": [
+            { "audio": "assets/audio/kommando-sitz.mp3", "is_correct": "true" },
+            { "audio": "assets/audio/kommando-platz.mp3" }
+          ]
+        }
+      }
+    }
+  ]
+}
+```
+
+The consumer half (`renderRefAudioChoice` + `gradeRefAudioChoice`) renders the
+sentence over every option's audio reference (a real consumer mounts its audio
+buttons there) and grades the chosen option's audio reference against the one
+marked `is_correct: "true"`.
+
+## Example extension: `ext:ref-audio-tiles`
+
+`src/examples/ext-ref-audio-tiles/` works out the audio-to-translation case: a
+spoken source-language sentence, built up as a target-language translation
+from word tiles ("listen to the sentence, arrange the translation from
+tiles"). Core `word_tiles` already covers the puzzle mechanic (`tiles` +
+`accept_orderings`), but carries no audio and no source-language sentence.
+Rather than pairing a core `word_tiles` exercise with a bare
+`ext_payload.audio` - an untested "core fields + ext_payload coexist" pattern
+nobody has exercised yet - this bundles audio + tiles into ONE self-contained
+`ext_payload`, matching `ext:ref-dictation`'s and `ext:ref-image-description`'s
+established shape.
+
+The payload is deliberately SELF-CONTAINED: no card reference, everything the
+consumer needs sits in `ext_payload`. The engine validates only the SHAPE of
+`audio` and `tiles`, plus `accept_orderings` when present - the same
+permutation rule core `word_tiles` enforces on its own `accept_orderings`
+field. There is no `direction` field: the payload is already
+direction-specific by construction (`audio` = source language, `tiles` =
+target language).
+
+Payload rules (engine half `refAudioTilesExtension`):
+
+| Id | Rule |
+|---|---|
+| `E-EXT-REFAUDIOTILES-SHAPE` | `ext_payload` must carry `audio` (string) and `tiles` (`string[]`). |
+| `E-EXT-REFAUDIOTILES-AUDIO` | `audio` is non-empty. |
+| `E-EXT-REFAUDIOTILES-TILES` | `tiles` has at least 2 entries. |
+| `E-EXT-REFAUDIOTILES-ORDERINGS` | Each `accept_orderings` entry (when present) is a permutation of `[0..tiles.length - 1]`. |
+
+A reference lesson on an existing topic (dog training), validated by the doc
+gate:
+
+```json
+{
+  "id": "hunde-audio-kacheln",
+  "title": "Hundetraining: Hoerkacheln",
+  "requires_extensions": ["ext:ref-audio-tiles@1"],
+  "steps": [
+    {
+      "id": "s1",
+      "type": "exercise",
+      "exercise": {
+        "id": "e1",
+        "type": "ext:ref-audio-tiles",
+        "prompt": "Hoere den Satz und baue die Uebersetzung aus den Kacheln.",
+        "ext_payload": {
+          "audio": "assets/audio/sit-command-en.mp3",
+          "tiles": ["Sitz", "bitte", "sofort"]
+        }
+      }
+    }
+  ]
+}
+```
+
+The consumer half (`renderRefAudioTiles` + `gradeRefAudioTiles`) renders the
+prompt over the audio reference and tile list (a real consumer mounts its
+audio player and draggable tiles there) and grades the learner's tile ordering
+against the canonical order, or against any `accept_orderings` entry when
+present - mirroring core word_tiles' own "if omitted, only the canonical order
+is accepted" contract.
+
+## Example extension: `ext:ref-speak-and-record`
+
+`src/examples/ext-ref-speak-and-record/` works out the speak-and-record case: a
+speaker button reads a sentence, a "show" button reveals its text, a "record"
+button lets the learner record themselves saying it. Unlike every other
+reference extension this one is deliberately UNGRADED: there is nothing to
+check a recording against, so the payload carries no `accept` list and the
+module exposes no grade function - a consumer treats it as a self-review
+activity, not a scored exercise.
+
+The payload is deliberately SELF-CONTAINED: no card reference, everything the
+consumer needs sits in `ext_payload`. `audio` is OPTIONAL: when an author has
+not recorded a reference clip, the consumer falls back to on-device speech
+synthesis of `sentence`. The engine validates only the SHAPE of `sentence`
+(required, non-empty) and `audio` (optional, but a string when present); it
+knows nothing about capturing, storing or playing back the learner's OWN
+recording, which is entirely consumer-side.
+
+Payload rules (engine half `refSpeakAndRecordExtension`):
+
+| Id | Rule |
+|---|---|
+| `E-EXT-REFSPEAKRECORD-SHAPE` | `ext_payload` must carry `sentence` (string) and an optional `audio` (string). |
+| `E-EXT-REFSPEAKRECORD-SENTENCE` | `sentence` is non-empty. |
+
+A reference lesson on an existing topic (dog training), validated by the doc
+gate:
+
+```json
+{
+  "id": "hunde-nachsprechen",
+  "title": "Hundetraining: Nachsprechen",
+  "requires_extensions": ["ext:ref-speak-and-record@1"],
+  "steps": [
+    {
+      "id": "s1",
+      "type": "exercise",
+      "exercise": {
+        "id": "e1",
+        "type": "ext:ref-speak-and-record",
+        "prompt": "Hoere den Satz, zeige ihn dir an und nimm dich selbst auf.",
+        "ext_payload": {
+          "sentence": "Sitz, bitte, sofort.",
+          "audio": "assets/audio/sitz-bitte-sofort.mp3"
+        }
+      }
+    }
+  ]
+}
+```
+
+The consumer half (`renderRefSpeakAndRecord`) renders the prompt over the
+sentence and, when authored, the audio reference (a real consumer mounts its
+speaker/show/record buttons there). There is no grade function: capturing,
+storing and reviewing the learner's own recording is entirely consumer-side,
+and this extension does not claim to know when a recording is "correct".
+
 The example extensions exist as a DECISION BASIS for adoption: nothing in the
 app or the content repos references them until that decision is made
 (adaptive-learner#1579 tracked the exercise-type adoptions; engine#46 tracks
