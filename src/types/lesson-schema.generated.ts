@@ -216,7 +216,7 @@ export type Distractors = string[];
  */
 export type Examples1 = InlineExample[] | null;
 /**
- * Optional Markdown explanation of WHY the answer/grammar is what it is (e.g. word order, a grammatical case), shown AFTER the learner answers - regardless of correct or incorrect - unlike ``hint`` (on demand, before/during answering) and ``examples`` (worked examples shown before answering, must not spoil it). Not restricted to any exercise type. Additive; schema_version 1.13.
+ * Optional Markdown explanation of WHY the answer/grammar is what it is (e.g. word order, a grammatical case), shown AFTER the learner answers - regardless of correct or incorrect - unlike ``hint`` (on demand, before/during answering) and ``examples`` (worked examples shown before answering, must not spoil it). 2000 chars, twice ``hint``'s 1000: Markdown structure (a short list, bold terms) eats characters faster than a single-line nudge, and a real "why" often runs longer than a hint. Not restricted to any exercise type. Additive; schema_version 1.13.
  */
 export type Explanation = string | null;
 /**

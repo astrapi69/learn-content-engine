@@ -243,7 +243,7 @@ see [Stable identity](#stable-identity-stable_id)).
 
 ### Explanation (post-answer)
 
-`explanation` (string \| null, max 1000 chars, schema v1.13) is Markdown
+`explanation` (string \| null, max 2000 chars, schema v1.13) is Markdown
 explaining WHY the answer/grammar is what it is - a French word-order rule, a
 grammatical case, a spelling exception. Timing is what distinguishes it from
 the other three "extra text" fields:
