@@ -7,6 +7,8 @@ All notable changes to `learn-content-engine`. The format is inspired by
 
 ## [Unreleased]
 
+## [0.23.0] - 2026-08-31
+
 ### Three new reference extensions: audio-choice, audio-tiles, speak-and-record
 
 Three language-learning exercise ideas surfaced as gaps against the existing
