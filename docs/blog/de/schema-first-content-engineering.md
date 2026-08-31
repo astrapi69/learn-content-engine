@@ -9,11 +9,11 @@ tags: [architecture, schema-design, typescript, content-engineering]
 
 *Wie `learn-content-engine` ein stabiles Kern-Schema behält und trotzdem Raum für pädagogische Erfindung lässt: durch eine harte Linie zwischen dem Vertrag, den es besitzt, und den Regeln, die seine Consumer besitzen.*
 
-`learn-content-engine` · Schema aktuell v1.12 · framework-agnostisches TypeScript
+`learn-content-engine` · Schema aktuell v1.13 · framework-agnostisches TypeScript
 
 ## Das Content-Schema-Dilemma
 
-`learn-content-engine` ist eine framework-agnostische TypeScript-Bibliothek, die Lerninhalte parst und validiert: Sprachkurse zuallererst, wobei ein `domain`-Feld (seit Engine 0.20.0 ein kontrolliertes Vokabular aus bekannten Werten plus other) dieselbe Form auch andere Wissensgebiete tragen lässt (Technik-Kurse, Führerschein-Vorbereitung, Psychologie). Sie verwandelt Rohquellen (Lektions-JSON plus eine `manifest.yaml`) in eine kanonische interne Form, und sie ist die einzige Quelle der Wahrheit für das Lektions-Schema, aktuell Version 1.12.
+`learn-content-engine` ist eine framework-agnostische TypeScript-Bibliothek, die Lerninhalte parst und validiert: Sprachkurse zuallererst, wobei ein `domain`-Feld (seit Engine 0.20.0 ein kontrolliertes Vokabular aus bekannten Werten plus other) dieselbe Form auch andere Wissensgebiete tragen lässt (Technik-Kurse, Führerschein-Vorbereitung, Psychologie). Sie verwandelt Rohquellen (Lektions-JSON plus eine `manifest.yaml`) in eine kanonische interne Form, und sie ist die einzige Quelle der Wahrheit für das Lektions-Schema, aktuell Version 1.13.
 
 Der Kern ist bewusst klein. Kein Rendering, keine Persistenz, kein Netzwerk; die einzige Laufzeit-Abhängigkeit ist ein YAML-Parser. Was er bietet, ist reine Validierung und Transformation. Dieser Minimalismus ist der Punkt, und er erzwingt eine harte Frage: *Wie entwickelt man ein Content-Schema weiter, ohne jeden Consumer zu brechen, der davon abhängt?*
 

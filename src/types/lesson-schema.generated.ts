@@ -216,6 +216,10 @@ export type Distractors = string[];
  */
 export type Examples1 = InlineExample[] | null;
 /**
+ * Optional Markdown explanation of WHY the answer/grammar is what it is (e.g. word order, a grammatical case), shown AFTER the learner answers - regardless of correct or incorrect - unlike ``hint`` (on demand, before/during answering) and ``examples`` (worked examples shown before answering, must not spoil it). Not restricted to any exercise type. Additive; schema_version 1.13.
+ */
+export type Explanation = string | null;
+/**
  * MATCHING: when true, the exercise derives its ``pairs`` from the referenced cards (left = card ``front``, right = card ``back``) instead of listing them explicitly, so a definition lives in one place. Requires non-empty ``card_ids`` and forbids an explicit ``pairs`` list. The engine resolves it to concrete ``pairs`` at parse time. Additive + optional; schema_version stays 1.5.
  */
 export type FromCards = boolean;
@@ -520,6 +524,7 @@ export interface Exercise {
   direction?: Direction;
   distractors?: Distractors;
   examples?: Examples1;
+  explanation?: Explanation;
   /**
    * Opaque per-exercise payload for an ``ext:`` extension type. The core engine does not interpret it; the registered extension validator does. Absent on core exercises.
    */

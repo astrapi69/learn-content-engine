@@ -425,6 +425,54 @@ describe("schema 1.12 — stable_id on pairs/blanks/options (engine#91 Phase 2)"
   });
 });
 
+describe("schema 1.13 — explanation on exercises (idea 5: post-answer 'why')", () => {
+  const lessonWithExplanation = (explanation?: string | null) => ({
+    id: "l1",
+    title: "Explanation",
+    steps: [
+      {
+        id: "s1",
+        type: "exercise",
+        exercise: {
+          id: "e1",
+          type: "free_text",
+          prompt: "p",
+          accept: ["a"],
+          ...(explanation !== undefined ? { explanation } : {}),
+        },
+      },
+    ],
+  });
+
+  it("accepts an exercise with a Markdown explanation", () => {
+    const checked = validateLesson(lessonWithExplanation("Il s'agit du subjonctif car..."));
+    expect(checked.errors).toEqual([]);
+    expect(checked.valid).toBe(true);
+  });
+
+  it("stays optional: an exercise without explanation validates unchanged (pre-1.13 content)", () => {
+    expect(validateLesson(lessonWithExplanation()).valid).toBe(true);
+  });
+
+  it("accepts an explicit null (the documented default)", () => {
+    expect(validateLesson(lessonWithExplanation(null)).valid).toBe(true);
+  });
+
+  it("boundary: rejects an explanation longer than 1000 characters", () => {
+    expect(validateLesson(lessonWithExplanation("x".repeat(1001))).valid).toBe(false);
+  });
+
+  it("boundary: accepts an explanation at exactly 1000 characters", () => {
+    expect(validateLesson(lessonWithExplanation("x".repeat(1000))).valid).toBe(true);
+  });
+
+  it("is not restricted to one exercise type: a matching exercise may carry it too", () => {
+    const lesson = clone(conf("matching"));
+    exerciseOf(lesson).explanation = "Diese Zuordnung folgt der grammatischen Regel...";
+    expect(validateLesson(lesson).valid).toBe(true);
+  });
+});
+
 describe("schema 1.9 — attribution and review_status on the set entry (engine#90/#94)", () => {
   const manifestWith = (setExtras: Record<string, unknown>) => ({
     schema_version: "1.2",

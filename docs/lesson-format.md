@@ -237,8 +237,25 @@ and `prompt`. `type` is one of `matching`, `picture_choice`, `free_text`,
 for-type combinations are rejected (see [validation.md](validation.md)).
 
 Common optional exercise fields: `card_ids` (the cards drilled; each must exist),
-`distractors`, `hint`, `direction`, `examples`, and `stable_id` (schema v1.9,
+`distractors`, `hint`, `direction`, `examples`, `explanation` (schema v1.13,
+see [Explanation](#explanation-post-answer)), and `stable_id` (schema v1.9,
 see [Stable identity](#stable-identity-stable_id)).
+
+### Explanation (post-answer)
+
+`explanation` (string \| null, max 1000 chars, schema v1.13) is Markdown
+explaining WHY the answer/grammar is what it is - a French word-order rule, a
+grammatical case, a spelling exception. Timing is what distinguishes it from
+the other three "extra text" fields:
+
+| Field | Shown | Purpose |
+|---|---|---|
+| `examples` | Before answering | Worked examples, must not spoil the answer. |
+| `hint` | On demand, before/during answering | A nudge behind a "Need a hint?" button. |
+| `explanation` | After answering (correct or not) | The reasoning behind the answer. |
+
+Not restricted to any exercise type; an author uses it wherever the "why" adds
+value and omits it everywhere else.
 
 ### matching
 
