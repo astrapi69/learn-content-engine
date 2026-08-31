@@ -99,10 +99,16 @@ if (!result.valid) console.error(result.errors); // [{ path, message }, …]
 | `isKnownLevel` | fn | whether a `level` is a CEFR band or, for a non-language set, the `none` sentinel - the `W-LEVEL-UNKNOWN` lint's predicate |
 | `ContentLesson`, `ContentSetEntry`, `ContentSetBook`, `ContentSetSource`, … | types | the canonical internal format |
 | `ContentLessonInlineExample` | type | one inline worked example (schema v1.5) on a theory step or exercise |
+| `ContentLessonCard`, `ContentLessonExercise`, `ContentLessonStep`, `ContentLessonResource`, `ContentLessonClozeBlank`, `ContentLessonCardTokenRole`, `ContentLessonCardTokenRoleName` | types | the rest of the `ContentLesson` field family (cards, exercises, steps, cloze blanks, token roles) |
+| `ContentCardMediaType`, `ContentExerciseDirection`, `SetStatus`, `SetVisibility` | types | enum-like fields on the canonical types above |
 | `SetReviewStatus`, `SetAttribution` | types | the set entry's review standing (schema v1.9) and attribution block |
 | `StableIdReport`, `StableIdDuplicate` | types | the `collectStableIds` return shape |
-| `ValidationResult`, `ValidationIssue` | types | the `validate*` return shape (`{ valid, errors[] }`) |
-| `LessonSetContext`, `LessonSourceAdapter`, `ParsedManifest`, `ParsedSet` | types | adapter + manifest surface |
+| `StabilityResult`, `StabilityViolation`, `StableIdElement`, `StableIdInventory` | types | the `buildStableIdInventory`/`compareStableIdInventories` return + input shapes |
+| `StableIdCoverage`, `CoverageVerdict`, `CoverageSet`, `CoverageFailure` | types | the `computeStableIdCoverage` return shape |
+| `ValidationResult`, `ValidationIssue`, `ValidationSeverity` | types | the `validate*` return shape (`{ valid, errors[] }`) and its issue-severity enum |
+| `ExerciseExtension`, `ExtensionRegistry` | types | the `ext:` extension registry contract (schema 1.7, see [Extensions](docs/extensions.md)) |
+| `LessonSetContext`, `LessonSourceAdapter`, `ParsedManifest`, `ParsedSet`, `ParsedSetAsset`, `ParsedSetBook` | types | adapter + manifest surface |
+| `Card`, `CardTokenRole`, `ClozeBlank`, `Direction`, `Exercise`, `ExerciseType`, `InlineExample`, `Lesson`, `LessonResource`, `LessonStep`, `MediaType`, `Pair`, `PictureImage`, `StepType`, `TokenRole` | types | the underlying generated schema element types (one per `schema/lesson.schema.json` `$defs` entry `ContentLesson*` wraps) |
 
 The bundled JSON-Schema ships too, so a content repo can mirror against it
 directly: `import schema from "learn-content-engine/schema/lesson.schema.json"`.

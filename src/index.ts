@@ -86,6 +86,8 @@ export type {
   ContentSetBook,
   ContentSetEntry,
   ContentSetSource,
+  SetAttribution,
+  SetReviewStatus,
   SetStatus,
   SetVisibility,
 } from "./types/index.js";
