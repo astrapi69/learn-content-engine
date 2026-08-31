@@ -458,12 +458,12 @@ describe("schema 1.13 — explanation on exercises (idea 5: post-answer 'why')",
     expect(validateLesson(lessonWithExplanation(null)).valid).toBe(true);
   });
 
-  it("boundary: rejects an explanation longer than 1000 characters", () => {
-    expect(validateLesson(lessonWithExplanation("x".repeat(1001))).valid).toBe(false);
+  it("boundary: rejects an explanation longer than 2000 characters", () => {
+    expect(validateLesson(lessonWithExplanation("x".repeat(2001))).valid).toBe(false);
   });
 
-  it("boundary: accepts an explanation at exactly 1000 characters", () => {
-    expect(validateLesson(lessonWithExplanation("x".repeat(1000))).valid).toBe(true);
+  it("boundary: accepts an explanation at exactly 2000 characters", () => {
+    expect(validateLesson(lessonWithExplanation("x".repeat(2000))).valid).toBe(true);
   });
 
   it("is not restricted to one exercise type: a matching exercise may carry it too", () => {
