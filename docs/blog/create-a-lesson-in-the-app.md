@@ -1,13 +1,13 @@
 ---
 title: "Create a Lesson in the App, Step by Step"
-description: "A hands-on walkthrough of the adaptive-learner lesson creator: the four wizard steps, the book path that turns pasted or uploaded textbook chapters into knowledge lessons, the extension path for the five advanced exercise types, and the edit mode, with real screenshots from the running app."
+description: "A hands-on walkthrough of the adaptive-learner lesson creator: the four wizard steps, the book path that turns pasted or uploaded textbook chapters into knowledge lessons, the extension path for the six advanced exercise types, and the edit mode, with real screenshots from the running app."
 date: 2026-07-17
 tags: [tutorial, authoring, adaptive-learner, walkthrough]
 ---
 
 # Create a Lesson in the App, Step by Step
 
-*A hands-on walkthrough of the lesson creator in adaptive-learner: the classic four wizard steps from an empty form to a saved, schema-valid lesson, the book path that turns pasted or uploaded textbook chapters into knowledge lessons, the extension path that makes the five advanced exercise types authorable without JSON, and the wizard's edit mode. Every screenshot in this guide comes from the running app, captured during the exact flow described.*
+*A hands-on walkthrough of the lesson creator in adaptive-learner: the classic four wizard steps from an empty form to a saved, schema-valid lesson, the book path that turns pasted or uploaded textbook chapters into knowledge lessons, the extension path that makes the six advanced exercise types authorable without JSON, and the wizard's edit mode. Every screenshot in this guide comes from the running app, captured during the exact flow described.*
 
 `adaptive-learner` · for teachers and content authors · part 3 of the series
 
@@ -123,9 +123,9 @@ The six core types cover the everyday drill. Some exercise shapes do not fit any
 
 ![Step 1 with the template row: the four starter templates plus the book-text and Advanced exercise types entries](assets/create-lesson/e1-extensions-entry.png)
 
-Choosing it switches to a shorter three-step flow: metadata, exercises, review. No card step, because extension exercises carry their own content rather than drawing on cards. **Add extension exercise** opens the type picker, and all five adopted types are there:
+Choosing it switches to a shorter three-step flow: metadata, exercises, review. No card step, because extension exercises carry their own content rather than drawing on cards. **Add extension exercise** opens the type picker, and all six adopted types are there:
 
-![The extension type picker with all five adopted types](assets/create-lesson/e2-type-picker.png)
+![The extension type picker with all six adopted types](assets/create-lesson/e2-type-picker.png)
 
 The picker shows the technical type ids, which is honest about what you are authoring: each is a namespaced `ext:` type that the lesson will declare in `requires_extensions`, so a consumer without that extension refuses the lesson loudly instead of mis-rendering it. Here is what each one is for, with a small example from a French course for German speakers:
 
@@ -136,8 +136,9 @@ The picker shows the technical type ids, which is honest about what you are auth
 | `ext:al-reading-comprehension` | Reads one passage, answers several questions on it | *"Marie habite à Paris. Elle travaille dans un café le matin et étudie le français le soir."* Question: where does Marie work? |
 | `ext:al-graded-quiz` | Works through a scored question set with a pass mark | Three questions on greetings, one point each, pass at 2 of 3 |
 | `ext:al-dictation` | Listens to a clip and types what was said | Hear *"Comment ça va?"*, accepted with or without the accent |
+| `ext:al-image-description` | Looks at a picture and types a description or answer | Shown a café table, type *"Il y a une tasse de café et un croissant."* |
 
-Dictation is the newest of the five, and its editor shows what a self-contained extension payload looks like:
+Dictation's editor shows what a self-contained extension payload looks like:
 
 ![The dictation editor: instruction, the audio field with upload and path, and two accepted transcriptions](assets/create-lesson/e3-dictation-fields.png)
 
@@ -175,4 +176,4 @@ For the everyday case (a teacher or learner who wants a small, clean vocabulary 
 
 ---
 
-*Four steps, no JSON: metadata, cards, generated exercises, and a review that runs the same quality floor as CI. And three doors more: a textbook chapter pasted in, or a whole book file with one lesson per selected chapter, a knowledge lesson out; the five advanced exercise types authorable in their own branch, dictation included; and every own lesson editable without losing its progress.*
+*Four steps, no JSON: metadata, cards, generated exercises, and a review that runs the same quality floor as CI. And three doors more: a textbook chapter pasted in, or a whole book file with one lesson per selected chapter, a knowledge lesson out; the six advanced exercise types authorable in their own branch, dictation and image description included; and every own lesson editable without losing its progress.*

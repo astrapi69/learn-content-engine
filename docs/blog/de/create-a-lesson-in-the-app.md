@@ -1,13 +1,13 @@
 ---
 title: "Eine Lektion in der App erstellen, Schritt für Schritt"
-description: "Eine praktische Tour durch den Lektions-Editor von adaptive-learner: die vier Assistenten-Schritte, der Buch-Pfad, der aus eingefügten oder hochgeladenen Lehrbuchkapiteln Wissens-Lektionen macht, der Erweiterungs-Pfad für die fünf fortgeschrittenen Übungstypen und der Bearbeitungsmodus, mit echten Screenshots aus der laufenden App."
+description: "Eine praktische Tour durch den Lektions-Editor von adaptive-learner: die vier Assistenten-Schritte, der Buch-Pfad, der aus eingefügten oder hochgeladenen Lehrbuchkapiteln Wissens-Lektionen macht, der Erweiterungs-Pfad für die sechs fortgeschrittenen Übungstypen und der Bearbeitungsmodus, mit echten Screenshots aus der laufenden App."
 date: 2026-07-17
 tags: [tutorial, authoring, adaptive-learner, walkthrough]
 ---
 
 # Eine Lektion in der App erstellen, Schritt für Schritt
 
-*Eine praktische Tour durch den Lektions-Editor in adaptive-learner: die klassischen vier Assistenten-Schritte vom leeren Formular bis zur gespeicherten, schema-gültigen Lektion, der Buch-Pfad, der aus eingefügten oder hochgeladenen Lehrbuchkapiteln Wissens-Lektionen macht, der Erweiterungs-Pfad, der die fünf fortgeschrittenen Übungstypen ohne JSON autorierbar macht, und der Bearbeitungsmodus des Assistenten. Jeder Screenshot in dieser Anleitung stammt aus der laufenden App, aufgenommen während des exakt beschriebenen Ablaufs.*
+*Eine praktische Tour durch den Lektions-Editor in adaptive-learner: die klassischen vier Assistenten-Schritte vom leeren Formular bis zur gespeicherten, schema-gültigen Lektion, der Buch-Pfad, der aus eingefügten oder hochgeladenen Lehrbuchkapiteln Wissens-Lektionen macht, der Erweiterungs-Pfad, der die sechs fortgeschrittenen Übungstypen ohne JSON autorierbar macht, und der Bearbeitungsmodus des Assistenten. Jeder Screenshot in dieser Anleitung stammt aus der laufenden App, aufgenommen während des exakt beschriebenen Ablaufs.*
 
 `adaptive-learner` · für Lehrende und Content-Autoren · Teil 3 der Serie
 
@@ -123,9 +123,9 @@ Die sechs Kern-Typen decken das alltägliche Einüben ab. Manche Übungsformen p
 
 ![Schritt 1 mit der Vorlagen-Reihe: die vier Start-Vorlagen plus die Einträge Buch-Text und Erweiterte Übungstypen](assets/create-lesson/e1-extensions-entry.png)
 
-Ihn zu wählen schaltet auf einen kürzeren dreistufigen Ablauf um: Metadaten, Übungen, Überprüfung. Kein Karten-Schritt, weil Erweiterungsübungen ihren eigenen Inhalt tragen, statt auf Karten zurückzugreifen. **Erweiterungsübung hinzufügen** öffnet die Typ-Auswahl, und alle fünf adoptierten Typen sind da:
+Ihn zu wählen schaltet auf einen kürzeren dreistufigen Ablauf um: Metadaten, Übungen, Überprüfung. Kein Karten-Schritt, weil Erweiterungsübungen ihren eigenen Inhalt tragen, statt auf Karten zurückzugreifen. **Erweiterungsübung hinzufügen** öffnet die Typ-Auswahl, und alle sechs adoptierten Typen sind da:
 
-![Die Erweiterungstyp-Auswahl mit allen fünf adoptierten Typen](assets/create-lesson/e2-type-picker.png)
+![Die Erweiterungstyp-Auswahl mit allen sechs adoptierten Typen](assets/create-lesson/e2-type-picker.png)
 
 Die Auswahl zeigt die Typen unter ihren deutschen Namen. Darunter liegt jeweils ein namensraum-gebundener `ext:`-Typ, den die Lektion in `requires_extensions` deklariert, sodass ein Konsument ohne diese Erweiterung die Lektion laut ablehnt, statt sie falsch darzustellen. Wofür jeder da ist, mit seiner technischen Id und einem kleinen Beispiel aus einem Französisch-Kurs für Deutschsprachige:
 
@@ -136,8 +136,9 @@ Die Auswahl zeigt die Typen unter ihren deutschen Namen. Darunter liegt jeweils 
 | Leseverständnis | `ext:al-reading-comprehension` | Liest einen Text, beantwortet mehrere Fragen dazu | *"Marie habite à Paris. Elle travaille dans un café le matin et étudie le français le soir."* Frage: Wo arbeitet Marie? |
 | Benotetes Quiz | `ext:al-graded-quiz` | Bearbeitet ein bewertetes Fragenset mit Bestehensgrenze | Drei Fragen zu Begrüßungen, je ein Punkt, bestanden bei 2 von 3 |
 | Diktat | `ext:al-dictation` | Hört einen Clip und tippt, was gesagt wurde | *"Comment ça va?"* hören, mit oder ohne Akzent akzeptiert |
+| Bildbeschreibung | `ext:al-image-description` | Schaut ein Bild an und tippt eine Beschreibung oder Antwort | Ein Café-Tisch wird gezeigt, tippen: *"Il y a une tasse de café et un croissant."* |
 
-Diktat ist der jüngste der fünf, und sein Editor zeigt, wie ein in sich geschlossenes Erweiterungs-Payload aussieht:
+Der Diktat-Editor zeigt, wie ein in sich geschlossenes Erweiterungs-Payload aussieht:
 
 ![Der Diktat-Editor: Anweisung, das Audio-Feld mit Hochladen und Pfad, und zwei akzeptierte Transkriptionen](assets/create-lesson/e3-dictation-fields.png)
 
@@ -175,4 +176,4 @@ Für den Alltagsfall (eine Lehrkraft oder lernende Person, die eine kleine, saub
 
 ---
 
-*Vier Schritte, kein JSON: Metadaten, Karten, generierte Übungen und eine Überprüfung, die denselben Qualitäts-Boden wie die CI ausführt. Und drei Türen mehr: ein Lehrbuchkapitel eingefügt oder eine ganze Buchdatei mit einer Lektion pro gewähltem Kapitel hinein, eine Wissens-Lektion hinaus; die fünf fortgeschrittenen Übungstypen autorierbar in ihrem eigenen Zweig, Diktat inklusive; und jede eigene Lektion bearbeitbar, ohne ihren Fortschritt zu verlieren.*
+*Vier Schritte, kein JSON: Metadaten, Karten, generierte Übungen und eine Überprüfung, die denselben Qualitäts-Boden wie die CI ausführt. Und drei Türen mehr: ein Lehrbuchkapitel eingefügt oder eine ganze Buchdatei mit einer Lektion pro gewähltem Kapitel hinein, eine Wissens-Lektion hinaus; die sechs fortgeschrittenen Übungstypen autorierbar in ihrem eigenen Zweig, Diktat und Bildbeschreibung inklusive; und jede eigene Lektion bearbeitbar, ohne ihren Fortschritt zu verlieren.*
