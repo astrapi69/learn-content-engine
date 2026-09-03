@@ -7,7 +7,7 @@ tags: [tutorial, authoring, adaptive-learner, walkthrough]
 
 # Create a Lesson in the App, Step by Step
 
-*A hands-on walkthrough of the lesson creator in adaptive-learner: the classic four wizard steps from an empty form to a saved, schema-valid lesson, the book path that turns pasted or uploaded textbook chapters into knowledge lessons, the extension path that makes the six advanced exercise types authorable without JSON, and the wizard's edit mode. Every screenshot in this guide comes from the running app, captured during the exact flow described.*
+*A hands-on walkthrough of the lesson creator in adaptive-learner: the classic four wizard steps from an empty form to a saved, schema-valid lesson, the book path that turns pasted or uploaded textbook chapters into knowledge lessons, the extension path that makes the six advanced exercise types authorable without JSON, and the wizard's edit mode. Every screenshot in this guide comes from the running app, captured during the exact flow described. The app is under active development, so a detail or two may have moved on by the time you read this - the flow stays the reliable guide.*
 
 `adaptive-learner` · for teachers and content authors · part 3 of the series
 
