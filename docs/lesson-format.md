@@ -257,6 +257,68 @@ the other three "extra text" fields:
 Not restricted to any exercise type; an author uses it wherever the "why" adds
 value and omits it everywhere else.
 
+#### Writing a good explanation
+
+The field is free Markdown on purpose, so the following is a convention, not
+a schema rule (engine#147). It exists so that hand-written and generated
+explanations look alike across content repos and so a consumer can render
+them consistently. Up to four blocks, in this order; use only the ones that
+add something for the exercise at hand:
+
+1. **Rule.** One or two sentences in the learner's `source_language`, naming
+   exactly the rule the exercise tests. Not the grammar chapter.
+2. **Word for word.** A gloss of the target sentence, one bullet per token:
+   `*token* - literal meaning (grammatical note)`. Tokens in
+   `target_language`, meanings and notes in `source_language`. This is the
+   fastest way for a learner to SEE the syntax instead of reading about it.
+3. **Further examples.** Two or three sentences with the same pattern, target
+   sentence plus translation. One example reads as a special case, three as a
+   pattern.
+4. **Typical mistake** (optional). The error speakers of the source language
+   tend to make, so the contrast is explicit.
+
+A complete example, Spanish A1 for German speakers, exercise "el coche rojo":
+
+```markdown
+**Regel:** Beschreibende Adjektive stehen im Spanischen meist NACH dem Nomen.
+
+**Wort für Wort:**
+- *el* - der (Artikel, maskulin Singular)
+- *coche* - Auto (Nomen)
+- *rojo* - rot (Adjektiv, nachgestellt, richtet sich nach *coche*)
+
+**Weitere Beispiele:**
+- *la casa blanca* - das weiße Haus
+- *un libro interesante* - ein interessantes Buch
+
+**Typischer Fehler:** *el rojo coche* nach deutschem Muster.
+```
+
+Practical notes:
+
+- **Budget.** The example above is about 420 characters; a gloss of a
+  ten-token sentence plus three examples plus a typical mistake fits well
+  inside the 2000-character limit. If it does not fit, the explanation is
+  covering more than one rule.
+- **Which exercises.** Anything with a target sentence benefits: `cloze`,
+  `word_tiles`, `free_text` translations, `multiple_choice` on grammar. A
+  `matching` or `picture_choice` exercise has no sentence to gloss; there the
+  explanation is a one-line rule, or absent.
+- **Repetition.** When the same rule is tested by many exercises of one
+  lesson, keep each explanation to the gloss of ITS sentence plus the short
+  rule, and put the long version into the theory step. Ten copies of the same
+  400 characters are content duplication and tire the learner.
+- **Not only languages.** The rule block applies to any domain (why `const`
+  and not `let`, why the derivative is what it is); the gloss and the
+  typical-mistake blocks are language-specific and are simply omitted.
+- **After the answer, so no spoiler rule.** Unlike `examples` and `hint`, the
+  explanation may name the solution freely.
+
+A structured shape (gloss tokens with per-token speech, post-answer examples
+reusing `InlineExample`) is deliberately deferred until real content written
+under this convention shows what authors actually use; it would be an
+additive schema change, tracked separately.
+
 ### matching
 
 Match left items to right items. Requires a non-empty `pairs` list of
