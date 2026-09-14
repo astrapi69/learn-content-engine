@@ -1,7 +1,7 @@
 # **Comparative Analysis of Exercise Types in E-Learning Platforms**
 **Benchmark Study for the `learn-content-engine` (v1.13)**
 
-**Version:** 1.0  
+**Version:** 1.1  
 **Date:** September 14, 2026  
 **Author:** Asterios Raptis (astrapi69)  
 **Project:** learn-content-engine / adaptive-learner  
@@ -29,7 +29,7 @@ The `learn-content-engine` serves as a framework-agnostic TypeScript engine for 
 ### 1.2 Objectives
 - **Benchmarking:** Systematic comparison of functional coverage of exercise types.
 - **Gap Analysis:** Identification of didactically and technically relevant gaps.
-- **Architectural Evaluation:** Assessment of the `ext:` extension concept in the context of established standards.
+- **Architectural Evaluation:** Assessment of the `ext:` extension concept in the context of established standards, including their licensing and accessibility.
 - **Roadmap Recommendations:** Prioritized action items for future development.
 
 ### 1.3 Methodology
@@ -88,7 +88,7 @@ The comparison is based on the analysis of official documentation and specificat
 ---
 
 ### 2.3 QTI 3.0 (IMS Question & Test Interoperability)
-**Characteristics:** The international standard for exchanging assessment items (IMS Global Learning Consortium, 2023).
+**Characteristics:** The international standard for exchanging assessment items (IMS Global Learning Consortium, 1EdTech).
 
 **Interaction Types (Excerpt):**
 - **Choice Interaction:** Standard Multiple/Single-Choice.
@@ -104,8 +104,6 @@ The comparison is based on the analysis of official documentation and specificat
 - **Portable Custom Interaction (PCI):** Interface for arbitrary custom extensions.
 
 **Assessment:** QTI 3.0 is the most comprehensive standard but is highly complex (XML-based). Its **PCI concept** is the direct equivalent of the `learn-content-engine`'s `ext:` pattern.
-
-> **Reference:** IMS Global Learning Consortium. (2023). *QTI 3.0 Best Practices and Implementation Guide*. https://www.imsglobal.org/spec/qti/v3p0
 
 ---
 
@@ -141,7 +139,48 @@ The comparison is based on the analysis of official documentation and specificat
 
 ---
 
-## **3. Comparison Matrix**
+## **3. Licensing and Accessibility of Reference Systems**
+
+Understanding the licensing models and UI accessibility of these platforms is crucial for evaluating their suitability as architectural references or integration targets.
+
+### 3.1 Moodle
+- **License:** **GPLv3+** (GNU General Public License).
+- **Open Source:** Yes. Fully free, open-source, and usable for commercial purposes.
+- **Publicly Accessible UI:** **Yes**. Moodle provides a freely accessible sandbox environment at [sandbox.moodledemo.net](https://sandbox.moodledemo.net) for learners, educators, and administrators. When self-hosted, the UI is natively included in the core package.
+
+### 3.2 H5P
+- **License:** **MIT License** (Core / Framework).
+- **Open Source:** Yes. Highly permissive. The source code and individual content types are free to use, modify, and deploy commercially. *(Note: H5P.com is the paid SaaS variant, while the underlying framework at H5P.org is open source).*
+- **Publicly Accessible UI:** **Yes**. The interactive authoring editor can be tested directly in the browser at [H5P.org](https://h5p.org) (requires a free account). Additionally, free plugins integrate this editor directly into WordPress, Moodle, and Drupal.
+
+### 3.3 QTI 3.0 (IMS Global / 1EdTech)
+- **License:** **Open Standard / Free Specification License**.
+- **Open Source:** N/A (It is a specification, not software). The specification itself is freely accessible and royalty-free. *(Note: QTI 3.0 is a data format (XML Schema), not a finished software product).*
+- **Publicly Accessible UI:** **Indirectly**. Since QTI is a standard, it has no "official" UI. However, open-source authoring tools and players, such as **TAO Testing** (Community Edition) or **Onyx**, provide functional UIs for creating and rendering QTI content.
+
+### 3.4 Canvas LMS
+- **License:** **AGPLv3** (Canvas LMS Courseware / Open Source Edition).
+- **Open Source:** Yes. The core LMS is available on GitHub. *(Note: Some add-ons and Instructure's hosted cloud infrastructure are proprietary).*
+- **Publicly Accessible UI:** **Yes**. Instructure offers a permanent "Free-for-Teacher" account, allowing educators to test the complete UI, including the New Quizzes engine, at no cost.
+
+### 3.5 Duolingo
+- **License:** **Proprietary / Commercial Software**.
+- **Open Source:** No. Both the source code and the didactic system are protected and commercial.
+- **Publicly Accessible UI:** **Yes (Freemium)**. The end-user interface is freely accessible via app and web. *(Note: "Duolingo for Schools" allows teachers to create classrooms for free, but there is no public authoring editor for creating custom, user-generated content).*
+
+### 3.6 Summary Matrix: Licensing & Accessibility
+
+| Tool / Standard | License Model | Open Source? | Freely Accessible UI for Testing? |
+| :--- | :--- | :--- | :--- |
+| **Moodle** | GPLv3+ | **Yes** | **Yes** ([sandbox.moodledemo.net](https://sandbox.moodledemo.net)) |
+| **H5P** | MIT | **Yes** | **Yes** ([H5P.org Editor](https://h5p.org)) |
+| **QTI 3.0** | Open Standard | *(Specification)* | **Indirectly** (via open-source tools like TAO) |
+| **Canvas LMS** | AGPLv3 | **Yes** | **Yes** (Free-for-Teacher Account) |
+| **Duolingo** | Proprietary | **No** | **Yes** (App/Web as learner; no authoring tool) |
+
+---
+
+## **4. Comparison Matrix: Exercise Types**
 
 | **Exercise Type Category** | **Moodle** | **H5P** | **QTI 3.0** | **Duolingo** | **learn-content-engine (v1.13)** |
 |----------------------------|------------|---------|-------------|--------------|----------------------------------|
@@ -164,9 +203,9 @@ The comparison is based on the analysis of official documentation and specificat
 
 ---
 
-## **4. Gap Analysis for `learn-content-engine`**
+## **5. Gap Analysis for `learn-content-engine`**
 
-### 4.1 Identified Gaps (Prioritized)
+### 5.1 Identified Gaps (Prioritized)
 
 #### **Priority 1: Hotspot / Image Mapping**
 - **Didactic Value:** High for visual domains (`alc-traffic-knowledge`, `alc-technology`, `alc-dog-training`).
@@ -190,8 +229,6 @@ The comparison is based on the analysis of official documentation and specificat
 - **Recommended Extension:** `ext:astrapi69-parsons@1`
 - **Academic Basis:** Denny et al. (2008) prove significantly better learning outcomes compared to free-text code tasks.
 
-> **Reference:** Denny, P., Luxton-Reilly, A., & Simon, B. (2008). Evaluating a new exam question: Parsons problems. *Proceedings of the Fourth International Workshop on Computing Education Research*, 113–124. https://doi.org/10.1145/1404520.1404531
-
 #### **Priority 4: Categorization (1:n)**
 - **Didactic Value:** Medium-High for taxonomies (psychology, biology, language classification).
 - **Bloom’s Level:** Analyzing, Evaluating.
@@ -208,7 +245,7 @@ The comparison is based on the analysis of official documentation and specificat
 
 ---
 
-### 4.2 Architectural Evaluation
+### 5.2 Architectural Evaluation
 
 #### **Strengths of `learn-content-engine`**
 1. **Lean-Core Design:** No schema bloat; focused on proven standard types.
@@ -223,9 +260,9 @@ The comparison is based on the analysis of official documentation and specificat
 
 ---
 
-## **5. Recommendations for Future Development**
+## **6. Recommendations for Future Development**
 
-### 5.1 Short-Term (Q4 2026 / Q1 2027)
+### 6.1 Short-Term (Q4 2026 / Q1 2027)
 1. **Implement `ext:astrapi69-parsons@1`:**
    - Target Repository: `alc-programming`
    - Schema: `$defs/ParsonsExercisePayload` (already drafted)
@@ -238,17 +275,17 @@ The comparison is based on the analysis of official documentation and specificat
    - Validation: Overlap checking, bounds checking
    - Didactic Value: Essential for traffic scenarios (right-of-way, signs).
 
-### 5.2 Mid-Term (Q2–Q3 2027)
+### 6.2 Mid-Term (Q2–Q3 2027)
 3. **Implement `ext:astrapi69-ordering@1`:**
    - Target Repositories: `alc-technology` (algorithms), `alc-traffic-knowledge` (procedures).
 4. **Evaluate `ext:astrapi69-categorization@1`:**
    - Target Repositories: `alc-psychology`, `alc-dog-training`.
 
-### 5.3 Long-Term (Q4 2027+)
+### 6.3 Long-Term (Q4 2027+)
 5. **Parametric Tasks:** Schema-level variable definitions (Engine validates syntax, Consumer evaluates).
 6. **Audio Input Extension:** STT service integration (strictly Consumer responsibility).
 
-### 5.4 Architectural Principles for Extensions
+### 6.4 Architectural Principles for Extensions
 1. **Separation of Concerns:** Core schema (`prompt`, `hint`, `explanation`) remains untouched; extensions define only `ext_payload`.
 2. **Schema-First Approach:** JSON Schema definition → TypeScript interfaces → Consumer implementation.
 3. **Test-Driven Development (TDD):** Unit tests for validation logic before production release.
@@ -257,9 +294,9 @@ The comparison is based on the analysis of official documentation and specificat
 
 ---
 
-## **6. Didactic Framework**
+## **7. Didactic Framework**
 
-### 6.1 Bloom’s Taxonomy
+### 7.1 Bloom’s Taxonomy
 The current engine (v1.13) primarily covers the lower levels:
 - **Remembering:** `free_text`, `cloze`, `matching`
 - **Understanding:** `multiple_choice`, `picture_choice`
@@ -271,12 +308,12 @@ The planned extensions systematically unlock higher cognitive levels:
 
 > **Reference:** Bloom, B. S. (1956). *Taxonomy of educational objectives: The classification of educational goals*. Longmans, Green.
 
-### 6.2 Cognitive Theory of Multimedia Learning
+### 7.2 Cognitive Theory of Multimedia Learning
 The planned visual extensions align with Mayer’s **Multimedia Principle**: Learning is more effective when words and pictures are integrated (Mayer, 2021).
 
 > **Reference:** Mayer, R. E. (2021). *Multimedia learning* (3rd ed.). Cambridge University Press. https://doi.org/10.1017/9781316941355
 
-### 6.3 Constructive Alignment
+### 7.3 Constructive Alignment
 The extensions enable **Constructive Alignment** (Biggs, 1996): Teaching/learning activities and assessments are directly aligned with the stated learning objectives.
 *Example:* If the objective is "The learner can *apply* the steps of a safe hill start," a Multiple-Choice question only tests recognition, whereas `ext:astrapi69-ordering@1` requires active construction of the sequence.
 
@@ -284,7 +321,7 @@ The extensions enable **Constructive Alignment** (Biggs, 1996): Teaching/learnin
 
 ---
 
-## **7. Conclusion**
+## **8. Conclusion**
 
 The `learn-content-engine` (v1.13) is in an **excellent strategic position**:
 1. **Standard Parity:** The six core exercise types fully cover the global standard for text-based foundational assessments.
@@ -305,7 +342,7 @@ Bloom, B. S. (1956). *Taxonomy of educational objectives: The classification of 
 
 Denny, P., Luxton-Reilly, A., & Simon, B. (2008). Evaluating a new exam question: Parsons problems. *Proceedings of the Fourth International Workshop on Computing Education Research*, 113–124. https://doi.org/10.1145/1404520.1404531
 
-IMS Global Learning Consortium. (2023). *QTI 3.0 Best Practices and Implementation Guide*. https://www.imsglobal.org/spec/qti/v3p0
+IMS Global Learning Consortium (1EdTech). (2023). *QTI 3.0 Best Practices and Implementation Guide*. https://www.imsglobal.org/spec/qti/v3p0
 
 Mayer, R. E. (2021). *Multimedia learning* (3rd ed.). Cambridge University Press. https://doi.org/10.1017/9781316941355
 
