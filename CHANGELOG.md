@@ -7,6 +7,17 @@ All notable changes to `learn-content-engine`. The format is inspired by
 
 ## [Unreleased]
 
+### Author guidance for `explanation` (engine#147)
+
+`docs/lesson-format.md` now says what a good post-answer explanation
+CONTAINS, not only when it is shown: a one-sentence rule in the learner's
+source language, a word-by-word gloss of the target sentence, two or three
+further examples, and an optional typical mistake, with a complete worked
+example and notes on the character budget, which exercise types benefit,
+and how to avoid repeating one rule across a whole lesson. Documentation
+only; the field stays free Markdown. A structured shape is deferred until
+content written under the convention shows what authors actually use.
+
 ## [0.23.0] - 2026-08-31
 
 ### Three new reference extensions: audio-choice, audio-tiles, speak-and-record
