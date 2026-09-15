@@ -1,7 +1,8 @@
 name: pages
 
-# Publishes the GitHub Pages site: the TypeDoc API reference under /api and
-# the schema artifacts under /schema, so the schema $id URLs
+# Publishes the GitHub Pages site: the TypeDoc API reference under /api, the
+# rendered docs/*.md under /docs (engine#152), and the schema artifacts under
+# /schema, so the schema $id URLs
 # (https://astrapi69.github.io/learn-content-engine/schema/*.json) resolve.
 
 on:
@@ -36,10 +37,14 @@ jobs:
       - name: Build API docs (TypeDoc)
         run: npm run docs:api
 
-      - name: Assemble site (landing page + API docs + schema at its $id path)
+      - name: Build docs site (Markdown to HTML)
+        run: npm run docs:site
+
+      - name: Assemble site (landing page + API docs + rendered docs + schema at its $id path)
         run: |
           mkdir -p _site/schema
           cp -r docs-api _site/api
+          cp -r docs-site _site/docs
           cp schema/*.json _site/schema/
           cp .github/pages/index.html _site/index.html
 

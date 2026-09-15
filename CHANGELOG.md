@@ -7,6 +7,18 @@ All notable changes to `learn-content-engine`. The format is inspired by
 
 ## [Unreleased]
 
+### Rendered docs on the Pages site (engine#152)
+
+The site published only the schema and the TypeDoc API; the Markdown
+documentation under `docs/` was reachable only by browsing the repository,
+and an external benchmark that read the site concluded the six core exercise
+types were all there is. `npm run docs:site` (`scripts/build-docs-site.mjs`,
+`marked` as a dev dependency) now renders the top-level `docs/*.md` to
+`/docs` on the site with GitHub-style heading ids, sibling links rewritten
+to the rendered pages, links into the repository pointed at GitHub, and
+mermaid fences rendered client-side. `docs/blog` and `docs/proposals` stay
+repository-only.
+
 ### Two new reference extensions: hotspot, parsons (engine#149)
 
 `docs/comparative-analysis.md` benchmarked the engine's exercise types
