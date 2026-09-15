@@ -5,7 +5,7 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
-## [Unreleased]
+## [0.24.1] - 2026-09-15
 
 ### Variable references are opt-in: `{{` is ordinary text without `variables` (engine#151)
 
@@ -18,7 +18,9 @@ braces was not checked against the content repos before publishing. Now
 only an exercise that declares `variables` is scanned; without it, braces
 are plain text and no `E-VAR-*` rule fires. Schema text corrected, version
 stays 1.14 (no field changed). README no longer lists parametric exercises
-as uncovered.
+as uncovered. Eight mermaid diagrams (tier model, gap map, parametric
+flow, extension lifecycle, Bloom mapping, variables graph, portability
+contract, engine/consumer seam) join the docs, rendered on the Pages site.
 
 ## [0.24.0] - 2026-09-15
 
