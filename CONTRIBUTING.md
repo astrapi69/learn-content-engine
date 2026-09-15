@@ -72,13 +72,17 @@ versions - do not let that recur):
 5. **Tag** `vX.Y.Z` on that commit (annotated) and push it:
    `git tag -a vX.Y.Z -m "vX.Y.Z - <summary>" && git push origin vX.Y.Z`.
    Verify the target rather than assume it (`git log -S '"version": "X.Y.Z"'`).
-6. **GitHub release** for the tag, body = the changelog excerpt
-   (`gh release create vX.Y.Z --latest --notes-file ...`).
-7. **`make publish`** - re-runs `release-check`, then `npm publish`
+6. **`make publish`** - re-runs `release-check`, then `npm publish`
    (`npm whoami` first). Confirm with `npm view learn-content-engine version`.
+7. **GitHub release** for the tag, body = the changelog excerpt
+   (`gh release create vX.Y.Z --latest --notes-file ...`).
 
-Do steps 5-7 for every release, in this order. A version that is committed but
-not tagged + published is not done.
+Do steps 5-7 for every release, in this order. **npm before the GitHub
+release, not after** - the Release parity workflow
+(`.github/workflows/release-parity.yml`) triggers on `release: published`
+and checks npm immediately; publishing to npm first means that check is
+never a guaranteed false red. A version that is committed but not tagged +
+published is not done.
 
 ## Identity is a contract
 
