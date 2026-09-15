@@ -367,6 +367,21 @@ and is one of two shapes:
 }
 ```
 
+How the three variables of that example depend on each other, and where the
+references sit:
+
+```mermaid
+flowchart LR
+  A[a: sampled, 1 to 20, integers] --> S[sum: computed, a + b, tolerance 0.01]
+  B[b: sampled, 1 to 20, step 0.5] --> S
+  A --> P[prompt references a and b]
+  B --> P
+  S --> ACC[accept references sum]
+  A --> EX[explanation references a, b and sum]
+  B --> EX
+  S --> EX
+```
+
 The engine validates the contract and never samples or evaluates:
 
 | ID | Rule |

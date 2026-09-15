@@ -186,6 +186,19 @@ Understanding the licensing models and UI accessibility of these platforms is cr
 
 The engine column distinguishes three tiers. **Core** types are in the schema's `ExerciseType` enum and are guaranteed to load in every consumer. **Reference extension** types exist under `src/examples/ext-ref-*` in the engine repository with full validation, a doc-gated example lesson, and a minimal consumer half; they are excluded from the published package and become usable in a given consumer only once that consumer adopts them under its own vendor namespace (`docs/extensions.md`). **Missing** means neither.
 
+```mermaid
+flowchart LR
+  Author[Content author] -->|lesson JSON| Core
+  Author -->|lesson JSON with requires_extensions| Ref
+  subgraph Engine[learn-content-engine]
+    Core[Core types: schema 1.14, ExerciseType enum]
+    Ref[Reference extensions: src/examples/ext-ref-*]
+  end
+  Core -->|guaranteed to load| App[adaptive-learner]
+  Ref -->|adopted under the app's vendor namespace| App
+  Ref -.->|consumer-parity gate| Core
+```
+
 | **Exercise Type Category** | **Moodle** | **H5P** | **QTI 3.0** | **Duolingo** | **learn-content-engine (schema 1.14)** |
 |----------------------------|------------|---------|-------------|--------------|----------------------------------|
 | **Multiple / Single Choice** | ✓ | ✓ | ✓ | ✓ | ✓ Core (`multiple_choice`, `picture_choice`) |
@@ -212,6 +225,26 @@ The engine column distinguishes three tiers. **Core** types are in the schema's 
 ### 5.1 Identified Gaps (Prioritized)
 
 Each entry below carries one example lesson. The examples are copies of the reference lessons in `docs/extensions.md`, where they are validated by the engine's doc gate (`src/docs-extensions-examples.test.ts`); this document is not gate-scanned, so the copies here are illustrative and the copies there are authoritative.
+
+Where each of the six gaps landed:
+
+```mermaid
+flowchart TB
+  subgraph Gaps[Six gaps from the benchmark]
+    H[Hotspot / image mapping]
+    O[Sequencing / ordering]
+    P[Parsons problems]
+    C[Categorization 1:n]
+    A[Audio input / voice]
+    V[Parametric / formulas]
+  end
+  H -->|new, engine issue 149| RH[ext:ref-hotspot]
+  P -->|new, engine issue 149| RP[ext:ref-parsons]
+  O -->|existed| RO[ext:ref-ordering]
+  C -->|existed, adopted by the app| RC[ext:ref-categorization]
+  A -->|existed| RA[ext:ref-speak-and-record, ext:ref-audio-choice, ext:ref-audio-tiles]
+  V -->|core field, schema 1.14, engine issue 151| RV[Exercise.variables]
+```
 
 #### **Priority 1: Hotspot / Image Mapping**
 - **Status:** Reference extension `ext:ref-hotspot` (`src/examples/ext-ref-hotspot/`, engine#149).
@@ -434,9 +467,38 @@ Each entry below carries one example lesson. The examples are copies of the refe
 
 ### 6.3 Long-Term (Q4 2027+)
 5. **Parametric Tasks, consumer side:** the schema contract shipped in 1.14 (engine#151: a `variables` block with ranges, computed expressions and tolerance, `{{name}}` references in core string fields, the engine validates and never evaluates). What remains is the consumer half in `adaptive-learner`: sample, compute, substitute, grade with tolerance, and record the drawn values per attempt.
+
+```mermaid
+sequenceDiagram
+  participant Author
+  participant Engine as learn-content-engine
+  participant App as adaptive-learner
+  participant Learner
+  Author->>Engine: exercise with variables and double-brace references
+  Engine->>Engine: check names, ranges, expressions, references
+  Engine-->>Author: E-VAR-* errors, or valid
+  App->>App: per attempt: sample min..max, evaluate expressions
+  App->>Learner: prompt with the values substituted
+  Learner->>App: answer
+  App->>App: grade against the substituted accept, within tolerance
+  App-->>Learner: result, explanation with the values substituted
+```
 6. **Graded Audio Input:** STT service integration on top of `ext:ref-speak-and-record` (strictly Consumer responsibility).
 
 ### 6.4 Architectural Principles for Extensions
+
+The life of an exercise type, from gap to core:
+
+```mermaid
+stateDiagram-v2
+  [*] --> Gap: named in a benchmark or by a content repo
+  Gap --> Reference: worked out as ext ref-name in src/examples, RED-first
+  Reference --> Reference: payload evolves behind the major pin
+  Reference --> Adopted: a consumer registers it under its own vendor namespace
+  Adopted --> Core: consumer-parity gate, promoted to the ExerciseType enum
+  Core --> [*]
+```
+
 1. **Separation of Concerns:** Core schema (`prompt`, `hint`, `explanation`) remains untouched; extensions define only `ext_payload`. No extension adds a `$defs` entry to `lesson.schema.json`.
 2. **Reference First:** A new type is worked out as `ext:ref-<name>` in `src/examples/` (engine half, consumer half, tests, doc-gated example lesson) before any consumer commits to it.
 3. **Test-Driven Development (TDD):** Unit tests for validation logic before production release.
@@ -456,6 +518,30 @@ The core types (schema 1.14) primarily cover the lower levels:
 The reference extensions systematically unlock higher cognitive levels:
 - **Applying:** `ext:ref-parsons`, `ext:ref-hotspot`
 - **Analyzing:** `ext:ref-ordering`, `ext:ref-categorization`
+
+```mermaid
+flowchart LR
+  subgraph Remembering
+    FT[free_text]
+    CL[cloze]
+    MA[matching]
+  end
+  subgraph Understanding
+    MC[multiple_choice]
+    PC[picture_choice]
+  end
+  subgraph Applying
+    WT[word_tiles]
+    PA[ext:ref-parsons]
+    HO[ext:ref-hotspot]
+    VA[variables on any type]
+  end
+  subgraph Analyzing
+    OR[ext:ref-ordering]
+    CA[ext:ref-categorization]
+  end
+  Remembering --> Understanding --> Applying --> Analyzing
+```
 
 > **Reference:** Bloom, B. S. (1956). *Taxonomy of educational objectives: The classification of educational goals*. Longmans, Green.
 
