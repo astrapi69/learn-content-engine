@@ -21,6 +21,16 @@ that "validates here => loads in any consumer".
   needs an extension either runs on a consumer that has it, or is rejected
   clearly everywhere else.
 
+```mermaid
+flowchart TD
+  L[Lesson declares requires_extensions: ext:acme-ordering@1] --> Q{registry has ext:acme-ordering at major 1?}
+  Q -->|yes| V[the extension validates ext_payload]
+  V --> OK[valid]
+  Q -->|no registry, or major mismatch| R[E-EXT-UNSUPPORTED: refused loudly]
+  X[an exercise uses an ext type the lesson never declared] --> U[E-EXT-UNDECLARED]
+  C[a lesson with core types only] --> OK2[valid, the registry is irrelevant]
+```
+
 ## Shape
 
 An extension exercise carries the `ext:` type and an opaque `ext_payload` the
@@ -97,6 +107,26 @@ ships both halves in one folder: the engine-half `refOrderingExtension` (an
 `renderRefOrdering` (a minimal renderer). It is excluded from the published
 build; a real extension would ship as its own package importing the engine's
 `ExerciseExtension` type.
+
+Every reference extension is cut along the same seam: the engine half sees
+only the payload's shape, the consumer half owns everything that needs a
+runtime.
+
+```mermaid
+flowchart LR
+  P[ext_payload, self-contained: no card lookup, no core-field reuse]
+  subgraph EngineHalf[Engine half, in validateLesson]
+    VAL[validate shape and rules, E-EXT-REF* ids]
+  end
+  subgraph ConsumerHalf[Consumer half, in the app]
+    REN[render]
+    GRA[grade]
+    RT[assets, storage, playback, recording]
+  end
+  P --> VAL
+  P --> REN --> GRA
+  P --> RT
+```
 
 Payload rules (engine half `refOrderingExtension`):
 
