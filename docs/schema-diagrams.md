@@ -26,7 +26,7 @@ false ordering sentence survived in this repo for weeks.
 
 <!-- GENERATED:schema-diagrams BEGIN - do not edit by hand, run scripts/generate-schema-diagrams.mjs -->
 
-<!-- schema x-schema-version: 1.13 -->
+<!-- schema x-schema-version: 1.14 -->
 
 ### 1. Content structure (generated)
 

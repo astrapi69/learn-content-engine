@@ -238,7 +238,8 @@ for-type combinations are rejected (see [validation.md](validation.md)).
 
 Common optional exercise fields: `card_ids` (the cards drilled; each must exist),
 `distractors`, `hint`, `direction`, `examples`, `explanation` (schema v1.13,
-see [Explanation](#explanation-post-answer)), and `stable_id` (schema v1.9,
+see [Explanation](#explanation-post-answer)), `variables` (schema v1.14, see
+[Variables](#variables-parametric-exercises)), and `stable_id` (schema v1.9,
 see [Stable identity](#stable-identity-stable_id)).
 
 ### Explanation (post-answer)
@@ -318,6 +319,78 @@ A structured shape (gloss tokens with per-token speech, post-answer examples
 reusing `InlineExample`) is deliberately deferred until real content written
 under this convention shows what authors actually use; it would be an
 additive schema change, tracked separately.
+
+### Variables (parametric exercises)
+
+`variables` (array of `ExerciseVariable` \| null, 1 to 20 entries, schema
+v1.14, engine#151) makes one authored exercise stand for many concrete
+instances: the consumer draws values per attempt, computes the derived ones,
+substitutes every `{{name}}` in the exercise's string fields, and grades
+against the substituted answer. This is the shape Moodle calls Calculated,
+Canvas calls Formula, and QTI 3.0 models with template variables.
+
+A variable has a `name` (lowercase identifier, unique within the exercise)
+and is one of two shapes:
+
+- **Sampled:** `min` and `max` (both inclusive), optional `step`. Without
+  `step` the value is an integer in the range; with `step` it is one of
+  `min`, `min + step`, `min + 2 step`, ... up to `max`.
+- **Computed:** `expression` over variables declared EARLIER in the list.
+  The expression language is deliberately small: decimal numbers, variable
+  names, `+ - * /`, parentheses, unary minus. No functions, no powers, no
+  comparison; it grows additively when content needs it. Optional
+  `tolerance` (absolute) is what a consumer applies when this variable's
+  value is an accepted answer.
+
+```json
+{
+  "id": "addition-parametrisch",
+  "title": "Addition mit Zufallszahlen",
+  "steps": [
+    {
+      "id": "s1",
+      "type": "exercise",
+      "exercise": {
+        "id": "e1",
+        "type": "free_text",
+        "prompt": "Was ist {{a}} + {{b}}?",
+        "variables": [
+          { "name": "a", "min": 1, "max": 20 },
+          { "name": "b", "min": 1, "max": 20, "step": 0.5 },
+          { "name": "sum", "expression": "a + b", "tolerance": 0.01 }
+        ],
+        "accept": ["{{sum}}"],
+        "explanation": "Die Summe von {{a}} und {{b}} ist {{sum}}."
+      }
+    }
+  ]
+}
+```
+
+The engine validates the contract and never samples or evaluates:
+
+| ID | Rule |
+|---|---|
+| `E-VAR-KIND` | A variable is a range (`min` and `max`, optional `step`) or an `expression`, never neither, never both. |
+| `E-VAR-DUP` | Two variables of one exercise share a `name`. |
+| `E-VAR-RANGE` | `min` is not below `max`. |
+| `E-VAR-EXPR` | An `expression` does not parse in the language above. |
+| `E-VAR-UNDEFINED` | An expression or a `{{reference}}` names a variable the exercise does not declare, or one declared later in the list (so no cycles, no self-reference). |
+| `E-VAR-REF` | A `{{...}}` holds something other than a plain name; put the expression into a computed variable and reference that. |
+| `W-VAR-UNUSED` | A declared variable is referenced by no field and used by no later expression. |
+
+The consumer side of the contract: substitute in EVERY string field of the
+exercise (`prompt`, `accept`, option texts, pairs, `sentence`, `hint`,
+`explanation`, `ext_payload`); a numeric accepted answer whose variable
+carries `tolerance` grades within that tolerance, otherwise exactly; the
+sampled values are the consumer's to record per attempt if a review should
+show them. `stable_id` names the authored exercise, not an instance. From
+schema 1.14 on, double braces are reserved: a literal `{{` in a string field
+must be a reference.
+
+Not restricted to any exercise type. Deferred, all additive: lesson-level
+shared variables, non-uniform distributions, and a richer expression
+language.
 
 ### matching
 
@@ -854,6 +927,12 @@ drifting.
 | `E-CARD-REF` | An exercise `card_ids` entry does not resolve to a [card](#cards). |
 | `E-EXT-UNDECLARED` | An exercise uses an [`ext:` type](#extensions) the lesson does not list in `requires_extensions`. |
 | `E-EXT-UNSUPPORTED` | A declared [extension](#extensions) (at its pinned major) is not registered - the consumer cannot render the lesson. |
+| `E-VAR-KIND` | A [variable](#variables-parametric-exercises) is neither a range (`min` and `max`) nor an `expression`, or both. |
+| `E-VAR-DUP` | Two variables of one exercise share a `name`. |
+| `E-VAR-RANGE` | A sampled variable's `min` is not below its `max`. |
+| `E-VAR-EXPR` | A computed variable's `expression` does not parse (numbers, names, `+ - * /`, parentheses, unary minus). |
+| `E-VAR-UNDEFINED` | An expression or a `{{reference}}` names a variable the exercise does not declare before that point. |
+| `E-VAR-REF` | A `{{...}}` in a string field holds something other than a plain variable name. |
 
 ### Warnings (advise, never block)
 
@@ -873,6 +952,7 @@ drifting.
 | `W-RETIRED-IDS-DUP` | Manifest-level ([stable identity](#stable-identity-stable_id)): `metadata.retired_ids` lists the same id more than once. The retirement still works, but the duplicate usually hides a mis-edited entry (engine#131). |
 | `W-DOMAIN-UNKNOWN` | Manifest-level ([content domains](#content-domains)): a set's `domain` is outside the known vocabulary (`KNOWN_CONTENT_DOMAINS`). It stays valid - the contract is known values plus other - but consumers cannot group it with existing subjects, so the registry's subject facet fragments. Prefer a known domain, or accept the fragmentation deliberately (engine#127). |
 | `W-LEVEL-UNKNOWN` | Manifest-level ([content domains](#content-domains)): a set's `level` is neither a CEFR band (`A1`..`C2`, case-insensitive) nor, for a non-language set, the explicit `none` sentinel. A consumer's level facet would offer the free-text value (`a0`, `einsteiger`, `reflexion` are live examples) as a category (engine#127). |
+| `W-VAR-UNUSED` | A declared [variable](#variables-parametric-exercises) is referenced by no string field and used by no later expression: dead declaration, usually a typo in the reference. |
 
 ## Linting
 

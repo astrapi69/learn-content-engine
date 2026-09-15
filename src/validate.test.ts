@@ -473,6 +473,137 @@ describe("schema 1.13 — explanation on exercises (idea 5: post-answer 'why')",
   });
 });
 
+describe("schema 1.14 — variables on exercises (engine#151: parametric exercises)", () => {
+  const sum = [
+    { name: "a", min: 1, max: 20 },
+    { name: "b", min: 1, max: 20, step: 0.5 },
+    { name: "sum", expression: "a + b", tolerance: 0.01 },
+  ];
+
+  const parametric = (variables: unknown, exercise: Record<string, unknown> = {}) => ({
+    id: "l1",
+    title: "Parametric",
+    steps: [
+      {
+        id: "s1",
+        type: "exercise",
+        exercise: {
+          id: "e1",
+          type: "free_text",
+          prompt: "What is {{a}} + {{b}}?",
+          accept: ["{{sum}}"],
+          ...(variables !== undefined ? { variables } : {}),
+          ...exercise,
+        },
+      },
+    ],
+  });
+
+  const ids = (lesson: unknown) => {
+    const checked = validateLesson(lesson);
+    return [...checked.errors, ...checked.warnings].map((issue) => issue.id);
+  };
+
+  it("accepts sampled variables plus a computed one, referenced from prompt and accept", () => {
+    const checked = validateLesson(parametric(sum));
+    expect(checked.errors).toEqual([]);
+    expect(checked.warnings).toEqual([]);
+    expect(checked.valid).toBe(true);
+  });
+
+  it("stays optional: an exercise without variables validates unchanged (pre-1.14 content), null too", () => {
+    const plain = { prompt: "p", accept: ["a"] };
+    expect(validateLesson(parametric(undefined, plain)).valid).toBe(true);
+    expect(validateLesson(parametric(null, plain)).valid).toBe(true);
+  });
+
+  it("structural: a variable name must be a lowercase identifier; step must be positive; tolerance non-negative", () => {
+    expect(ids(parametric([{ name: "1a", min: 1, max: 2 }]))).toContain("E-SCHEMA");
+    expect(ids(parametric([{ name: "A", min: 1, max: 2 }]))).toContain("E-SCHEMA");
+    expect(ids(parametric([{ name: "a", min: 1, max: 2, step: 0 }]))).toContain("E-SCHEMA");
+    expect(ids(parametric([{ name: "a", expression: "1", tolerance: -1 }]))).toContain("E-SCHEMA");
+  });
+
+  it("E-VAR-KIND: a variable is a range (min and max) or an expression, never neither, never both", () => {
+    expect(ids(parametric([{ name: "a" }]))).toContain("E-VAR-KIND");
+    expect(ids(parametric([{ name: "a", min: 1 }]))).toContain("E-VAR-KIND");
+    expect(ids(parametric([{ name: "a", min: 1, max: 2, expression: "1" }]))).toContain("E-VAR-KIND");
+    expect(ids(parametric([{ name: "a", expression: "1", step: 1 }]))).toContain("E-VAR-KIND");
+  });
+
+  it("E-VAR-DUP: variable names are unique within the exercise", () => {
+    expect(ids(parametric([{ name: "a", min: 1, max: 2 }, { name: "a", min: 3, max: 4 }]))).toContain("E-VAR-DUP");
+  });
+
+  it("E-VAR-RANGE: min must be below max", () => {
+    expect(ids(parametric([{ name: "a", min: 5, max: 5 }]))).toContain("E-VAR-RANGE");
+    expect(ids(parametric([{ name: "a", min: 6, max: 5 }]))).toContain("E-VAR-RANGE");
+  });
+
+  it("E-VAR-EXPR: an expression must parse (arithmetic, parentheses, unary minus, names, numbers)", () => {
+    expect(ids(parametric([{ name: "a", min: 1, max: 2 }, { name: "s", expression: "a +" }]))).toContain("E-VAR-EXPR");
+    expect(ids(parametric([{ name: "a", min: 1, max: 2 }, { name: "s", expression: "sqrt(a)" }]))).toContain("E-VAR-EXPR");
+  });
+
+  it("E-VAR-UNDEFINED: expressions and {{references}} may only name variables declared earlier in the exercise", () => {
+    expect(ids(parametric([{ name: "a", min: 1, max: 2 }, { name: "s", expression: "a + b" }]))).toContain("E-VAR-UNDEFINED");
+    expect(ids(parametric([{ name: "s", expression: "a + 1" }, { name: "a", min: 1, max: 2 }]))).toContain("E-VAR-UNDEFINED");
+    expect(ids(parametric([{ name: "s", expression: "s + 1" }]))).toContain("E-VAR-UNDEFINED");
+    expect(ids(parametric([{ name: "a", min: 1, max: 2 }], { prompt: "{{a}} and {{zz}}", accept: ["{{a}}"] }))).toContain(
+      "E-VAR-UNDEFINED",
+    );
+    expect(ids(parametric(undefined, { prompt: "{{a}}", accept: ["x"] }))).toContain("E-VAR-UNDEFINED");
+  });
+
+  it("E-VAR-REF: a {{reference}} carries a plain name, never an expression", () => {
+    expect(ids(parametric(sum, { prompt: "{{a + b}}", accept: ["{{sum}}"] }))).toContain("E-VAR-REF");
+  });
+
+  it("W-VAR-UNUSED: a declared variable no field and no later expression uses is flagged, but does not block", () => {
+    const checked = validateLesson(parametric([...sum, { name: "c", min: 1, max: 2 }]));
+    expect(checked.valid).toBe(true);
+    expect(checked.warnings.map((issue) => issue.id)).toContain("W-VAR-UNUSED");
+  });
+
+  it("a variable used only by a later expression counts as used", () => {
+    const checked = validateLesson(
+      parametric([{ name: "a", min: 1, max: 2 }, { name: "twice", expression: "a * 2" }], { prompt: "p", accept: ["{{twice}}"] }),
+    );
+    expect(checked.warnings).toEqual([]);
+  });
+
+  it("is not restricted to one exercise type: a multiple_choice option may carry a reference", () => {
+    const lesson = {
+      id: "l1",
+      title: "Parametric choice",
+      steps: [
+        {
+          id: "s1",
+          type: "exercise",
+          exercise: {
+            id: "e1",
+            type: "multiple_choice",
+            prompt: "Which option equals {{n}} doubled?",
+            variables: [
+              { name: "n", min: 2, max: 9 },
+              { name: "twice", expression: "n * 2" },
+              { name: "wrong", expression: "n * 2 + 1" },
+            ],
+            options: [
+              { text: "{{twice}}", correct: true },
+              { text: "{{wrong}}" },
+            ],
+          },
+        },
+      ],
+    };
+    const checked = validateLesson(lesson);
+    expect(checked.errors).toEqual([]);
+    expect(checked.warnings).toEqual([]);
+    expect(checked.valid).toBe(true);
+  });
+});
+
 describe("schema 1.9 — attribution and review_status on the set entry (engine#90/#94)", () => {
   const manifestWith = (setExtras: Record<string, unknown>) => ({
     schema_version: "1.2",
