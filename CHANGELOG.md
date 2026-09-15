@@ -5,6 +5,21 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [Unreleased]
+
+### Variable references are opt-in: `{{` is ordinary text without `variables` (engine#151)
+
+0.24.0 scanned every exercise for `{{name}}` references and reserved double
+braces from schema 1.14 on. Re-pinning the content repos showed why that was
+wrong: alc-technology's Ansible course teaches Jinja2, and `{{ server }}` in
+a prompt, an accepted answer or a matching pair is the lesson, not a
+variable. The claim in the 0.24.0 notes that no known content used double
+braces was not checked against the content repos before publishing. Now
+only an exercise that declares `variables` is scanned; without it, braces
+are plain text and no `E-VAR-*` rule fires. Schema text corrected, version
+stays 1.14 (no field changed). README no longer lists parametric exercises
+as uncovered.
+
 ## [0.24.0] - 2026-09-15
 
 ### Parametric exercises: `variables` on any exercise, schema 1.14 (engine#151)

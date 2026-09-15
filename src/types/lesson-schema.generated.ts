@@ -315,7 +315,7 @@ export type ExerciseType = "matching" | "picture_choice" | "free_text" | "word_t
  */
 export type ExtExerciseType = string;
 /**
- * Optional variables of a parametric exercise (schema v1.14, engine#151): sampled ranges and computed expressions the consumer resolves per attempt, referenced as ``{{name}}`` from any string field of this exercise. Double braces are reserved for this from 1.14 on. One authored exercise, many concrete instances (Moodle Calculated, Canvas Formula, QTI template variables). Not restricted to any exercise type. Additive; content without it validates unchanged.
+ * Optional variables of a parametric exercise (schema v1.14, engine#151): sampled ranges and computed expressions the consumer resolves per attempt, referenced as ``{{name}}`` from any string field of this exercise. Only an exercise that declares ``variables`` is scanned for references; without it, double braces are ordinary text (a lesson about Jinja2 templates is not parametric). One authored exercise, many concrete instances (Moodle Calculated, Canvas Formula, QTI template variables). Not restricted to any exercise type. Additive; content without it validates unchanged.
  */
 export type Variables = ExerciseVariable[] | null;
 /**
