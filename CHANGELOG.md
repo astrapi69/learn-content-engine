@@ -7,6 +7,23 @@ All notable changes to `learn-content-engine`. The format is inspired by
 
 ## [Unreleased]
 
+### Parametric exercises: `variables` on any exercise, schema 1.14 (engine#151)
+
+The last row of the comparative analysis still marked Missing. An exercise
+may declare `variables`: SAMPLED (`min`/`max`, optional `step`) or COMPUTED
+(`expression` over earlier variables, optional `tolerance`), and reference
+them as `{{name}}` from any of its string fields; the consumer draws,
+computes, substitutes and grades per attempt, the engine checks the
+contract and never evaluates (rules `E-VAR-KIND`, `E-VAR-DUP`,
+`E-VAR-RANGE`, `E-VAR-EXPR`, `E-VAR-UNDEFINED`, `E-VAR-REF`,
+`W-VAR-UNUSED`). The expression language is deliberately small (decimal
+numbers, names, `+ - * /`, parentheses, unary minus). This could not be an
+`ext_payload` extension because the references live in core fields.
+`x-schema-version` 1.13 to 1.14 in both schemas (lockstep). Additive:
+content without `variables` validates unchanged; from 1.14 on a literal
+`{{` in an exercise string field is reserved for references. See
+`docs/lesson-format.md#variables-parametric-exercises`.
+
 ### Rendered docs on the Pages site (engine#152)
 
 The site published only the schema and the TypeDoc API; the Markdown

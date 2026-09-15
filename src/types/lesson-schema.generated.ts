@@ -315,6 +315,34 @@ export type ExerciseType = "matching" | "picture_choice" | "free_text" | "word_t
  */
 export type ExtExerciseType = string;
 /**
+ * Optional variables of a parametric exercise (schema v1.14, engine#151): sampled ranges and computed expressions the consumer resolves per attempt, referenced as ``{{name}}`` from any string field of this exercise. Double braces are reserved for this from 1.14 on. One authored exercise, many concrete instances (Moodle Calculated, Canvas Formula, QTI template variables). Not restricted to any exercise type. Additive; content without it validates unchanged.
+ */
+export type Variables = ExerciseVariable[] | null;
+/**
+ * Lowercase identifier: a letter, then letters, digits, underscores. Unique within the exercise.
+ */
+export type Name = string;
+/**
+ * Sampled variable: inclusive lower bound.
+ */
+export type Min = number;
+/**
+ * Sampled variable: inclusive upper bound (must exceed ``min``, rule E-VAR-RANGE).
+ */
+export type Max = number;
+/**
+ * Sampled variable: the grid the value is drawn from, counted up from ``min``. Absent means integers.
+ */
+export type Step = number;
+/**
+ * Computed variable: arithmetic over earlier variables (rules E-VAR-EXPR, E-VAR-UNDEFINED).
+ */
+export type Expression = string;
+/**
+ * Absolute tolerance for grading when this variable's value is the accepted answer. Absent means exact.
+ */
+export type Tolerance = number;
+/**
  * Slug id: lowercase Unicode letters and digits in hyphen-separated runs (no leading/trailing/double hyphen, no underscore, no uppercase, no whitespace). Exactly the rule the reference consumer (adaptive-learner) enforces on import - an id that fails it is silently skipped there, so the engine rejects it up front (engine#105).
  */
 export type SlugId3 = string;
@@ -546,6 +574,7 @@ export interface Exercise {
    * Which exercise renderer handles this step. A core ExerciseType value, or an ``ext:<vendor>-<name>`` extension type (ExtExerciseType) that the lesson declares in ``requires_extensions``.
    */
   type: ExerciseType | ExtExerciseType;
+  variables?: Variables;
 }
 /**
  * One blank inside a cloze exercise's ``sentence`` (Phase 52D /
@@ -618,4 +647,15 @@ export interface Pair {
   left: Left;
   right: Right;
   stable_id?: StableId4;
+}
+/**
+ * One variable of a parametric exercise (schema v1.14, engine#151). SAMPLED when it carries ``min`` and ``max`` (optional ``step``; integers when ``step`` is absent, else multiples of ``step`` from ``min``): the consumer draws a value per attempt. COMPUTED when it carries ``expression`` (arithmetic over variables declared EARLIER in the same ``variables`` list: decimal numbers, names, ``+ - * /``, parentheses, unary minus): the consumer evaluates it after sampling. Exactly one of the two shapes (semantic rule E-VAR-KIND). ``tolerance`` is the absolute tolerance a consumer applies when this variable's value is an accepted answer. Any string field of the exercise may reference a variable as ``{{name}}``; the consumer substitutes every occurrence before rendering and grading. The engine validates the contract and never samples or evaluates.
+ */
+export interface ExerciseVariable {
+  name: Name;
+  min?: Min;
+  max?: Max;
+  step?: Step;
+  expression?: Expression;
+  tolerance?: Tolerance;
 }

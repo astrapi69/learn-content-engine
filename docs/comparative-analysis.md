@@ -198,7 +198,7 @@ The engine column distinguishes three tiers. **Core** types are in the schema's 
 | **Parsons Problems (Code)** | (Plugin) | ✗ | ✗ | ✗ | Reference extension (`ext:ref-parsons`, engine#149) |
 | **Categorization (1:n)** | (Plugin) | ✓ | ✓ | ✗ | Reference extension (`ext:ref-categorization`) |
 | **Audio Input / Voice** | ✗ | ✓ | ✗ | ✓ | Reference extensions (`ext:ref-speak-and-record`, `ext:ref-audio-choice`, `ext:ref-audio-tiles`) |
-| **Parametric / Formulas** | ✓ | ✗ | ✓ | ✗ | **Missing** (planned, engine#151) |
+| **Parametric / Formulas** | ✓ | ✗ | ✓ | ✗ | ✓ Core (`variables` on any exercise, schema 1.14, engine#151) |
 
 **Legend:**  
 ✓ = Native support  
@@ -405,7 +405,7 @@ Each entry below carries one example lesson. The examples are copies of the refe
 4. **Domain Flexibility:** The `domain` field enables usage beyond language learning (programming, psychology, traffic knowledge).
 
 #### **Weaknesses / Risks**
-1. **No Parametric Tasks:** No native support for randomized values (like Moodle Calculated). This is the one matrix row still marked Missing, and it is a different class of problem from the others: it needs a variable-definition contract in the CORE schema (the engine validates the syntax, the consumer evaluates), not an `ext_payload`. Planned and tracked as engine#151, with the design direction and the open questions.
+1. **Parametric Tasks, first cut only:** `variables` (schema 1.14, engine#151) covers the Moodle Calculated / Canvas Formula shape with a deliberately small expression language (arithmetic, parentheses, unary minus) and exercise-level variables. Not covered yet, all additive: lesson-level shared variables, non-uniform distributions, functions and powers in expressions.
 2. **No Complex Mathematics:** No symbolic evaluation (like STACK in Moodle).
 3. **No Graded Speech Input:** The core has no audio field at all (engine#68's decision); the reference extensions cover audio stimulus and ungraded recording; grading a recording (STT, phoneme matching) remains consumer-side and unimplemented.
 
@@ -433,7 +433,7 @@ Each entry below carries one example lesson. The examples are copies of the refe
    - Already adopted; target further repositories (`alc-psychology`, `alc-dog-training`).
 
 ### 6.3 Long-Term (Q4 2027+)
-5. **Parametric Tasks:** Schema-level variable definitions (Engine validates syntax, Consumer evaluates). Planned: engine#151 carries the direction (a `variables` block with domains and tolerance, a reference syntax inside core string fields, a small expression language) and the five open questions to settle before the schema PR.
+5. **Parametric Tasks, consumer side:** the schema contract shipped in 1.14 (engine#151: a `variables` block with ranges, computed expressions and tolerance, `{{name}}` references in core string fields, the engine validates and never evaluates). What remains is the consumer half in `adaptive-learner`: sample, compute, substitute, grade with tolerance, and record the drawn values per attempt.
 6. **Graded Audio Input:** STT service integration on top of `ext:ref-speak-and-record` (strictly Consumer responsibility).
 
 ### 6.4 Architectural Principles for Extensions

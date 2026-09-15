@@ -34,6 +34,7 @@ import { describeInvisibleChars, findInvisibleChars } from "./invisible-chars.js
 import { lessonIdOrderingIssues } from "./set-ordering.js";
 import { collectStableIds } from "./stable-ids.js";
 import type { Exercise, Lesson, LessonStep } from "./types/lesson-schema.generated.js";
+import { variableIssues } from "./variables.js";
 
 /** Whether an issue blocks (``error``) or merely advises (``warning``). */
 export type ValidationSeverity = "error" | "warning";
@@ -396,6 +397,9 @@ function checkExercise(
     issues.push(
       warn("W-HINT-LENGTH", path, "hint reveals the answer length - redundant on consumers that display the answer length automatically, revealing on the rest", "rule-catalog"),
     );
+  }
+  for (const issue of variableIssues(exercise, path)) {
+    issues.push(makeIssue(issue.severity, issue.id, issue.path, issue.message, "variables-parametric-exercises"));
   }
   if (isExtType(exercise.type)) {
     checkExtExercise(exercise, path, ext, issues);
