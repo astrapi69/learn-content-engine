@@ -98,6 +98,45 @@ ships both halves in one folder: the engine-half `refOrderingExtension` (an
 build; a real extension would ship as its own package importing the engine's
 `ExerciseExtension` type.
 
+Payload rules (engine half `refOrderingExtension`):
+
+| Id | Rule |
+|---|---|
+| `E-EXT-REFORDER-ITEMS` | `ext_payload.items` must be a string array. |
+| `E-EXT-REFORDER-MIN` | At least 2 items. |
+| `E-EXT-REFORDER-EMPTY` | Items are non-empty strings. |
+| `E-EXT-REFORDER-DUP` | Items are unique (a duplicate makes the order ambiguous). |
+
+A reference lesson on an existing topic (traffic knowledge), validated by the
+doc gate:
+
+```json
+{
+  "id": "anfahren-am-berg",
+  "title": "Verkehrskunde: Anfahren am Berg",
+  "requires_extensions": ["ext:ref-ordering@1"],
+  "steps": [
+    {
+      "id": "s1",
+      "type": "exercise",
+      "exercise": {
+        "id": "e1",
+        "type": "ext:ref-ordering",
+        "prompt": "Bringe die Schritte in die richtige Reihenfolge",
+        "ext_payload": {
+          "items": [
+            "Handbremse anziehen",
+            "Kupplung treten und ersten Gang einlegen",
+            "Kupplung bis zum Schleifpunkt kommen lassen",
+            "Gas geben und Handbremse loesen"
+          ]
+        }
+      }
+    }
+  ]
+}
+```
+
 ## Example extension: `ext:ref-categorization`
 
 `src/examples/ext-ref-categorization/` works out the first adoption candidate
@@ -688,6 +727,133 @@ sentence and, when authored, the audio reference (a real consumer mounts its
 speaker/show/record buttons there). There is no grade function: capturing,
 storing and reviewing the learner's own recording is entirely consumer-side,
 and this extension does not claim to know when a recording is "correct".
+
+## Example extension: `ext:ref-hotspot`
+
+`src/examples/ext-ref-hotspot/` works out the hotspot case from the
+comparative analysis (`docs/comparative-analysis.md`, priority 1): an image
+with clickable target zones, "click the correct region". Modelled on QTI 3.0's
+Hotspot Interaction and H5P's Find the Hotspot, reduced to two shape
+primitives (`rect`, `circle`) with percentage coordinates (0-100) so the
+payload stays resolution-independent: the consumer maps percentages onto its
+own rendered image size.
+
+The payload is SELF-CONTAINED: the image reference is a string the engine does
+not resolve (relative asset path or data URI, consumer decision, exactly as in
+`ext:ref-image-description`). Zones follow the core `picture_choice`
+exactly-one-correct convention (`is_correct: "true"`). Overlapping zones are
+allowed - real hotspot images have adjacent regions - the engine validates
+zone SHAPE, not layout.
+
+Payload rules (engine half `refHotspotExtension`):
+
+| Id | Rule |
+|---|---|
+| `E-EXT-REFHOTSPOT-SHAPE` | `ext_payload` must carry `src` (string) and `zones` (`[{shape, coords[], is_correct?}]`). |
+| `E-EXT-REFHOTSPOT-SRC` | `src` is non-empty. |
+| `E-EXT-REFHOTSPOT-MIN` | At least 2 zones (one zone is no discrimination). |
+| `E-EXT-REFHOTSPOT-SHAPETYPE` | Every zone shape is `rect` or `circle`. |
+| `E-EXT-REFHOTSPOT-COORDS` | `rect` carries exactly `[x, y, width, height]`, `circle` exactly `[cx, cy, radius]`, each a percentage 0-100. |
+| `E-EXT-REFHOTSPOT-CORRECT` | Exactly one zone has `is_correct: "true"`. |
+
+A reference lesson on an existing topic (traffic knowledge), validated by the
+doc gate:
+
+```json
+{
+  "id": "verkehrszeichen-erkennen",
+  "title": "Verkehrskunde: Verkehrszeichen erkennen",
+  "requires_extensions": ["ext:ref-hotspot@1"],
+  "steps": [
+    {
+      "id": "s1",
+      "type": "exercise",
+      "exercise": {
+        "id": "e1",
+        "type": "ext:ref-hotspot",
+        "prompt": "Tippe auf das Zeichen, das Vorfahrt gewaehren bedeutet",
+        "ext_payload": {
+          "src": "assets/images/kreuzung-schilder.png",
+          "zones": [
+            { "shape": "rect", "coords": [8, 12, 18, 18] },
+            { "shape": "rect", "coords": [40, 10, 18, 18], "is_correct": "true" },
+            { "shape": "circle", "coords": [78, 20, 9] }
+          ]
+        }
+      }
+    }
+  ]
+}
+```
+
+The consumer half (`renderRefHotspot` + `gradeRefHotspot`) renders the prompt
+over the image reference and zone count (without revealing which zone is
+correct) and grades a clicked point by hit-testing it against every zone:
+inside the correct zone (edges and radius inclusive) is correct, inside a
+distractor zone or outside every zone is incorrect.
+
+## Example extension: `ext:ref-parsons`
+
+`src/examples/ext-ref-parsons/` works out the Parsons-problem case from the
+comparative analysis (`docs/comparative-analysis.md`, priority 3): the lines
+of a short program are handed to the learner scrambled, and the task is to
+put them back in order AND at the right indentation (Denny, Luxton-Reilly and
+Simon 2008). It is `ext:ref-ordering` with a second dimension: for code,
+WHERE a line sits carries as much meaning as its position, so grading checks
+both.
+
+The payload is SELF-CONTAINED: `lines` is the program in its CORRECT order,
+each with its 0-based indent level (one level = one block); the consumer
+shuffles for presentation. `language` is an optional syntax-highlighting hint
+the engine does not interpret. Deliberately NO uniqueness rule, unlike
+`ext:ref-ordering`: a real program legitimately repeats a statement, and a
+Parsons UI identifies tiles by position, not by text.
+
+Payload rules (engine half `refParsonsExtension`):
+
+| Id | Rule |
+|---|---|
+| `E-EXT-REFPARSONS-SHAPE` | `ext_payload` must carry `lines` (`[{code, indent}]`) and an optional `language` (string). |
+| `E-EXT-REFPARSONS-MIN` | At least 2 lines. |
+| `E-EXT-REFPARSONS-CODE` | Every line's `code` is non-empty. |
+| `E-EXT-REFPARSONS-INDENT` | Every line's `indent` is a non-negative integer. |
+
+A reference lesson on an existing topic (Python basics), validated by the doc
+gate:
+
+```json
+{
+  "id": "python-funktion-zusammensetzen",
+  "title": "Python-Grundlagen: Funktion zusammensetzen",
+  "requires_extensions": ["ext:ref-parsons@1"],
+  "steps": [
+    {
+      "id": "s1",
+      "type": "exercise",
+      "exercise": {
+        "id": "e1",
+        "type": "ext:ref-parsons",
+        "prompt": "Bringe die Zeilen in die richtige Reihenfolge und Einrueckung",
+        "ext_payload": {
+          "language": "python",
+          "lines": [
+            { "code": "def begruessung(name):", "indent": 0 },
+            { "code": "if name:", "indent": 1 },
+            { "code": "return f\"Hallo {name}\"", "indent": 2 },
+            { "code": "return \"Hallo\"", "indent": 1 }
+          ]
+        }
+      }
+    }
+  ]
+}
+```
+
+The consumer half (`renderRefParsons` + `gradeRefParsons`) renders the
+program in its authored order, four spaces per indent level, and grades an
+arrangement (`{order, indents}`): correct only when the placed order is
+exactly the authored order AND every placed tile carries its authored indent.
+A right sequence at the wrong depth is still a wrong program.
 
 The example extensions exist as a DECISION BASIS for adoption: nothing in the
 app or the content repos references them until that decision is made

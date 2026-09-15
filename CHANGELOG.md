@@ -7,6 +7,20 @@ All notable changes to `learn-content-engine`. The format is inspired by
 
 ## [Unreleased]
 
+### Two new reference extensions: hotspot, parsons (engine#149)
+
+`docs/comparative-analysis.md` benchmarked the engine's exercise types
+against Moodle, H5P, QTI 3.0, Canvas and Duolingo and listed six gaps. Three
+of them (ordering, categorization, audio input) already had reference
+extensions; the doc now says so. The two that were genuinely missing ship
+here: `ext:ref-hotspot` (an image with `rect`/`circle` zones in percentage
+coordinates, exactly one correct, graded by point-in-zone hit test) and
+`ext:ref-parsons` (a program's lines with per-line indent, graded on order
+AND indentation; deliberately no uniqueness rule, since real code repeats
+statements). Both follow the self-contained-`ext_payload` shape (engine#68).
+`ext:ref-ordering` gained the reference lesson it was the only extension
+without. See `docs/extensions.md`.
+
 ### Author guidance for `explanation` (engine#147)
 
 `docs/lesson-format.md` now says what a good post-answer explanation
