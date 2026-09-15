@@ -99,8 +99,10 @@ vendor namespace (adaptive-learner runs `ext:ref-categorization` as
 | [`ext:ref-hotspot`](docs/extensions.md#example-extension-extref-hotspot) | click the correct region of an image (rect and circle zones) |
 | [`ext:ref-parsons`](docs/extensions.md#example-extension-extref-parsons) | arrange scrambled code lines by order and indentation |
 
-Not yet covered at any tier: parametric exercises with sampled variables
-(engine#151). The gap analysis behind this list is
+Parametric exercises (sampled variables, computed answers) are not an
+extension but a core field since schema 1.14: `variables` on any exercise
+(engine#151, see [Variables](docs/lesson-format.md#variables-parametric-exercises)).
+The gap analysis behind this list is
 [docs/comparative-analysis.md](docs/comparative-analysis.md).
 
 ## Public API

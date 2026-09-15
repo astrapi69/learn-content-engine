@@ -1,7 +1,7 @@
 # **Comparative Analysis of Exercise Types in E-Learning Platforms**
-**Benchmark Study for the `learn-content-engine` (package 0.23.0, lesson schema 1.13)**
+**Benchmark Study for the `learn-content-engine` (package 0.24.0, lesson schema 1.14)**
 
-**Version:** 1.2  
+**Version:** 1.3  
 **Date:** September 15, 2026  
 **Author:** Asterios Raptis (astrapi69)  
 **Project:** learn-content-engine / adaptive-learner  
@@ -11,13 +11,13 @@
 
 ## **Executive Summary**
 
-This document presents a systematic comparative analysis of exercise types across established e-learning platforms (Moodle, H5P, QTI 3.0, Canvas LMS, Duolingo) in the context of the `learn-content-engine`. Two version numbers matter and are easy to conflate: the npm package is at **0.23.0**, the lesson schema it validates against is at **1.13** (`x-schema-version` in `schema/lesson.schema.json`). This document benchmarks the schema's exercise types.
+This document presents a systematic comparative analysis of exercise types across established e-learning platforms (Moodle, H5P, QTI 3.0, Canvas LMS, Duolingo) in the context of the `learn-content-engine`. Two version numbers matter and are easy to conflate: the npm package is at **0.24.0**, the lesson schema it validates against is at **1.14** (`x-schema-version` in `schema/lesson.schema.json`). This document benchmarks the schema's exercise types.
 
 The analysis demonstrates that the engine, with its six core exercise types (`matching`, `picture_choice`, `free_text`, `word_tiles`, `cloze`, `multiple_choice`), fully covers the **global standard for text-based foundational assessments**.
 
 The identified gaps (hotspot interactions, sequencing/ordering tasks, Parsons problems, categorization, audio input) are not architectural deficits, but rather the result of a deliberate **Lean-Core Design** decision. The `ext:<vendor>-<name>` extension concept aligns with modern best practices (comparable to QTI 3.0 Portable Custom Interactions) and enables the incremental introduction of specialized exercise types without bloating the core schema.
 
-**State of play (version 1.2 of this document):** every one of those five gaps now has a reference extension under `src/examples/ext-ref-*` in the engine repository. Three existed before this document was written (ordering, categorization, and three audio variants); the two this document originally singled out as missing, hotspot and Parsons, were added in response to it (engine#149). What remains open is not engine-side implementation but **consumer adoption**: `adaptive-learner` decides per extension whether to register it, under its own vendor namespace.
+**State of play (version 1.3 of this document):** every one of those five gaps now has a reference extension under `src/examples/ext-ref-*` in the engine repository. Three existed before this document was written (ordering, categorization, and three audio variants); the two this document originally singled out as missing, hotspot and Parsons, were added in response to it (engine#149). The sixth gap, parametric exercises, became a core field in schema 1.14 (`variables`, engine#151). What remains open is not engine-side implementation but **consumer adoption**: `adaptive-learner` decides per extension whether to register it, under its own vendor namespace, and implements the sampling and substitution half of `variables`.
 
 **Recommendation:** Adopt `ext:ref-parsons` in `adaptive-learner` for `alc-programming` and `ext:ref-hotspot` for `alc-traffic-knowledge`, following the consumer-parity gate in section 6.4.
 
@@ -186,7 +186,7 @@ Understanding the licensing models and UI accessibility of these platforms is cr
 
 The engine column distinguishes three tiers. **Core** types are in the schema's `ExerciseType` enum and are guaranteed to load in every consumer. **Reference extension** types exist under `src/examples/ext-ref-*` in the engine repository with full validation, a doc-gated example lesson, and a minimal consumer half; they are excluded from the published package and become usable in a given consumer only once that consumer adopts them under its own vendor namespace (`docs/extensions.md`). **Missing** means neither.
 
-| **Exercise Type Category** | **Moodle** | **H5P** | **QTI 3.0** | **Duolingo** | **learn-content-engine (schema 1.13)** |
+| **Exercise Type Category** | **Moodle** | **H5P** | **QTI 3.0** | **Duolingo** | **learn-content-engine (schema 1.14)** |
 |----------------------------|------------|---------|-------------|--------------|----------------------------------|
 | **Multiple / Single Choice** | ✓ | ✓ | ✓ | ✓ | ✓ Core (`multiple_choice`, `picture_choice`) |
 | **Fill-in-the-Blank (Cloze)** | ✓ | ✓ | ✓ | ✓ | ✓ Core (`cloze`) |
@@ -448,7 +448,7 @@ Each entry below carries one example lesson. The examples are copies of the refe
 ## **7. Didactic Framework**
 
 ### 7.1 Bloom's Taxonomy
-The core types (schema 1.13) primarily cover the lower levels:
+The core types (schema 1.14) primarily cover the lower levels:
 - **Remembering:** `free_text`, `cloze`, `matching`
 - **Understanding:** `multiple_choice`, `picture_choice`
 - **Applying:** `word_tiles` (limited)
@@ -474,7 +474,7 @@ The extensions enable **Constructive Alignment** (Biggs, 1996): Teaching/learnin
 
 ## **8. Conclusion**
 
-The `learn-content-engine` (package 0.23.0, schema 1.13) is in an **excellent strategic position**:
+The `learn-content-engine` (package 0.24.0, schema 1.14) is in an **excellent strategic position**:
 1. **Standard Parity:** The six core exercise types fully cover the global standard for text-based foundational assessments.
 2. **Architectural Maturity:** The `ext:` concept matches modern best practices (QTI 3.0 PCI) and prevents schema bloat.
 3. **Didactic Growth Potential:** Every gap this analysis identified now has a reference extension; the higher Bloom levels are reachable without compromising core stability.
