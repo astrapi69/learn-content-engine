@@ -191,6 +191,9 @@ export function variableIssues(exercise: object, path: string): VariableIssue[] 
   };
   const declaredRaw = (exercise as { variables?: unknown }).variables;
   const declared: DeclaredVariable[] = Array.isArray(declaredRaw) ? (declaredRaw as DeclaredVariable[]) : [];
+  // Only a parametric exercise is scanned: without variables, {{ is ordinary
+  // text (a Jinja2 lesson has {{ server }} in its prompt and is not parametric).
+  if (declared.length === 0) return issues;
 
   const known = new Set<string>();
   const used = new Set<string>();

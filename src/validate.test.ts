@@ -552,7 +552,19 @@ describe("schema 1.14 — variables on exercises (engine#151: parametric exercis
     expect(ids(parametric([{ name: "a", min: 1, max: 2 }], { prompt: "{{a}} and {{zz}}", accept: ["{{a}}"] }))).toContain(
       "E-VAR-UNDEFINED",
     );
-    expect(ids(parametric(undefined, { prompt: "{{a}}", accept: ["x"] }))).toContain("E-VAR-UNDEFINED");
+  });
+
+  it("without a variables block, double braces are ordinary text (a Jinja2 lesson is not parametric)", () => {
+    const jinja = {
+      prompt: "Wie referenziert Jinja2 die Variable server im Template? {{ ... }}",
+      accept: ["{{ server }}", "{{server}}"],
+      hint: "Doppelte geschweifte Klammern: {{}}",
+    };
+    const checked = validateLesson(parametric(undefined, jinja));
+    expect(checked.errors).toEqual([]);
+    expect(checked.valid).toBe(true);
+    expect(ids(parametric(undefined, jinja)).filter((id) => id.includes("-VAR-"))).toEqual([]);
+    expect(ids(parametric(null, jinja)).filter((id) => id.includes("-VAR-"))).toEqual([]);
   });
 
   it("E-VAR-REF: a {{reference}} carries a plain name, never an expression", () => {

@@ -83,7 +83,9 @@ newer schema**. For example, v1.5 added the inline `examples` field; a v1.4
 lesson without `examples` validates unchanged under v1.5. v1.6 added the native
 `multiple_choice` exercise type and matching `from_cards`, and v1.7 added the
 extension tier (`ext:` exercise types), all optional, so pre-1.7 content
-validates unchanged under v1.7.
+validates unchanged under v1.7. The same holds for the later additions, up to
+v1.13's post-answer `explanation` and v1.14's `variables` for parametric
+exercises: an exercise that does not carry them is unaffected by them.
 
 The schema's **canonical source is this engine** (as of v0.6.0); consumers
 (adaptive-learner, the content repos) consume it (see

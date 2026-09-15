@@ -384,9 +384,14 @@ exercise (`prompt`, `accept`, option texts, pairs, `sentence`, `hint`,
 `explanation`, `ext_payload`); a numeric accepted answer whose variable
 carries `tolerance` grades within that tolerance, otherwise exactly; the
 sampled values are the consumer's to record per attempt if a review should
-show them. `stable_id` names the authored exercise, not an instance. From
-schema 1.14 on, double braces are reserved: a literal `{{` in a string field
-must be a reference.
+show them. `stable_id` names the authored exercise, not an instance.
+
+Only an exercise that declares `variables` is parametric. There, every
+`{{...}}` in its string fields must be a reference. An exercise WITHOUT
+`variables` is never scanned, so lessons about templating languages keep
+their braces as ordinary text: an Ansible lesson teaching Jinja2 has
+`{{ server }}` in its prompt and accepted answers and is not parametric.
+A consumer substitutes only on exercises that carry `variables`.
 
 Not restricted to any exercise type. Deferred, all additive: lesson-level
 shared variables, non-uniform distributions, and a richer expression
