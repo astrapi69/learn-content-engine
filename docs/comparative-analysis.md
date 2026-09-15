@@ -188,21 +188,21 @@ The engine column distinguishes three tiers. **Core** types are in the schema's 
 
 | **Exercise Type Category** | **Moodle** | **H5P** | **QTI 3.0** | **Duolingo** | **learn-content-engine (schema 1.13)** |
 |----------------------------|------------|---------|-------------|--------------|----------------------------------|
-| **Multiple / Single Choice** | yes | yes | yes | yes | Core (`multiple_choice`, `picture_choice`) |
-| **Fill-in-the-Blank (Cloze)** | yes | yes | yes | yes | Core (`cloze`) |
-| **Matching (1:1)** | yes | yes | yes | no | Core (`matching`) |
-| **Short Answer (Free Text)** | yes | yes | yes | yes | Core (`free_text`) |
-| **Word Tiles / Word Bank** | no | yes | no | yes | Core (`word_tiles`) |
-| **Hotspot / Image Mapping** | (Plugin) | yes | yes | no | Reference extension (`ext:ref-hotspot`, engine#149) |
-| **Sequencing / Ordering** | (Plugin) | yes | yes | no | Reference extension (`ext:ref-ordering`) |
-| **Parsons Problems (Code)** | (Plugin) | no | no | no | Reference extension (`ext:ref-parsons`, engine#149) |
-| **Categorization (1:n)** | (Plugin) | yes | yes | no | Reference extension (`ext:ref-categorization`) |
-| **Audio Input / Voice** | no | yes | no | yes | Reference extensions (`ext:ref-speak-and-record`, `ext:ref-audio-choice`, `ext:ref-audio-tiles`) |
-| **Parametric / Formulas** | yes | no | yes | no | **Missing** |
+| **Multiple / Single Choice** | ✓ | ✓ | ✓ | ✓ | ✓ Core (`multiple_choice`, `picture_choice`) |
+| **Fill-in-the-Blank (Cloze)** | ✓ | ✓ | ✓ | ✓ | ✓ Core (`cloze`) |
+| **Matching (1:1)** | ✓ | ✓ | ✓ | ✗ | ✓ Core (`matching`) |
+| **Short Answer (Free Text)** | ✓ | ✓ | ✓ | ✓ | ✓ Core (`free_text`) |
+| **Word Tiles / Word Bank** | ✗ | ✓ | ✗ | ✓ | ✓ Core (`word_tiles`) |
+| **Hotspot / Image Mapping** | (Plugin) | ✓ | ✓ | ✗ | Reference extension (`ext:ref-hotspot`, engine#149) |
+| **Sequencing / Ordering** | (Plugin) | ✓ | ✓ | ✗ | Reference extension (`ext:ref-ordering`) |
+| **Parsons Problems (Code)** | (Plugin) | ✗ | ✗ | ✗ | Reference extension (`ext:ref-parsons`, engine#149) |
+| **Categorization (1:n)** | (Plugin) | ✓ | ✓ | ✗ | Reference extension (`ext:ref-categorization`) |
+| **Audio Input / Voice** | ✗ | ✓ | ✗ | ✓ | Reference extensions (`ext:ref-speak-and-record`, `ext:ref-audio-choice`, `ext:ref-audio-tiles`) |
+| **Parametric / Formulas** | ✓ | ✗ | ✓ | ✗ | **Missing** (planned, engine#151) |
 
 **Legend:**  
-yes = Native support  
-no = Not available  
+✓ = Native support  
+✗ = Not available  
 (Plugin) = Extensible via plugin system
 
 ---
@@ -405,7 +405,7 @@ Each entry below carries one example lesson. The examples are copies of the refe
 4. **Domain Flexibility:** The `domain` field enables usage beyond language learning (programming, psychology, traffic knowledge).
 
 #### **Weaknesses / Risks**
-1. **No Parametric Tasks:** No native support for randomized values (like Moodle Calculated). This is the one matrix row still marked Missing, and it is a different class of problem from the others: it needs a variable-definition contract in the CORE schema (the engine validates the syntax, the consumer evaluates), not an `ext_payload`.
+1. **No Parametric Tasks:** No native support for randomized values (like Moodle Calculated). This is the one matrix row still marked Missing, and it is a different class of problem from the others: it needs a variable-definition contract in the CORE schema (the engine validates the syntax, the consumer evaluates), not an `ext_payload`. Planned and tracked as engine#151, with the design direction and the open questions.
 2. **No Complex Mathematics:** No symbolic evaluation (like STACK in Moodle).
 3. **No Graded Speech Input:** The core has no audio field at all (engine#68's decision); the reference extensions cover audio stimulus and ungraded recording; grading a recording (STT, phoneme matching) remains consumer-side and unimplemented.
 
@@ -433,7 +433,7 @@ Each entry below carries one example lesson. The examples are copies of the refe
    - Already adopted; target further repositories (`alc-psychology`, `alc-dog-training`).
 
 ### 6.3 Long-Term (Q4 2027+)
-5. **Parametric Tasks:** Schema-level variable definitions (Engine validates syntax, Consumer evaluates).
+5. **Parametric Tasks:** Schema-level variable definitions (Engine validates syntax, Consumer evaluates). Planned: engine#151 carries the direction (a `variables` block with domains and tolerance, a reference syntax inside core string fields, a small expression language) and the five open questions to settle before the schema PR.
 6. **Graded Audio Input:** STT service integration on top of `ext:ref-speak-and-record` (strictly Consumer responsibility).
 
 ### 6.4 Architectural Principles for Extensions
