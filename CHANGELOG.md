@@ -5,7 +5,7 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
-## [Unreleased]
+## [0.24.0] - 2026-09-15
 
 ### Parametric exercises: `variables` on any exercise, schema 1.14 (engine#151)
 
