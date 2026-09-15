@@ -74,6 +74,35 @@ if (!result.valid) console.error(result.errors); // [{ path, message }, …]
 - [**Security policy**](SECURITY.md) - supported versions, private vulnerability reports.
 - [**Code of conduct**](CODE_OF_CONDUCT.md) - Contributor Covenant 2.1.
 
+### Reference extensions
+
+The core enum has six exercise types. Twelve more are worked out as
+reference extensions under `src/examples/ext-ref-*`, each with an engine half
+(payload validation), a consumer half (minimal render and grade), tests, and a
+doc-gated example lesson in [Extensions](docs/extensions.md). They are
+excluded from the published package; a consumer adopts one under its own
+vendor namespace (adaptive-learner runs `ext:ref-categorization` as
+`ext:al-categorization`). Before concluding a type is missing, look here:
+
+| Extension | Works out |
+|---|---|
+| [`ext:ref-ordering`](docs/extensions.md#reference-extension-extref-ordering) | put these items in the correct order |
+| [`ext:ref-categorization`](docs/extensions.md#example-extension-extref-categorization) | sort items into their buckets (1:n) |
+| [`ext:ref-error-correction`](docs/extensions.md#example-extension-extref-error-correction) | one token in the sentence is wrong: mark it, correct it |
+| [`ext:ref-reading-comprehension`](docs/extensions.md#example-extension-extref-reading-comprehension) | a passage bound to N sub-questions (stimulus with questions) |
+| [`ext:ref-graded-quiz`](docs/extensions.md#example-extension-extref-graded-quiz) | scored question set with points, partial credit, pass threshold |
+| [`ext:ref-dictation`](docs/extensions.md#example-extension-extref-dictation) | hear a clip, type what you heard |
+| [`ext:ref-image-description`](docs/extensions.md#example-extension-extref-image-description) | look at the picture, answer in free text |
+| [`ext:ref-audio-choice`](docs/extensions.md#example-extension-extref-audio-choice) | gapped sentence, pick the audio clip that fills it |
+| [`ext:ref-audio-tiles`](docs/extensions.md#example-extension-extref-audio-tiles) | hear a sentence, build its translation from word tiles |
+| [`ext:ref-speak-and-record`](docs/extensions.md#example-extension-extref-speak-and-record) | hear, reveal, record yourself (ungraded) |
+| [`ext:ref-hotspot`](docs/extensions.md#example-extension-extref-hotspot) | click the correct region of an image (rect and circle zones) |
+| [`ext:ref-parsons`](docs/extensions.md#example-extension-extref-parsons) | arrange scrambled code lines by order and indentation |
+
+Not yet covered at any tier: parametric exercises with sampled variables
+(engine#151). The gap analysis behind this list is
+[docs/comparative-analysis.md](docs/comparative-analysis.md).
+
 ## Public API
 
 | Export | Kind | Purpose |
