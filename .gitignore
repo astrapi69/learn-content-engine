@@ -2,6 +2,7 @@ node_modules/
 dist/
 coverage/
 docs-api/
+docs-site/
 *.log
 .DS_Store
 .idea/
