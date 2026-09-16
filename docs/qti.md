@@ -29,6 +29,32 @@ import { qtiLessonAdapter } from "learn-content-engine/qti";
 const lesson = parseLesson(qtiXml, setContext, qtiLessonAdapter);
 ```
 
+## Command line
+
+The same two directions as a `bin` command, one document per run, no code
+(engine#164):
+
+```bash
+# QTI item or test (2.x or 3.0, detected) -> lesson JSON on stdout
+npx learn-content-engine qti import item.xml
+
+# ... or into a file, with the lesson id and title set explicitly
+npx learn-content-engine qti import test.xml --out sets/de/mein-set/lessons/01-import.json --id import-1 --title "Importiert"
+
+# lesson JSON -> QTI 2.x test (default) or QTI 3.0
+npx learn-content-engine qti export sets/de/mein-set/lessons/01-import.json --out export.xml
+npx learn-content-engine qti export sets/de/mein-set/lessons/01-import.json --version 3.0 --out export3.xml
+```
+
+Exit codes follow the other subcommands: `0` converted, `1` refused (every
+unmappable item or exercise listed on stderr, one line each, the same list
+`QtiImportError.issues` / `QtiExportError` carry), `2` usage or unreadable
+file. An imported lesson has already passed `validateLesson`, so `qti import`
+followed by `lint` is redundant; `mint-stable-ids` is the natural next step
+before the lesson enters a set. The command is the adapter, nothing more: the
+mapping table, the refusal list and the fidelity limits below apply
+unchanged.
+
 ## Dialects: QTI 2.x and QTI 3.0
 
 QTI 3.0 (1EdTech, the current version) kept the semantics of the mappable

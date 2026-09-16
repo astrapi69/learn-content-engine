@@ -17,7 +17,7 @@ export function parseLintArgs(argv: string[]): LintArgs {
     "lint",
     argv,
     ["--json"],
-    "lint <file...> [--json] | migrate <file...> [--write] [--json] | suggest-wiring <file...> [--json] [--write --accept <id>...]",
+    "lint <file...> [--json] | migrate <file...> [--write] [--json] | suggest-wiring <file...> [--json] [--write --accept <id>...] | qti import|export <file> [--out <file>]",
     "usage: learn-content-engine lint <file...> [--json]",
   );
   if ("error" in parsed) return parsed;

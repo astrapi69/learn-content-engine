@@ -5,6 +5,21 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [Unreleased]
+
+### `qti import` / `qti export` on the command line (engine#164)
+
+The QTI adapter was reachable only from code. `learn-content-engine qti
+import <file.xml> [--out <lesson.json>] [--id] [--title]` maps a 2.x or 3.0
+item or test (dialect detected) to lesson JSON, on stdout or into a file;
+`qti export <lesson.json> [--out <file.xml>] [--version 2.x|3.0]` goes the
+other way. Exit codes as for every subcommand: 0 converted, 1 refused with
+every unmappable item or exercise listed on stderr, 2 usage. The core
+(`src/qti-command.ts`) is filesystem-free and pinned by the bin-shim
+contract test; the bin shim owns the I/O. The comparative analysis names
+interchange as the engine's entry door for content that lives in QTI; this
+turns it into a two-minute try.
+
 ## [0.25.1] - 2026-09-16
 
 ### Documentation patch
