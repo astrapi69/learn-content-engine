@@ -1,7 +1,7 @@
 # **Comparative Analysis of Exercise Types in E-Learning Platforms**
-**Benchmark Study for the `learn-content-engine` (package 0.25.0, lesson schema 1.14)**
+**Benchmark Study for the `learn-content-engine` (package 0.25.1, lesson schema 1.14)**
 
-**Version:** 1.5  
+**Version:** 1.6  
 **Date:** September 16, 2026  
 **Author:** Asterios Raptis (astrapi69)  
 **Project:** learn-content-engine / adaptive-learner  
@@ -11,13 +11,13 @@
 
 ## **Executive Summary**
 
-This document presents a systematic comparative analysis of exercise types across established e-learning platforms (Moodle, H5P, QTI 3.0, Canvas LMS, Duolingo) in the context of the `learn-content-engine`. Two version numbers matter and are easy to conflate: the npm package is at **0.25.0**, the lesson schema it validates against is at **1.14** (`x-schema-version` in `schema/lesson.schema.json`). This document benchmarks the schema's exercise types.
+This document presents a systematic comparative analysis of exercise types across established e-learning platforms (Moodle, H5P, QTI 3.0, Canvas LMS, Duolingo) in the context of the `learn-content-engine`. Two version numbers matter and are easy to conflate: the npm package is at **0.25.1**, the lesson schema it validates against is at **1.14** (`x-schema-version` in `schema/lesson.schema.json`). This document benchmarks the schema's exercise types.
 
 The analysis demonstrates that the engine, with its six core exercise types (`matching`, `picture_choice`, `free_text`, `word_tiles`, `cloze`, `multiple_choice`), fully covers the **global standard for text-based foundational assessments**.
 
 The identified gaps (hotspot interactions, sequencing/ordering tasks, Parsons problems, categorization, audio input) are not architectural deficits, but rather the result of a deliberate **Lean-Core Design** decision. The `ext:<vendor>-<name>` extension concept aligns with modern best practices (comparable to QTI 3.0 Portable Custom Interactions) and enables the incremental introduction of specialized exercise types without bloating the core schema.
 
-**State of play (version 1.5 of this document):** on the engine side every row of the matrix is covered. Every one of the five extension gaps has a reference extension under `src/examples/ext-ref-*` (three existed before this document was written: ordering, categorization, three audio variants; hotspot and Parsons were added in response to it, engine#149). The sixth gap, parametric exercises, became a core field in schema 1.14 (`variables`, engine#151, references opt-in since 0.24.1). The interchange boundary speaks QTI 2.x and QTI 3.0 since 0.25.0 (engine#158). What remains open is **consumer adoption** in `adaptive-learner`, tracked as three issues: adaptive-learner#3108 (pin 0.24.1, mirror schema 1.14), adaptive-learner#3109 (the sampling, substitution and grading half of `variables`), adaptive-learner#3110 (adopt hotspot, Parsons and ordering under the app's vendor namespace).
+**State of play (version 1.6 of this document):** on the engine side every row of the matrix is covered. Every one of the five extension gaps has a reference extension under `src/examples/ext-ref-*` (three existed before this document was written: ordering, categorization, three audio variants; hotspot and Parsons were added in response to it, engine#149). The sixth gap, parametric exercises, became a core field in schema 1.14 (`variables`, engine#151, references opt-in since 0.24.1). The interchange boundary speaks QTI 2.x and QTI 3.0 since 0.25.0 (engine#158). What remains open is **consumer adoption** in `adaptive-learner`, tracked as three issues: adaptive-learner#3108 (pin 0.24.1, mirror schema 1.14), adaptive-learner#3109 (the sampling, substitution and grading half of `variables`), adaptive-learner#3110 (adopt hotspot, Parsons and ordering under the app's vendor namespace).
 
 **Recommendation:** work the three adaptive-learner issues in that order; #3109 and #3110 depend on the pin from #3108. Nothing further is needed on the engine side for the types in this analysis.
 
@@ -580,7 +580,7 @@ The extensions enable **Constructive Alignment** (Biggs, 1996): Teaching/learnin
 
 ## **8. Conclusion**
 
-The `learn-content-engine` (package 0.25.0, schema 1.14) is in an **excellent strategic position**:
+The `learn-content-engine` (package 0.25.1, schema 1.14) is in an **excellent strategic position**:
 1. **Standard Parity:** The six core exercise types fully cover the global standard for text-based foundational assessments, and the boundary speaks QTI 2.x and QTI 3.0.
 2. **Architectural Maturity:** The `ext:` concept matches modern best practices (QTI 3.0 PCI) and prevents schema bloat.
 3. **Didactic Growth Potential:** Every gap this analysis identified is covered, as a reference extension or as the core `variables` field; the higher Bloom levels are reachable without compromising core stability.

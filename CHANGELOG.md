@@ -5,6 +5,22 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [0.25.1] - 2026-09-16
+
+### Documentation patch
+
+The README shipped with 0.25.0 did not list the comparative analysis under
+Documentation; it does now, so the npm page carries the link. Around it,
+repository-only changes since 0.25.0: `docs/comparative-analysis.md`
+version 1.6 states that the engine side is complete for every row of its
+matrix and points its roadmap at the three adaptive-learner issues (#3108
+pin, #3109 `variables` consumer half, #3110 hotspot, Parsons and ordering
+adoption) instead of quarters; the version-claims gate now also checks
+the package version the analysis names (seeded RED first); CONTRIBUTING
+publishes to npm before creating the GitHub release, so the release-parity
+workflow no longer reports a false red while npm propagates. No code, no
+schema change.
+
 ## [0.25.0] - 2026-09-16
 
 ### QTI 3.0 dialect for the QTI adapter (engine#158)
