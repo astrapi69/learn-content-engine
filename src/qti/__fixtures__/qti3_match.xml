@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<qti-assessment-item xmlns="http://www.imsglobal.org/xsd/imsqtiasi_v3p0"
+    identifier="q-match" title="Match colours" adaptive="false" time-dependent="false">
+  <qti-response-declaration identifier="RESPONSE" cardinality="multiple" base-type="directedPair">
+    <qti-correct-response>
+      <qti-value>L0 R0</qti-value>
+      <qti-value>L1 R1</qti-value>
+    </qti-correct-response>
+  </qti-response-declaration>
+  <qti-item-body>
+    <qti-match-interaction response-identifier="RESPONSE" shuffle="true" max-associations="0">
+      <qti-prompt>Match each colour to its translation.</qti-prompt>
+      <qti-simple-match-set>
+        <qti-simple-associable-choice identifier="L0" match-max="1">rouge</qti-simple-associable-choice>
+        <qti-simple-associable-choice identifier="L1" match-max="1">bleu</qti-simple-associable-choice>
+      </qti-simple-match-set>
+      <qti-simple-match-set>
+        <qti-simple-associable-choice identifier="R0" match-max="1">red</qti-simple-associable-choice>
+        <qti-simple-associable-choice identifier="R1" match-max="1">blue</qti-simple-associable-choice>
+      </qti-simple-match-set>
+    </qti-match-interaction>
+  </qti-item-body>
+</qti-assessment-item>

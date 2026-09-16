@@ -17,6 +17,7 @@ import type { LessonSourceAdapter } from "../content-engine.js";
 import type { ContentLesson } from "../types/index.js";
 import type { Exercise, Lesson, LessonStep } from "../types/lesson-schema.generated.js";
 import { validateLesson } from "../validate.js";
+import { detectQtiVersion } from "./dialect.js";
 import {
   attr,
   childNamed,
@@ -24,6 +25,7 @@ import {
   descendantsNamed,
   descendantsWhere,
   localName,
+  rawLocalName,
   textOf,
 } from "./xml.js";
 
@@ -162,15 +164,22 @@ function mapItem(item: XmlElement): { exercise?: Exercise; issue?: QtiMappingIss
 }
 
 /**
- * Parse QTI 2.x XML (a single ``assessmentItem`` or an ``assessmentTest`` with
- * inline items) into a canonical {@link ContentLesson}. Throws
- * {@link QtiImportError} when any item is unmappable, or when the produced
+ * Parse QTI XML (a single ``assessmentItem`` or an ``assessmentTest`` with
+ * inline items, in the 2.x or the 3.0 dialect, detected from the root) into a
+ * canonical {@link ContentLesson}. Throws {@link QtiImportError} when the root
+ * is not a QTI item or test, when any item is unmappable, or when the produced
  * lesson fails ``validateLesson``. ``meta`` overrides the lesson id / title
  * otherwise taken from the QTI root.
  */
 export function importQti(xml: string, meta: { id?: string; title?: string } = {}): ContentLesson {
   const root = parseXml(xml).root;
   if (!root) throw new QtiImportError("QTI document has no root element", []);
+  if (detectQtiVersion(rawLocalName(root), attr(root, "xmlns")) === null) {
+    throw new QtiImportError(
+      `QTI document root '${root.name}' is not a QTI 2.x or 3.0 assessmentItem / assessmentTest`,
+      [],
+    );
+  }
   const rootName = localName(root);
   const items = rootName === "assessmentItem" ? [root] : descendantsNamed(root, "assessmentItem");
   if (items.length === 0) {

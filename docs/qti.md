@@ -2,7 +2,8 @@
 
 [QTI](https://www.imsglobal.org/question/index.html) (IMS Question and Test
 Interoperability) is the established interchange format for assessment content.
-`learn-content-engine` ships an optional **QTI 2.x adapter** that maps the
+`learn-content-engine` ships an optional **QTI adapter** (2.x and 3.0
+dialects, see [Dialects](#dialects-qti-2x-and-qti-30)) that maps the
 mappable subset of QTI to and from the canonical lesson model, at the same
 source-to-canonical boundary the core engine draws
 ([architecture.md](architecture.md)).
@@ -14,8 +15,9 @@ dependency-free core import:
 ```ts
 import { importQti, exportQti, QtiImportError } from "learn-content-engine/qti";
 
-const lesson = importQti(qtiXml);          // QTI 2.x XML -> ContentLesson
-const xml = exportQti(lesson);             // ContentLesson -> QTI 2.x XML
+const lesson = importQti(qtiXml);          // QTI 2.x or 3.0 XML -> ContentLesson (dialect detected)
+const xml = exportQti(lesson);             // ContentLesson -> QTI 2.x XML (the default)
+const xml3 = exportQti(lesson, { version: "3.0" }); // ContentLesson -> QTI 3.0 XML
 ```
 
 It also plugs into the `parseLesson` seam as a source adapter:
@@ -27,12 +29,42 @@ import { qtiLessonAdapter } from "learn-content-engine/qti";
 const lesson = parseLesson(qtiXml, setContext, qtiLessonAdapter);
 ```
 
-This adapter targets **QTI 2.x**. A future 3.0 reader plugs in as a second
-mapping layer without changing the canonical shape.
+## Dialects: QTI 2.x and QTI 3.0
+
+QTI 3.0 (1EdTech, the current version) kept the semantics of the mappable
+subset and renamed the syntax: every element is `qti-` prefixed kebab-case
+(`choiceInteraction` became `qti-choice-interaction`, `assessmentItem`
+became `qti-assessment-item`) and every multi-word attribute is kebab-case
+(`responseIdentifier` became `response-identifier`, `baseType` became
+`base-type`), under the namespace `http://www.imsglobal.org/xsd/imsqtiasi_v3p0`.
+Attribute values (`directedPair`, `single`, `multiple`) and plain HTML inside
+the item body (`<p>`) are unchanged.
+
+The adapter treats that as a spelling, not a second format:
+
+- **Import** detects the dialect from the root element (a `qti-` prefixed
+  root or the 3.0 namespace) and normalises names to the 2.x spelling before
+  the mapping runs, so both dialects go through the same code, the same
+  refusal list and the same `validateLesson` gate. A root that is neither a
+  2.x nor a 3.0 `assessmentItem` / `assessmentTest` is refused with
+  `QtiImportError`. Mapping issues report the canonical 2.x interaction name
+  (`orderInteraction`, even when the document said `qti-order-interaction`).
+- **Export** stays 2.x by default (byte-identical to before 3.0 support) and
+  emits the 3.0 spelling and namespace with `{ version: "3.0" }`.
+- The mapping table, the refusal list, the round-trip guarantee and the
+  fidelity limits below apply to both dialects; the table uses the 2.x
+  spelling.
+
+The whole difference lives in three pure functions (`src/qti/dialect.ts`).
+The 3.0 test fixtures follow the element and attribute spellings of
+1EdTech's implementation guide (checked verbatim against its choice
+interaction example; text entry and match follow the same renaming rule).
+QTI 3.0 packaging (manifest, one file per item) is not part of the adapter:
+it reads and writes single documents, as it does for 2.x.
 
 ## Mapping table
 
-| QTI 2.x interaction | response cardinality | Engine exercise type | Mapping |
+| QTI interaction (2.x spelling) | response cardinality | Engine exercise type | Mapping |
 |---|---|---|---|
 | `choiceInteraction` | `single` | `multiple_choice` (`multiple` omitted) | `simpleChoice` -> option; `correctResponse` identifiers -> `correct: true` |
 | `choiceInteraction` | `multiple` | `multiple_choice` (`multiple: true`) | every `correctResponse` identifier -> a correct option |
@@ -99,7 +131,7 @@ and the `multiple` flag. `cards` come back as `[]`.
 
 ## Scope and non-goals
 
-The adapter maps the three exercise types with a faithful QTI 2.x interaction
+The adapter maps the three exercise types with a faithful QTI interaction
 (`multiple_choice`, `free_text`, `matching`) and refuses the rest loudly. That
 subset is deliberate, and expanding it is intentionally NOT on the roadmap
 unless a concrete QTI consumer needs it. The reasoning:

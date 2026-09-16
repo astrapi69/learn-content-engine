@@ -5,6 +5,25 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [Unreleased]
+
+### QTI 3.0 dialect for the QTI adapter (engine#158)
+
+`learn-content-engine/qti` spoke QTI 2.x only. 1EdTech's current version,
+QTI 3.0, keeps the semantics of the mappable subset (choice, text entry,
+match) and renames the syntax: `qti-` prefixed kebab-case elements
+(`qti-choice-interaction`) and kebab-case attributes (`response-identifier`)
+under the `imsqtiasi_v3p0` namespace. The adapter now reads both dialects,
+detected from the root element (`importQti` is unchanged for 2.x callers and
+refuses a root that is neither), and writes either: `exportQti(lesson)`
+stays byte-identical 2.x, `exportQti(lesson, { version: "3.0" })` emits 3.0.
+Same mapping table, same loud refusal list (issues report the canonical 2.x
+interaction name), same fidelity limits, same round-trip guarantee. The
+dialect difference lives in three pure functions in `src/qti/dialect.ts`;
+the 3.0 fixtures follow the element and attribute spellings of 1EdTech's
+implementation guide (checked verbatim for the choice example). Widening
+the mapped subset stays a separate decision (docs/qti.md non-goals).
+
 ## [0.24.1] - 2026-09-15
 
 ### Variable references are opt-in: `{{` is ordinary text without `variables` (engine#151)

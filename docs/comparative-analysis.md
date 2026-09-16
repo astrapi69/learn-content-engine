@@ -455,12 +455,12 @@ What the engine's format provides that none of the five offer as a library:
 
 QTI 3.0 as the native format would have bought interoperability with LMS authoring tools and cost all four: it is XML (poor diffs, no strict-shape equivalent), it has no semantic-rule layer, it models tests and items rather than lessons with theory steps and cards, and its Portable Custom Interaction mechanism is the same idea as `ext:` but with a JavaScript runtime contract the engine deliberately does not carry. H5P is a runtime (content type plus player) under MIT; adopting it would have handed the app finished renderers, and with them H5P's packaging, its lack of cross-version identity, and a dependency on the player for every exercise, in an application whose exercise components are small and SRS-integrated.
 
-The interoperability need is real and is met at the boundary rather than in the core. The QTI 2.x adapter (`docs/qti.md`) maps the mappable subset in both directions at the same source-to-canonical seam every source adapter uses, and refuses unsupported interactions loudly (`QtiImportError` with the per-item list). Its fidelity limits are documented: theory steps, cards, hints and examples do not cross; scoring, timing and shuffle are not preserved. A QTI 3.0 reader plugs in as a second adapter when content demands it.
+The interoperability need is real and is met at the boundary rather than in the core. The QTI adapter (`docs/qti.md`) maps the mappable subset in both directions at the same source-to-canonical seam every source adapter uses, in the QTI 2.x and, since engine 0.25.0, the QTI 3.0 dialect (detected on import, chosen on export), and refuses unsupported interactions loudly (`QtiImportError` with the per-item list). Its fidelity limits are documented: theory steps, cards, hints and examples do not cross; scoring, timing and shuffle are not preserved.
 
 ```mermaid
 flowchart LR
-  QTI[QTI 2.x XML] -->|importQti| C[Canonical lesson model]
-  C -->|exportQti, documented fidelity limits| QTI
+  QTI[QTI 2.x or 3.0 XML] -->|importQti, dialect detected| C[Canonical lesson model]
+  C -->|exportQti, 2.x or 3.0, documented fidelity limits| QTI
   JSON[Lesson JSON: the native format] --> C
   C --> V[validateLesson: strict schema plus semantic rules]
   C --> S[stable_id and retired_ids: identity across edits]

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<qti-assessment-item xmlns="http://www.imsglobal.org/xsd/imsqtiasi_v3p0"
+    identifier="q-order" title="Order the steps" adaptive="false" time-dependent="false">
+  <qti-response-declaration identifier="RESPONSE" cardinality="ordered" base-type="identifier"/>
+  <qti-item-body>
+    <qti-order-interaction response-identifier="RESPONSE" shuffle="true">
+      <qti-prompt>Put the steps in order.</qti-prompt>
+      <qti-simple-choice identifier="A">First</qti-simple-choice>
+      <qti-simple-choice identifier="B">Second</qti-simple-choice>
+    </qti-order-interaction>
+  </qti-item-body>
+</qti-assessment-item>
