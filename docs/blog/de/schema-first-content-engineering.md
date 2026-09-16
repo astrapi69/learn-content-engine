@@ -15,7 +15,7 @@ tags: [architecture, schema-design, typescript, content-engineering]
 
 `learn-content-engine` ist eine framework-agnostische TypeScript-Bibliothek, die Lerninhalte parst und validiert: Sprachkurse zuallererst, wobei ein `domain`-Feld (seit Engine 0.20.0 ein kontrolliertes Vokabular aus bekannten Werten plus other) dieselbe Form auch andere Wissensgebiete tragen lässt (Technik-Kurse, Führerschein-Vorbereitung, Psychologie). Sie verwandelt Rohquellen (Lektions-JSON plus eine `manifest.yaml`) in eine kanonische interne Form, und sie ist die einzige Quelle der Wahrheit für das Lektions-Schema, aktuell Version 1.14.
 
-Der Kern ist bewusst klein. Kein Rendering, keine Persistenz, kein Netzwerk; die einzige Laufzeit-Abhängigkeit ist ein YAML-Parser. Was er bietet, ist reine Validierung und Transformation. Dieser Minimalismus ist der Punkt, und er erzwingt eine harte Frage: *Wie entwickelt man ein Content-Schema weiter, ohne jeden Consumer zu brechen, der davon abhängt?*
+Der Kern ist bewusst klein. Kein Rendering, keine Persistenz, kein Netzwerk; die Laufzeit-Abhängigkeiten sind ein YAML-Parser und ein JSON-Schema-Validator, und der XML-Parser des QTI-Adapters sitzt hinter einem eigenen Subpath, sodass er den Kern-Import nie berührt. Was er bietet, ist reine Validierung und Transformation. Dieser Minimalismus ist der Punkt, und er erzwingt eine harte Frage: *Wie entwickelt man ein Content-Schema weiter, ohne jeden Consumer zu brechen, der davon abhängt?*
 
 Sprachlern-Inhalte halten nicht still. Neue Übungstypen tauchen ständig auf (Kategorisierung, Fehlerkorrektur, benotete Quizze), alte verblassen, und in der Produktion zeigen sich Randfälle, die niemand vorgesehen hat. Ein Content-Schema muss stabil genug sein, um Inhalte über mehrere Repositories hinweg zu versionieren, und zugleich locker genug, um pädagogische Ideen aufzunehmen, die beim Schreiben noch nicht gedacht waren. Stabilität gegen Evolution: Diese Spannung ist das ganze Design-Problem, und der Rest dieses Textes ist, wie wir sie aufgelöst haben.
 
@@ -81,7 +81,7 @@ Was das einbringt, ist Bewegungsfreiheit: experimentieren, ohne den Kern zu dest
 
 ## Vier Adoptionen, ein Rezept
 
-Vier Erweiterungstypen sind diesen Weg vollständig gegangen. Jeder hat einen anderen Teil des Designs belastet.
+Vier Erweiterungstypen waren diesen Weg vollständig gegangen, als dieser Text entstand; heute existieren zwölf Referenz-Extensions, und die App rendert alle. Eine Idee ging den anderen Weg: Parametrische Aufgaben wurden ein Kernfeld (`variables`, Schema 1.14), weil ihre `{{name}}`-Referenzen in `prompt` und `accept` liegen, genau der Fall, in dem die Frage „braucht es die Kernfelder" unten mit Ja beantwortet wird. Der vierte Artikel dieser Serie erzählt diese Geschichte. Die vier unten haben jeweils einen anderen Teil des Designs belastet.
 
 ### `ext:al-categorization`: Sortieren in Behälter
 

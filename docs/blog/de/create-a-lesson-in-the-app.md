@@ -7,7 +7,7 @@ tags: [tutorial, authoring, adaptive-learner, walkthrough]
 
 # Eine Lektion in der App erstellen, Schritt für Schritt
 
-*Eine praktische Tour durch den Lektions-Editor in adaptive-learner: die klassischen vier Assistenten-Schritte vom leeren Formular bis zur gespeicherten, schema-gültigen Lektion, der Buch-Pfad, der aus eingefügten oder hochgeladenen Lehrbuchkapiteln Wissens-Lektionen macht, der Erweiterungs-Pfad, der die sechs fortgeschrittenen Übungstypen ohne JSON autorierbar macht, und der Bearbeitungsmodus des Assistenten. Jeder Screenshot in dieser Anleitung stammt aus der laufenden App, aufgenommen während des exakt beschriebenen Ablaufs. Die App wird aktiv weiterentwickelt, ein Detail kann sich also bis zu deiner Lektüre verschoben haben - der Ablauf selbst bleibt der verlässliche Leitfaden.*
+*Eine praktische Tour durch den Lektions-Editor in adaptive-learner: die klassischen vier Assistenten-Schritte vom leeren Formular bis zur gespeicherten, schema-gültigen Lektion, der Buch-Pfad, der aus eingefügten oder hochgeladenen Lehrbuchkapiteln Wissens-Lektionen macht, der Erweiterungs-Pfad, der die sechs fortgeschrittenen Übungstypen ohne JSON autorierbar macht, und der Bearbeitungsmodus des Assistenten. Jeder Screenshot in dieser Anleitung stammt aus der laufenden App, aufgenommen während des exakt beschriebenen Ablaufs. Die App wird aktiv weiterentwickelt, ein Detail kann sich also bis zu deiner Lektüre verschoben haben: der Ablauf selbst bleibt der verlässliche Leitfaden.*
 
 `adaptive-learner` · für Lehrende und Content-Autoren · Teil 3 der Serie
 
@@ -123,9 +123,9 @@ Die sechs Kern-Typen decken das alltägliche Einüben ab. Manche Übungsformen p
 
 ![Schritt 1 mit der Vorlagen-Reihe: die vier Start-Vorlagen plus die Einträge Buch-Text und Erweiterte Übungstypen](assets/create-lesson/e1-extensions-entry.png)
 
-Ihn zu wählen schaltet auf einen kürzeren dreistufigen Ablauf um: Metadaten, Übungen, Überprüfung. Kein Karten-Schritt, weil Erweiterungsübungen ihren eigenen Inhalt tragen, statt auf Karten zurückzugreifen. **Erweiterungsübung hinzufügen** öffnet die Typ-Auswahl, und alle sechs adoptierten Typen sind da:
+Ihn zu wählen schaltet auf einen kürzeren dreistufigen Ablauf um: Metadaten, Übungen, Überprüfung. Kein Karten-Schritt, weil Erweiterungsübungen ihren eigenen Inhalt tragen, statt auf Karten zurückzugreifen. **Erweiterungsübung hinzufügen** öffnet die Typ-Auswahl, und jeder Typ, den der Assistent unterstützt, ist da, zehn mit Stand September 2026:
 
-![Die Erweiterungstyp-Auswahl mit allen sechs adoptierten Typen](assets/create-lesson/e2-type-picker.png)
+![Die Erweiterungstyp-Auswahl (Screenshot vom Juli mit den sechs Typen von damals; heute bietet die Auswahl zehn)](assets/create-lesson/e2-type-picker.png)
 
 Die Auswahl zeigt die Typen unter ihren deutschen Namen. Darunter liegt jeweils ein namensraum-gebundener `ext:`-Typ, den die Lektion in `requires_extensions` deklariert, sodass ein Konsument ohne diese Erweiterung die Lektion laut ablehnt, statt sie falsch darzustellen. Wofür jeder da ist, mit seiner technischen Id und einem kleinen Beispiel aus einem Französisch-Kurs für Deutschsprachige:
 
@@ -137,6 +137,12 @@ Die Auswahl zeigt die Typen unter ihren deutschen Namen. Darunter liegt jeweils 
 | Benotetes Quiz | `ext:al-graded-quiz` | Bearbeitet ein bewertetes Fragenset mit Bestehensgrenze | Drei Fragen zu Begrüßungen, je ein Punkt, bestanden bei 2 von 3 |
 | Diktat | `ext:al-dictation` | Hört einen Clip und tippt, was gesagt wurde | *"Comment ça va?"* hören, mit oder ohne Akzent akzeptiert |
 | Bildbeschreibung | `ext:al-image-description` | Schaut ein Bild an und tippt eine Beschreibung oder Antwort | Ein Café-Tisch wird gezeigt, tippen: *"Il y a une tasse de café et un croissant."* |
+| Sprechen & aufnehmen | `ext:al-speak-and-record` | Hört einen Satz, blendet den Text ein, nimmt die eigene Stimme auf; unbewertet, zur Selbstkontrolle | *"Je voudrais un café, s'il vous plaît."* hören, dann nachsprechen |
+| Sortieren | `ext:al-ordering` | Bringt Elemente in die richtige Reihenfolge | Die Schritte des Sich-Vorstellens ordnen: *Bonjour*, *Je m'appelle Anna*, *Enchantée* |
+| Hotspot | `ext:al-hotspot` | Tippt auf den richtigen Bereich eines Bildes | Eine Café-Szene wird gezeigt, auf *la tasse* tippen |
+| Parsons (Code sortieren) | `ext:al-parsons` | Ordnet durcheinandergewürfelte Codezeilen nach Reihenfolge und Einrückung; gebaut für die Programmier-Sets | Eine dreizeilige Python-Funktion, deren `return` in die `def` gehört |
+
+Die letzten drei kamen im September 2026 mit der Adoption der Hotspot-, Ordering- und Parsons-Referenz-Extensions der Engine in die App.
 
 Der Diktat-Editor zeigt, wie ein in sich geschlossenes Erweiterungs-Payload aussieht:
 
