@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<qti-assessment-item xmlns="http://www.imsglobal.org/xsd/imsqtiasi_v3p0"
+    identifier="q-hello" title="Hello in French" adaptive="false" time-dependent="false">
+  <qti-response-declaration identifier="RESPONSE" cardinality="single" base-type="string">
+    <qti-correct-response>
+      <qti-value>bonjour</qti-value>
+    </qti-correct-response>
+    <qti-mapping default-value="0">
+      <qti-map-entry map-key="salut" mapped-value="1"/>
+    </qti-mapping>
+  </qti-response-declaration>
+  <qti-item-body>
+    <p>Say hello in French.</p>
+    <qti-text-entry-interaction response-identifier="RESPONSE" expected-length="20"/>
+  </qti-item-body>
+</qti-assessment-item>

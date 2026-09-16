@@ -172,5 +172,114 @@ describe("round-trip import(export(lesson))", () => {
       expect(round.title).toBe(lesson.title);
       expect(round.steps.map((s) => s.exercise)).toEqual(lesson.steps.map((s) => s.exercise));
     });
+
+    it(`preserves content for ${name} through the 3.0 dialect`, () => {
+      const round = importQti(exportQti(lesson, { version: "3.0" }));
+      expect(round.id).toBe(lesson.id);
+      expect(round.title).toBe(lesson.title);
+      expect(round.steps.map((s) => s.exercise)).toEqual(lesson.steps.map((s) => s.exercise));
+    });
   }
+});
+
+describe("importQti - QTI 3.0 dialect (qti- prefixed kebab-case names, imsqtiasi_v3p0 namespace)", () => {
+  it("maps qti-choice-interaction exactly like choiceInteraction", () => {
+    const lesson = importQti(fixture("qti3_choice_single.xml"));
+    const exercise = firstExercise(lesson);
+    expect(exercise.type).toBe("multiple_choice");
+    expect(exercise.prompt).toBe("What is the capital of France?");
+    expect(exercise.multiple).toBeUndefined();
+    expect(exercise.options).toEqual([
+      { text: "Paris", correct: true },
+      { text: "London" },
+      { text: "Berlin" },
+    ]);
+  });
+
+  it("maps qti-text-entry-interaction with qti-mapping / map-key to accept[]", () => {
+    const exercise = firstExercise(importQti(fixture("qti3_text_entry.xml")));
+    expect(exercise.type).toBe("free_text");
+    expect(exercise.prompt).toBe("Say hello in French.");
+    expect(exercise.accept).toEqual(["bonjour", "salut"]);
+  });
+
+  it("maps qti-match-interaction with qti-simple-match-set to matching pairs", () => {
+    const exercise = firstExercise(importQti(fixture("qti3_match.xml")));
+    expect(exercise.type).toBe("matching");
+    expect(exercise.pairs).toEqual([
+      { left: "rouge", right: "red" },
+      { left: "bleu", right: "blue" },
+    ]);
+  });
+
+  it("maps a qti-assessment-test with inline qti-assessment-items to one lesson", () => {
+    const lesson = importQti(fixture("qti3_assessment_test.xml"));
+    expect(lesson.id).toBe("lesson-de");
+    expect(lesson.title).toBe("Deutsch Quiz");
+    expect(lesson.steps.map((step) => step.exercise!.type)).toEqual(["multiple_choice", "free_text"]);
+    expect(lesson.steps[0]!.exercise!.options![0]!.text).toBe("Kärnten");
+  });
+
+  it("every 3.0 import passes validateLesson", () => {
+    for (const name of ["qti3_choice_single.xml", "qti3_text_entry.xml", "qti3_match.xml", "qti3_assessment_test.xml"]) {
+      const result = validateLesson(importQti(fixture(name)));
+      expect(result.errors, `${name} should validate`).toEqual([]);
+    }
+  });
+
+  it("refuses an unsupported 3.0 interaction loudly, reporting the canonical interaction name", () => {
+    let thrown: unknown;
+    try {
+      importQti(fixture("qti3_unsupported_order.xml"));
+    } catch (error) {
+      thrown = error;
+    }
+    expect(thrown).toBeInstanceOf(QtiImportError);
+    const issues = (thrown as QtiImportError).issues;
+    expect(issues).toHaveLength(1);
+    expect(issues[0]!.itemIdentifier).toBe("q-order");
+    expect(issues[0]!.interaction).toBe("orderInteraction");
+  });
+
+  it("refuses a document whose root is neither a QTI 2.x nor a QTI 3.0 item or test", () => {
+    expect(() => importQti('<?xml version="1.0"?><questestinterop><item ident="x"/></questestinterop>')).toThrow(QtiImportError);
+    expect(() => importQti('<?xml version="1.0"?><questestinterop/>')).toThrow(/root/);
+  });
+});
+
+describe("exportQti - version option", () => {
+  const lesson = (): Lesson => ({
+    id: "rt",
+    title: "Round trip",
+    cards: [],
+    steps: [
+      { id: "e1", type: "exercise", exercise: { id: "e1", type: "multiple_choice", prompt: "Pick one", options: [{ text: "a", correct: true }, { text: "b" }] } },
+      { id: "e2", type: "exercise", exercise: { id: "e2", type: "free_text", prompt: "Say hi", accept: ["hi", "hello"] } },
+      { id: "e3", type: "exercise", exercise: { id: "e3", type: "matching", prompt: "Match", pairs: [{ left: "rouge", right: "red" }] } },
+    ],
+  });
+
+  it("defaults to 2.x, byte-identical to the explicit 2.x option", () => {
+    const xml = exportQti(lesson());
+    expect(xml).toBe(exportQti(lesson(), { version: "2.x" }));
+    expect(xml).toContain('xmlns="http://www.imsglobal.org/xsd/imsqti_v2p1"');
+    expect(xml).toContain("<choiceInteraction responseIdentifier=");
+    expect(xml).not.toContain("qti-");
+  });
+
+  it("emits the 3.0 namespace and names when asked", () => {
+    const xml = exportQti(lesson(), { version: "3.0" });
+    expect(xml).toContain('<qti-assessment-test xmlns="http://www.imsglobal.org/xsd/imsqtiasi_v3p0"');
+    expect(xml).toContain('<qti-test-part identifier="part1" navigation-mode="linear" submission-mode="individual">');
+    expect(xml).toContain('<qti-choice-interaction response-identifier="RESPONSE" shuffle="false" max-choices="1">');
+    expect(xml).toContain("<qti-prompt>Pick one</qti-prompt>");
+    expect(xml).toContain('<qti-simple-choice identifier="OPT0">a</qti-simple-choice>');
+    expect(xml).toContain('<qti-text-entry-interaction response-identifier="RESPONSE" expected-length="20"/>');
+    expect(xml).toContain('<qti-map-entry map-key="hello" mapped-value="1"/>');
+    expect(xml).toContain('<qti-simple-associable-choice identifier="L0" match-max="1">rouge</qti-simple-associable-choice>');
+    expect(xml).toContain('base-type="directedPair"');
+    expect(xml).toContain("<p>Say hi</p>");
+    expect(xml).not.toMatch(/<[a-z]+[A-Z]/);
+    expect(xml).not.toMatch(/ [a-z]+[A-Z][a-zA-Z]*=/);
+  });
 });

@@ -2,15 +2,24 @@
  * Minimal typed accessors over ``@rgrove/parse-xml`` nodes. QTI documents use a
  * default namespace (element names arrive unprefixed) but some exporters prefix
  * them (``qti:choiceInteraction``); every lookup here compares the LOCAL name so
- * both shapes map identically.
+ * both shapes map identically. The local name is further normalised to the
+ * QTI 2.x spelling, so a QTI 3.0 document (``qti-choice-interaction``,
+ * ``response-identifier``) reads through the same accessors unchanged.
  */
 
 import type { XmlElement, XmlNode } from "@rgrove/parse-xml";
 
-/** Local element name without any namespace prefix. */
-export function localName(element: XmlElement): string {
+import { camelToKebab, canonicalName } from "./dialect.js";
+
+/** Local element name without any namespace prefix, as written in the document. */
+export function rawLocalName(element: XmlElement): string {
   const colon = element.name.indexOf(":");
   return colon === -1 ? element.name : element.name.slice(colon + 1);
+}
+
+/** Local element name in its QTI 2.x spelling, whichever dialect wrote it. */
+export function localName(element: XmlElement): string {
+  return canonicalName(rawLocalName(element));
 }
 
 function isElement(node: XmlNode): node is XmlElement {
@@ -50,9 +59,11 @@ export function descendantsWhere(
   return found;
 }
 
-/** Attribute value, or ``undefined`` when absent. */
+/** Attribute value by its QTI 2.x name, or ``undefined`` when absent. A QTI 3.0
+ *  document spells multi-word attributes in kebab-case; that spelling is tried
+ *  second. */
 export function attr(element: XmlElement, key: string): string | undefined {
-  return element.attributes[key];
+  return element.attributes[key] ?? element.attributes[camelToKebab(key)];
 }
 
 /** Trimmed concatenated text of an element (all descendant text nodes). */

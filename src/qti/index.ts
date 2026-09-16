@@ -1,6 +1,8 @@
 /**
- * QTI 2.x interop for learn-content-engine (subpath export
- * ``learn-content-engine/qti``).
+ * QTI interop for learn-content-engine (subpath export
+ * ``learn-content-engine/qti``): the 2.x dialect and, since 0.25.0, the 3.0
+ * dialect (detected on import from the root element, chosen on export via
+ * ``{ version: "3.0" }``).
  *
  * QTI (IMS Question and Test Interoperability) is the established interchange
  * format for assessment content; this adapter bridges the mappable subset to
@@ -16,3 +18,6 @@
 export { importQti, qtiLessonAdapter, QtiImportError } from "./import.js";
 export type { QtiMappingIssue } from "./import.js";
 export { exportQti, QtiExportError } from "./export.js";
+export type { QtiExportOptions } from "./export.js";
+export type { QtiVersion } from "./dialect.js";
+export { QTI_2_NAMESPACE, QTI_3_NAMESPACE } from "./dialect.js";

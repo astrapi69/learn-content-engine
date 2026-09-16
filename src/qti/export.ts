@@ -1,9 +1,10 @@
 /**
- * Canonical {@link Lesson} -> QTI 2.x export, for the mappable subset
- * only (``multiple_choice`` -> ``choiceInteraction``, ``free_text`` ->
- * ``textEntryInteraction``, ``matching`` -> ``matchInteraction``). The lesson is
- * serialised as a single ``assessmentTest`` with inline ``assessmentItem``s (one
- * per exercise step), so ``importQti`` can read it straight back.
+ * Canonical {@link Lesson} -> QTI export, for the mappable subset only
+ * (``multiple_choice`` -> ``choiceInteraction``, ``free_text`` ->
+ * ``textEntryInteraction``, ``matching`` -> ``matchInteraction``), in the 2.x
+ * dialect by default or the 3.0 dialect on request. The lesson is serialised as
+ * a single ``assessmentTest`` with inline ``assessmentItem``s (one per exercise
+ * step), so ``importQti`` can read it straight back.
  *
  * Non-exercise (theory) steps have no QTI equivalent and are dropped (documented
  * fidelity limit, see docs/qti.md). An exercise whose type is outside the
@@ -12,9 +13,14 @@
  */
 
 import type { Exercise, Lesson } from "../types/lesson-schema.generated.js";
+import { attributeName, elementName, QTI_2_NAMESPACE, QTI_3_NAMESPACE, type QtiVersion } from "./dialect.js";
 
-const QTI_NS = "http://www.imsglobal.org/xsd/imsqti_v2p1";
 const MAPPABLE_TYPES = new Set(["multiple_choice", "free_text", "matching"]);
+
+export interface QtiExportOptions {
+  /** Dialect to emit; ``"2.x"`` (the default) or ``"3.0"``. */
+  version?: QtiVersion;
+}
 
 /** Thrown when a lesson carries an exercise type QTI export cannot represent. */
 export class QtiExportError extends Error {
@@ -24,6 +30,21 @@ export class QtiExportError extends Error {
     this.name = "QtiExportError";
     this.exerciseIds = exerciseIds;
   }
+}
+
+/** The dialect-specific spellings an item template needs. */
+interface Dialect {
+  el(canonical: string): string;
+  at(canonical: string): string;
+  namespace: string;
+}
+
+function dialectFor(version: QtiVersion): Dialect {
+  return {
+    el: (canonical) => elementName(canonical, version),
+    at: (canonical) => attributeName(canonical, version),
+    namespace: version === "3.0" ? QTI_3_NAMESPACE : QTI_2_NAMESPACE,
+  };
 }
 
 /** Escape the five XML markup characters in element text (umlauts and other
@@ -37,106 +58,119 @@ function escapeAttr(value: string): string {
   return escapeText(value).replace(/"/g, "&quot;");
 }
 
-function choiceItem(exercise: Exercise): string {
+function itemOpen(exercise: Exercise, { el, at }: Dialect): string {
+  const id = escapeAttr(exercise.id);
+  return `  <${el("assessmentItem")} identifier="${id}" title="${id}" adaptive="false" ${at("timeDependent")}="false">`;
+}
+
+function choiceItem(exercise: Exercise, dialect: Dialect): string {
+  const { el, at } = dialect;
   const options = exercise.options ?? [];
   const multiple = exercise.multiple === true;
   const correctValues = options
-    .map((option, index) => (option.correct === true ? `        <value>OPT${index}</value>` : null))
+    .map((option, index) => (option.correct === true ? `        <${el("value")}>OPT${index}</${el("value")}>` : null))
     .filter((line): line is string => line !== null)
     .join("\n");
   const choices = options
-    .map((option, index) => `        <simpleChoice identifier="OPT${index}">${escapeText(option.text)}</simpleChoice>`)
+    .map((option, index) => `        <${el("simpleChoice")} identifier="OPT${index}">${escapeText(option.text)}</${el("simpleChoice")}>`)
     .join("\n");
   return [
-    `  <assessmentItem identifier="${escapeAttr(exercise.id)}" title="${escapeAttr(exercise.id)}" adaptive="false" timeDependent="false">`,
-    `    <responseDeclaration identifier="RESPONSE" cardinality="${multiple ? "multiple" : "single"}" baseType="identifier">`,
-    `      <correctResponse>`,
+    itemOpen(exercise, dialect),
+    `    <${el("responseDeclaration")} identifier="RESPONSE" cardinality="${multiple ? "multiple" : "single"}" ${at("baseType")}="identifier">`,
+    `      <${el("correctResponse")}>`,
     correctValues,
-    `      </correctResponse>`,
-    `    </responseDeclaration>`,
-    `    <itemBody>`,
-    `      <choiceInteraction responseIdentifier="RESPONSE" shuffle="false" maxChoices="${multiple ? 0 : 1}">`,
-    `        <prompt>${escapeText(exercise.prompt)}</prompt>`,
+    `      </${el("correctResponse")}>`,
+    `    </${el("responseDeclaration")}>`,
+    `    <${el("itemBody")}>`,
+    `      <${el("choiceInteraction")} ${at("responseIdentifier")}="RESPONSE" shuffle="false" ${at("maxChoices")}="${multiple ? 0 : 1}">`,
+    `        <${el("prompt")}>${escapeText(exercise.prompt)}</${el("prompt")}>`,
     choices,
-    `      </choiceInteraction>`,
-    `    </itemBody>`,
-    `  </assessmentItem>`,
+    `      </${el("choiceInteraction")}>`,
+    `    </${el("itemBody")}>`,
+    `  </${el("assessmentItem")}>`,
   ].join("\n");
 }
 
-function textEntryItem(exercise: Exercise): string {
+function textEntryItem(exercise: Exercise, dialect: Dialect): string {
+  const { el, at } = dialect;
   const accept = exercise.accept ?? [];
   const primary = accept[0] ?? "";
   const alternates = accept.slice(1);
   const mapping =
     alternates.length > 0
       ? [
-          `      <mapping defaultValue="0">`,
-          ...alternates.map((value) => `        <mapEntry mapKey="${escapeAttr(value)}" mappedValue="1"/>`),
-          `      </mapping>`,
+          `      <${el("mapping")} ${at("defaultValue")}="0">`,
+          ...alternates.map(
+            (value) => `        <${el("mapEntry")} ${at("mapKey")}="${escapeAttr(value)}" ${at("mappedValue")}="1"/>`,
+          ),
+          `      </${el("mapping")}>`,
         ].join("\n")
       : "";
   return [
-    `  <assessmentItem identifier="${escapeAttr(exercise.id)}" title="${escapeAttr(exercise.id)}" adaptive="false" timeDependent="false">`,
-    `    <responseDeclaration identifier="RESPONSE" cardinality="single" baseType="string">`,
-    `      <correctResponse>`,
-    `        <value>${escapeText(primary)}</value>`,
-    `      </correctResponse>`,
+    itemOpen(exercise, dialect),
+    `    <${el("responseDeclaration")} identifier="RESPONSE" cardinality="single" ${at("baseType")}="string">`,
+    `      <${el("correctResponse")}>`,
+    `        <${el("value")}>${escapeText(primary)}</${el("value")}>`,
+    `      </${el("correctResponse")}>`,
     mapping,
-    `    </responseDeclaration>`,
-    `    <itemBody>`,
+    `    </${el("responseDeclaration")}>`,
+    `    <${el("itemBody")}>`,
     `      <p>${escapeText(exercise.prompt)}</p>`,
-    `      <textEntryInteraction responseIdentifier="RESPONSE" expectedLength="20"/>`,
-    `    </itemBody>`,
-    `  </assessmentItem>`,
+    `      <${el("textEntryInteraction")} ${at("responseIdentifier")}="RESPONSE" ${at("expectedLength")}="20"/>`,
+    `    </${el("itemBody")}>`,
+    `  </${el("assessmentItem")}>`,
   ]
     .filter((line) => line !== "")
     .join("\n");
 }
 
-function matchItem(exercise: Exercise): string {
+function matchItem(exercise: Exercise, dialect: Dialect): string {
+  const { el, at } = dialect;
   const pairs = exercise.pairs ?? [];
-  const correctValues = pairs.map((_pair, index) => `        <value>L${index} R${index}</value>`).join("\n");
-  const leftSet = pairs
-    .map((pair, index) => `        <simpleAssociableChoice identifier="L${index}" matchMax="1">${escapeText(pair.left)}</simpleAssociableChoice>`)
+  const correctValues = pairs
+    .map((_pair, index) => `        <${el("value")}>L${index} R${index}</${el("value")}>`)
     .join("\n");
-  const rightSet = pairs
-    .map((pair, index) => `        <simpleAssociableChoice identifier="R${index}" matchMax="1">${escapeText(pair.right)}</simpleAssociableChoice>`)
-    .join("\n");
+  const choice = (id: string, text: string): string =>
+    `        <${el("simpleAssociableChoice")} identifier="${id}" ${at("matchMax")}="1">${escapeText(text)}</${el("simpleAssociableChoice")}>`;
+  const leftSet = pairs.map((pair, index) => choice(`L${index}`, pair.left)).join("\n");
+  const rightSet = pairs.map((pair, index) => choice(`R${index}`, pair.right)).join("\n");
   return [
-    `  <assessmentItem identifier="${escapeAttr(exercise.id)}" title="${escapeAttr(exercise.id)}" adaptive="false" timeDependent="false">`,
-    `    <responseDeclaration identifier="RESPONSE" cardinality="multiple" baseType="directedPair">`,
-    `      <correctResponse>`,
+    itemOpen(exercise, dialect),
+    `    <${el("responseDeclaration")} identifier="RESPONSE" cardinality="multiple" ${at("baseType")}="directedPair">`,
+    `      <${el("correctResponse")}>`,
     correctValues,
-    `      </correctResponse>`,
-    `    </responseDeclaration>`,
-    `    <itemBody>`,
-    `      <matchInteraction responseIdentifier="RESPONSE" shuffle="false" maxAssociations="0">`,
-    `        <prompt>${escapeText(exercise.prompt)}</prompt>`,
-    `        <simpleMatchSet>`,
+    `      </${el("correctResponse")}>`,
+    `    </${el("responseDeclaration")}>`,
+    `    <${el("itemBody")}>`,
+    `      <${el("matchInteraction")} ${at("responseIdentifier")}="RESPONSE" shuffle="false" ${at("maxAssociations")}="0">`,
+    `        <${el("prompt")}>${escapeText(exercise.prompt)}</${el("prompt")}>`,
+    `        <${el("simpleMatchSet")}>`,
     leftSet,
-    `        </simpleMatchSet>`,
-    `        <simpleMatchSet>`,
+    `        </${el("simpleMatchSet")}>`,
+    `        <${el("simpleMatchSet")}>`,
     rightSet,
-    `        </simpleMatchSet>`,
-    `      </matchInteraction>`,
-    `    </itemBody>`,
-    `  </assessmentItem>`,
+    `        </${el("simpleMatchSet")}>`,
+    `      </${el("matchInteraction")}>`,
+    `    </${el("itemBody")}>`,
+    `  </${el("assessmentItem")}>`,
   ].join("\n");
 }
 
-function itemFor(exercise: Exercise): string {
-  if (exercise.type === "multiple_choice") return choiceItem(exercise);
-  if (exercise.type === "free_text") return textEntryItem(exercise);
-  return matchItem(exercise);
+function itemFor(exercise: Exercise, dialect: Dialect): string {
+  if (exercise.type === "multiple_choice") return choiceItem(exercise, dialect);
+  if (exercise.type === "free_text") return textEntryItem(exercise, dialect);
+  return matchItem(exercise, dialect);
 }
 
 /**
- * Serialise a {@link Lesson} to a QTI 2.x ``assessmentTest`` document.
- * Throws {@link QtiExportError} listing any exercise whose type is outside the
+ * Serialise a {@link Lesson} to a QTI ``assessmentTest`` document in the 2.x
+ * dialect (default) or the 3.0 dialect (``{ version: "3.0" }``). Throws
+ * {@link QtiExportError} listing any exercise whose type is outside the
  * mappable subset. Theory steps are dropped (documented fidelity limit).
  */
-export function exportQti(lesson: Lesson): string {
+export function exportQti(lesson: Lesson, options: QtiExportOptions = {}): string {
+  const dialect = dialectFor(options.version ?? "2.x");
+  const { el, at } = dialect;
   const exercises = lesson.steps
     .filter((step) => step.type === "exercise" && step.exercise != null)
     .map((step) => step.exercise as Exercise);
@@ -150,16 +184,17 @@ export function exportQti(lesson: Lesson): string {
     );
   }
 
-  const items = exercises.map(itemFor).join("\n");
+  const items = exercises.map((exercise) => itemFor(exercise, dialect)).join("\n");
+  const title = escapeAttr(lesson.title);
   return [
     `<?xml version="1.0" encoding="UTF-8"?>`,
-    `<assessmentTest xmlns="${QTI_NS}" identifier="${escapeAttr(lesson.id)}" title="${escapeAttr(lesson.title)}">`,
-    `  <testPart identifier="part1" navigationMode="linear" submissionMode="individual">`,
-    `    <assessmentSection identifier="section1" title="${escapeAttr(lesson.title)}" visible="true">`,
+    `<${el("assessmentTest")} xmlns="${dialect.namespace}" identifier="${escapeAttr(lesson.id)}" title="${title}">`,
+    `  <${el("testPart")} identifier="part1" ${at("navigationMode")}="linear" ${at("submissionMode")}="individual">`,
+    `    <${el("assessmentSection")} identifier="section1" title="${title}" visible="true">`,
     items,
-    `    </assessmentSection>`,
-    `  </testPart>`,
-    `</assessmentTest>`,
+    `    </${el("assessmentSection")}>`,
+    `  </${el("testPart")}>`,
+    `</${el("assessmentTest")}>`,
     ``,
   ].join("\n");
 }
