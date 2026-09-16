@@ -5,7 +5,7 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
-## [Unreleased]
+## [0.25.0] - 2026-09-16
 
 ### QTI 3.0 dialect for the QTI adapter (engine#158)
 
