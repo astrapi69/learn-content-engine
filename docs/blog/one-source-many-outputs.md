@@ -72,12 +72,13 @@ For the tooling-minded: a content repo runs this as two gates in CI, and both mu
 
 ## One source, many outputs
 
-Once the source is canonical and valid, each output is a projection of it. None of the three below re-authors the content; each renders the one source into its own shape.
+Once the source is canonical and valid, each output is a projection of it. None of the four below re-authors the content; each renders the one source into its own shape.
 
 ```
-                                    ├─ app   : interactive exercise + spaced repetition
-  lesson JSON  -->  validate   -->  ├─ print : student test PDF + teacher answer key
-  + manifest.yaml   canonicalize    └─ LMS   : QTI 2.x import / export (mappable subset) 
+                                    +- app   : interactive exercise + spaced repetition
+  lesson JSON  -->  validate   -->  +- print : student test PDF + teacher answer key
+  + manifest.yaml   canonicalize    +- SRS   : Anki deck (.apkg), note GUIDs from stable_id
+                                    +- LMS   : QTI 2.x / 3.0 import / export (mappable subset)
 ```
 
 ### The app: interactive, with memory
@@ -93,9 +94,13 @@ For the school-test case, a small teacher-facing tool reads a graded-quiz lesson
 
 Notably, this tool is *standalone*: it reads the canonical lesson and renders a presentation of it, but it doesn't invoke the engine at all, so it isn't tied to any particular engine version. That is the boundary working in your favor: a new output can be built as an independent tool against the same source, without becoming entangled in the core.
 
+### The Anki deck: for the largest spaced-repetition community
+
+Every content repository can turn a set into an Anki deck with one command (`make export-anki`). Cards and the mappable exercise types become notes; theory steps, picture choice and extension types are skipped and named in the report, never silently. The detail that matters: each note's GUID derives from the element's `stable_id`, so re-importing a newer export into Anki updates the notes and keeps the learner's scheduling instead of duplicating them. The identity promise the format makes inside this pipeline travels with the content. Like the PDF tool, it is a consumer tool that reads the canonical lesson and never invokes the engine.
+
 ### The LMS export: honest about its limits
 
-To move content in and out of an LMS, the engine ships an optional **QTI 2.x adapter** behind a subpath import (`learn-content-engine/qti`), so its XML dependency never touches the dependency-free core. It maps the subset that maps *faithfully*:
+To move content in and out of an LMS, the engine ships an optional **QTI adapter** behind a subpath import (`learn-content-engine/qti`), so its XML dependency never touches the dependency-free core. It reads QTI 2.x and QTI 3.0 (the dialect is detected from the document) and writes either, and `learn-content-engine qti import` / `qti export` expose both directions on the command line. It maps the subset that maps *faithfully*:
 
 | QTI interaction | Engine type |
 |---|---|

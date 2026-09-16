@@ -72,12 +72,13 @@ Für die Tooling-Interessierten: Ein Content-Repo fährt das als zwei Gates in d
 
 ## Eine Quelle, viele Ausgaben
 
-Sobald die Quelle kanonisch und gültig ist, ist jede Ausgabe eine Projektion davon. Keine der drei unten autoriert den Inhalt neu; jede rendert die eine Quelle in ihre eigene Form.
+Sobald die Quelle kanonisch und gültig ist, ist jede Ausgabe eine Projektion davon. Keine der vier unten autoriert den Inhalt neu; jede rendert die eine Quelle in ihre eigene Form.
 
 ```
-                                    ├─ app   : interactive exercise + spaced repetition
-  lesson JSON  ──▶  validate   ──▶  ├─ print : student test PDF + teacher answer key
-  + manifest.yaml   canonicalize    └─ LMS   : QTI 2.x import / export (mappable subset) 
+                                    +- app   : interaktive Übung + Spaced Repetition
+  lesson JSON  -->  validate   -->  +- print : Schülertest-PDF + Lösungsblatt
+  + manifest.yaml   canonicalize    +- SRS   : Anki-Deck (.apkg), Notiz-GUIDs aus stable_id
+                                    +- LMS   : QTI 2.x / 3.0 Import / Export (abbildbare Teilmenge)
 ```
 
 ### Die App: interaktiv, mit Gedächtnis
@@ -93,9 +94,13 @@ Für den Schultest-Fall liest ein kleines, auf Lehrende zielendes Werkzeug eine 
 
 Bemerkenswert: Dieses Werkzeug ist *eigenständig*. Es liest die kanonische Lektion und rendert eine Darstellung davon, ruft aber die Engine gar nicht auf, hängt also an keiner bestimmten Engine-Version. Das ist die Grenze, die für Sie arbeitet: Eine neue Ausgabe kann als unabhängiges Werkzeug gegen dieselbe Quelle gebaut werden, ohne sich in den Kern zu verstricken.
 
+### Das Anki-Deck: für die größte Spaced-Repetition-Community
+
+Jedes Content-Repository macht aus einem Set mit einem Befehl ein Anki-Deck (`make export-anki`). Karten und die abbildbaren Aufgabentypen werden zu Notizen; Theorieschritte, Bildauswahl und Erweiterungstypen werden ausgelassen und im Bericht benannt, nie still. Das Detail, das zählt: Die GUID jeder Notiz leitet sich aus der `stable_id` des Elements ab, sodass ein erneuter Import eines neueren Exports die Notizen in Anki aktualisiert und den Lernstand behält, statt Duplikate anzulegen. Das Identitätsversprechen, das das Format innerhalb dieser Pipeline gibt, reist mit dem Content. Wie das PDF-Werkzeug ist es ein Konsumenten-Werkzeug, das die kanonische Lektion liest und die Engine nie aufruft.
+
 ### Der LMS-Export: ehrlich über seine Grenzen
 
-Um Inhalte in ein LMS und wieder heraus zu bewegen, liefert die Engine einen optionalen **QTI-2.x-Adapter** hinter einem Subpath-Import (`learn-content-engine/qti`), damit seine XML-Abhängigkeit den abhängigkeitsfreien Kern nie berührt. Er bildet die Teilmenge ab, die sich *treu* abbilden lässt:
+Um Inhalte in ein LMS und wieder heraus zu bewegen, liefert die Engine einen optionalen **QTI-Adapter** hinter einem Subpath-Import (`learn-content-engine/qti`), damit seine XML-Abhängigkeit den abhängigkeitsfreien Kern nie berührt. Er liest QTI 2.x und QTI 3.0 (der Dialekt wird am Dokument erkannt) und schreibt beide, und `learn-content-engine qti import` / `qti export` stellen beide Richtungen auf der Kommandozeile bereit. Er bildet die Teilmenge ab, die sich *treu* abbilden lässt:
 
 | QTI-Interaktion                       | Engine-Typ      |
 |---------------------------------------|-----------------|

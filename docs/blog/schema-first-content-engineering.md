@@ -15,7 +15,7 @@ tags: [architecture, schema-design, typescript, content-engineering]
 
 `learn-content-engine` is a framework-agnostic TypeScript library that parses and validates learning content: language courses foremost, though a `domain` field (a known-values-plus-other vocabulary since engine 0.20.0) lets the same shape carry other knowledge domains (tech courses, driving-test prep, psychology). It turns raw sources (lesson JSON plus a `manifest.yaml`) into a canonical internal shape, and it is the single source of truth for the lesson schema, currently version 1.14.
 
-The core is deliberately small. No rendering, no persistence, no networking; its only runtime dependency is a YAML parser. What it offers is pure validation and transformation. That minimalism is the point, and it forces one hard question: *how do you evolve a content schema without breaking every consumer that depends on it?*
+The core is deliberately small. No rendering, no persistence, no networking; its runtime dependencies are a YAML parser and a JSON-Schema validator, and the QTI adapter's XML parser sits behind its own subpath so it never enters the core import. What it offers is pure validation and transformation. That minimalism is the point, and it forces one hard question: *how do you evolve a content schema without breaking every consumer that depends on it?*
 
 Language-learning content does not hold still. New exercise types keep appearing (categorization, error-correction, graded quizzes), old ones fade, and edge cases surface in production that no one designed for. A content schema has to be stable enough to version content across several repositories, yet loose enough to absorb pedagogical ideas that weren't imagined when it was written. Stability versus evolution: that tension is the whole design problem, and the rest of this note is how we resolved it.
 
@@ -81,7 +81,7 @@ What this buys is room to move: experiment without destabilizing the core, chang
 
 ## Four adoptions, one recipe
 
-Four extension types have gone through this path end to end. Each stressed a different part of the design.
+Four extension types had gone through this path end to end when this was written; twelve reference extensions exist today, and the app renders all of them. One idea went the other way: parametric exercises became a core field (`variables`, schema 1.14), because their `{{name}}` references live in `prompt` and `accept`, which is exactly the "does it need the core fields" test below answering yes. The fourth article of this series tells that story. The four below each stressed a different part of the design.
 
 ### `ext:al-categorization`: sorting into buckets
 

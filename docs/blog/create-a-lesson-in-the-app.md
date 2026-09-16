@@ -7,7 +7,7 @@ tags: [tutorial, authoring, adaptive-learner, walkthrough]
 
 # Create a Lesson in the App, Step by Step
 
-*A hands-on walkthrough of the lesson creator in adaptive-learner: the classic four wizard steps from an empty form to a saved, schema-valid lesson, the book path that turns pasted or uploaded textbook chapters into knowledge lessons, the extension path that makes the six advanced exercise types authorable without JSON, and the wizard's edit mode. Every screenshot in this guide comes from the running app, captured during the exact flow described. The app is under active development, so a detail or two may have moved on by the time you read this - the flow stays the reliable guide.*
+*A hands-on walkthrough of the lesson creator in adaptive-learner: the classic four wizard steps from an empty form to a saved, schema-valid lesson, the book path that turns pasted or uploaded textbook chapters into knowledge lessons, the extension path that makes the six advanced exercise types authorable without JSON, and the wizard's edit mode. Every screenshot in this guide comes from the running app, captured during the exact flow described. The app is under active development, so a detail or two may have moved on by the time you read this: the flow stays the reliable guide.*
 
 `adaptive-learner` · for teachers and content authors · part 3 of the series
 
@@ -123,9 +123,9 @@ The six core types cover the everyday drill. Some exercise shapes do not fit any
 
 ![Step 1 with the template row: the four starter templates plus the book-text and Advanced exercise types entries](assets/create-lesson/e1-extensions-entry.png)
 
-Choosing it switches to a shorter three-step flow: metadata, exercises, review. No card step, because extension exercises carry their own content rather than drawing on cards. **Add extension exercise** opens the type picker, and all six adopted types are there:
+Choosing it switches to a shorter three-step flow: metadata, exercises, review. No card step, because extension exercises carry their own content rather than drawing on cards. **Add extension exercise** opens the type picker, and every type the wizard supports is there, ten as of September 2026:
 
-![The extension type picker with all six adopted types](assets/create-lesson/e2-type-picker.png)
+![The extension type picker (July screenshot with the six types of that time; the picker offers ten today)](assets/create-lesson/e2-type-picker.png)
 
 The picker shows the technical type ids, which is honest about what you are authoring: each is a namespaced `ext:` type that the lesson will declare in `requires_extensions`, so a consumer without that extension refuses the lesson loudly instead of mis-rendering it. Here is what each one is for, with a small example from a French course for German speakers:
 
@@ -137,6 +137,12 @@ The picker shows the technical type ids, which is honest about what you are auth
 | `ext:al-graded-quiz` | Works through a scored question set with a pass mark | Three questions on greetings, one point each, pass at 2 of 3 |
 | `ext:al-dictation` | Listens to a clip and types what was said | Hear *"Comment ça va?"*, accepted with or without the accent |
 | `ext:al-image-description` | Looks at a picture and types a description or answer | Shown a café table, type *"Il y a une tasse de café et un croissant."* |
+| `ext:al-speak-and-record` | Hears a sentence, reveals its text, records their own voice; ungraded, for self-review | Hear *"Je voudrais un café, s'il vous plaît."*, then say it |
+| `ext:al-ordering` | Puts items into the correct order | Order the steps of introducing yourself: *Bonjour*, *Je m'appelle Anna*, *Enchantée* |
+| `ext:al-hotspot` | Taps the correct region of an image | Shown a café scene, tap *la tasse* |
+| `ext:al-parsons` | Arranges scrambled code lines by order and indentation; built for the programming sets | A three-line Python function whose `return` has to sit inside the `def` |
+
+The last three arrived in September 2026 together with the app's adoption of the engine's hotspot, ordering and Parsons reference extensions.
 
 Dictation's editor shows what a self-contained extension payload looks like:
 
