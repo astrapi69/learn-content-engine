@@ -1,7 +1,7 @@
 # **Comparative Analysis of Exercise Types in E-Learning Platforms**
 **Benchmark Study for the `learn-content-engine` (package 0.25.1, lesson schema 1.14)**
 
-**Version:** 1.6  
+**Version:** 1.7  
 **Date:** September 16, 2026  
 **Author:** Asterios Raptis (astrapi69)  
 **Project:** learn-content-engine / adaptive-learner  
@@ -17,7 +17,7 @@ The analysis demonstrates that the engine, with its six core exercise types (`ma
 
 The identified gaps (hotspot interactions, sequencing/ordering tasks, Parsons problems, categorization, audio input) are not architectural deficits, but rather the result of a deliberate **Lean-Core Design** decision. The `ext:<vendor>-<name>` extension concept aligns with modern best practices (comparable to QTI 3.0 Portable Custom Interactions) and enables the incremental introduction of specialized exercise types without bloating the core schema.
 
-**State of play (version 1.6 of this document):** on the engine side every row of the matrix is covered. Every one of the five extension gaps has a reference extension under `src/examples/ext-ref-*` (three existed before this document was written: ordering, categorization, three audio variants; hotspot and Parsons were added in response to it, engine#149). The sixth gap, parametric exercises, became a core field in schema 1.14 (`variables`, engine#151, references opt-in since 0.24.1). The interchange boundary speaks QTI 2.x and QTI 3.0 since 0.25.0 (engine#158). What remains open is **consumer adoption** in `adaptive-learner`, tracked as three issues: adaptive-learner#3108 (pin 0.24.1, mirror schema 1.14), adaptive-learner#3109 (the sampling, substitution and grading half of `variables`), adaptive-learner#3110 (adopt hotspot, Parsons and ordering under the app's vendor namespace).
+**State of play (version 1.7 of this document; section 9 adds the library-level comparison and a verdict per use case):** on the engine side every row of the matrix is covered. Every one of the five extension gaps has a reference extension under `src/examples/ext-ref-*` (three existed before this document was written: ordering, categorization, three audio variants; hotspot and Parsons were added in response to it, engine#149). The sixth gap, parametric exercises, became a core field in schema 1.14 (`variables`, engine#151, references opt-in since 0.24.1). The interchange boundary speaks QTI 2.x and QTI 3.0 since 0.25.0 (engine#158). What remains open is **consumer adoption** in `adaptive-learner`, tracked as three issues: adaptive-learner#3108 (pin 0.24.1, mirror schema 1.14), adaptive-learner#3109 (the sampling, substitution and grading half of `variables`), adaptive-learner#3110 (adopt hotspot, Parsons and ordering under the app's vendor namespace).
 
 **Recommendation:** work the three adaptive-learner issues in that order; #3109 and #3110 depend on the pin from #3108. Nothing further is needed on the engine side for the types in this analysis.
 
@@ -151,8 +151,8 @@ Understanding the licensing models and UI accessibility of these platforms is cr
 - **Publicly Accessible UI:** **Yes**. Moodle provides a freely accessible sandbox environment at [sandbox.moodledemo.net](https://sandbox.moodledemo.net) for learners, educators, and administrators. When self-hosted, the UI is natively included in the core package.
 
 ### 3.2 H5P
-- **License:** **MIT License** (Core / Framework).
-- **Open Source:** Yes. Highly permissive. The source code and individual content types are free to use, modify, and deploy commercially. *(Note: H5P.com is the paid SaaS variant, while the underlying framework at H5P.org is open source).*
+- **License:** **GPL-3.0** for the core libraries (`h5p-php-library`, `h5p-editor-php-library`); the individual content types and the third-party standalone player (`tunapanda/h5p-standalone`) are **MIT**. (Corrected in version 1.7 of this document; earlier versions called the core MIT.)
+- **Open Source:** Yes. Content types are permissively licensed; embedding the core into a proprietary platform is a GPL question. *(Note: H5P.com is the paid SaaS variant, while the underlying framework at H5P.org is open source).*
 - **Publicly Accessible UI:** **Yes**. The interactive authoring editor can be tested directly in the browser at [H5P.org](https://h5p.org) (requires a free account). Additionally, free plugins integrate this editor directly into WordPress, Moodle, and Drupal.
 
 ### 3.3 QTI 3.0 (IMS Global / 1EdTech)
@@ -175,7 +175,7 @@ Understanding the licensing models and UI accessibility of these platforms is cr
 | Tool / Standard | License Model | Open Source? | Freely Accessible UI for Testing? |
 | :--- | :--- | :--- | :--- |
 | **Moodle** | GPLv3+ | **Yes** | **Yes** ([sandbox.moodledemo.net](https://sandbox.moodledemo.net)) |
-| **H5P** | MIT | **Yes** | **Yes** ([H5P.org Editor](https://h5p.org)) |
+| **H5P** | GPL-3.0 core, MIT content types and standalone player | **Yes** | **Yes** ([H5P.org Editor](https://h5p.org)) |
 | **QTI 3.0** | Open Standard | *(Specification)* | **Indirectly** (via open-source tools like TAO) |
 | **Canvas LMS** | AGPLv3 | **Yes** | **Yes** (Free-for-Teacher Account) |
 | **Duolingo** | Proprietary | **No** | **Yes** (App/Web as learner; no authoring tool) |
@@ -588,6 +588,85 @@ The `learn-content-engine` (package 0.25.1, schema 1.14) is in an **excellent st
 
 **Recommended Next Step:**  
 Work adaptive-learner#3108, #3109 and #3110 in that order. After them, a learner can play every row of the matrix; the engine side is complete for the types in this analysis.
+
+---
+
+## **9. Library-Level Comparison: Which Is Better, and for What**
+
+Sections 2 to 4 compare platforms and standards by exercise-type coverage. "Which library is better" is a different question, and only partly a fair one: Moodle and Canvas are learning-management systems, Duolingo is a product, QTI is a specification. This section restricts itself to what a developer could actually adopt instead of `learn-content-engine` to model, validate and exchange lesson content, states the verifiable facts, and gives a verdict per use case. It does not name a single winner, because the candidates optimise different things.
+
+### 9.1 What is comparable
+
+| Candidate | What you get | What it is not |
+|---|---|---|
+| **`learn-content-engine`** | A lesson format (JSON Schema), a validator with semantic rules and stable rule ids, generated TypeScript types, stable identity across edits, a QTI 2.x / 3.0 adapter, author tooling (mint, migrate, coverage gates). | Not a renderer, not an authoring UI, not a runtime. The consumer owns all three. |
+| **QTI 3.0 via TAO Community Edition** (`oat-sa/tao-core`) or **`amp-up-io/qti3-item-player`** | The 1EdTech interchange standard with a full assessment platform (TAO) or a Vue item player. Largest interoperability reach of any option. | Not a lesson model (no theory steps, no cards), no semantic validation beyond XSD, no identity across item versions, XML. |
+| **H5P** (`h5p/h5p-php-library`, content types, `tunapanda/h5p-standalone`) | Around fifty finished interactive content types with editor and player, embeddable anywhere. | A runtime and a package format, not a validated data model; no cross-version identity; core is GPL-3.0. |
+| **LiaScript** (`LiaScript/LiaScript`) | Courses as Markdown with inline quizzes, surveys and code, plus an interpreter/player; git-friendly text; free hosting via the LiaScript viewer. | Quizzes are inline syntax, not a typed schema you can validate or query; no identity, no SRS, player is Elm. |
+| **Anki deck format via `kerrickstaley/genanki`** | The largest spaced-repetition ecosystem there is, with a Python library to build decks. | Cards, not typed exercises; no validator; identity is Anki's note id; the format is an SQLite package. |
+| **Moodle XML / GIFT** | Teacher-facing question formats every Moodle instance imports. | Formats inside Moodle (GPL-3.0, PHP); no standalone library; question bank semantics, not lessons. |
+
+Excluded on purpose: Learnosity (proprietary, no public source), Open edX OLX (bound to the platform), SCORM and xAPI (packaging and tracking, not content models).
+
+### 9.2 Facts (GitHub API, 2026-09-16)
+
+| Repository | License | Language | Stars | Last push | Maintenance |
+|---|---|---|---|---|---|
+| `astrapi69/learn-content-engine` | MIT | TypeScript | 1 | 2026-09-16 | one maintainer (148 of 153 commits), AI-assisted |
+| `h5p/h5p-php-library` | GPL-3.0 | PHP | 150 | 2026-09-15 | H5P Group |
+| `tunapanda/h5p-standalone` | MIT | TypeScript | 343 | 2026-03-24 | community |
+| `LiaScript/LiaScript` | BSD-3-Clause | Elm | 282 | 2026-09-15 | small team (TU Freiberg origin) |
+| `oat-sa/tao-core` | GPL-2.0 | PHP | 64 | 2026-09-15 | Open Assessment Technologies |
+| `amp-up-io/qti3-item-player` | MIT | Vue | 30 | 2025-06-21 | one company |
+| `kerrickstaley/genanki` | MIT | Python | 2701 | 2024-12-30 | one maintainer |
+| `ankitects/anki` | AGPL-3.0 (own LICENSE file) | Rust | 30612 | 2026-09-16 | Anki team |
+| `moodle/moodle` | GPL-3.0 | PHP | 7410 | 2026-09-16 | Moodle HQ and community |
+
+Runtime footprint of `learn-content-engine`: three dependencies (`yaml`, `ajv`; `@rgrove/parse-xml` only behind the `/qti` subpath), 1146 tests, no framework. Stars measure attention, not quality, but they are the honest proxy for the size of the community that will answer a question or fix a bug.
+
+### 9.3 Criteria
+
+| Criterion | learn-content-engine | QTI 3.0 (TAO, item player) | H5P | LiaScript | Anki / genanki | Moodle XML / GIFT |
+|---|---|---|---|---|---|---|
+| Typed content model with strict schema | yes (`additionalProperties: false`) | XSD, permissive | package manifest, per-type JSON, no strictness contract | no (Markdown grammar) | no | no |
+| Semantic validation with stable rule ids | yes (`E-*`, `W-*`, documented) | no | no | no | no | no |
+| Identity across content edits | yes (`stable_id`, `retired_ids`) | per package identifier | no | no | note id | no |
+| Git-friendly text format | yes (JSON, YAML) | XML, workable | zipped packages | best in class (Markdown) | SQLite in a zip | XML / plain text |
+| Extension contract | yes (`ext:` namespace, declared, pinned, refused loudly) | PCI (JS runtime contract) | content types (JS runtime) | inline macros | no | no |
+| LMS interchange | via QTI adapter, mappable subset | native, the standard | via LTI / plugins | export to SCORM / IMS | no | native for Moodle |
+| Finished renderers | no | TAO, item player | yes, around fifty | yes, the player | Anki clients | Moodle |
+| Authoring UI in the package | no (the consumer app has one) | TAO | yes | any text editor plus live preview | Anki desktop | Moodle |
+| Spaced-repetition fit | designed for it (identity, per-element ids) | no | no | no | the reference | no |
+| Federation of content repositories | yes (registry, search index, gates) | no | H5P Hub (central) | no | AnkiWeb shared decks (central) | no |
+| Community size | very small | large (assessment industry) | large | medium | very large | very large |
+| Bus factor | one person | organisations | organisation | small team | one person (genanki), team (Anki) | organisation |
+
+### 9.4 Verdict, by use case
+
+1. **You run or integrate with an LMS and need interchange.** QTI 3.0 through TAO or an item player, or Moodle XML for Moodle. `learn-content-engine` only bridges to QTI for its mappable subset; it is not a substitute.
+2. **You want finished interactive content with an editor, embedded in an existing site.** H5P, with the GPL-3.0 core license as the one thing to check. `learn-content-engine` ships no renderer at all.
+3. **You write courses as text and want a free player.** LiaScript is the closest in spirit (git, Markdown, open license) and better at author ergonomics; it gives up typed validation, identity and SRS, which is fine for a course and not fine for a drill app.
+4. **You need spaced repetition at scale with an existing community.** Anki plus genanki. Cards rather than typed exercises, and no validator, but thirty thousand stars of ecosystem.
+5. **You build your own learning application and need a strict, validated, versioned content format, content maintained in git with CI gates, identity that survives edits, and a federation of content repositories.** `learn-content-engine`. It is the only candidate built as a library for exactly this, and the only one with semantic rules and stable ids. Its weaknesses are not in the design: one consumer, one maintainer, one star, no renderer, no authoring UI in the package. A team choosing it takes on the bus factor and the ecosystem size; the mitigations are the ones already in place (strict gates, byte-pinned schema mirrors, documented contracts, a docs site), and they do not remove the risk.
+
+Objective summary: there is no better library in general. Each candidate wins the use case it was built for, and `learn-content-engine` wins exactly one, the fifth, which is the one this ecosystem has. The trade it makes for that fit is size. That is the fair sentence to put in front of anyone deciding.
+
+```mermaid
+quadrantChart
+  title What each candidate optimises
+  x-axis "Content model and validation" --> "Runtime and authoring"
+  y-axis "Single application" --> "Interchange and ecosystem"
+  quadrant-1 "Ecosystem runtimes"
+  quadrant-2 "Interchange standards"
+  quadrant-3 "Application-specific models"
+  quadrant-4 "Embeddable players"
+  "learn-content-engine": [0.15, 0.25]
+  "QTI 3.0 / TAO": [0.3, 0.9]
+  "Moodle XML / GIFT": [0.25, 0.75]
+  "H5P": [0.85, 0.7]
+  "LiaScript": [0.6, 0.45]
+  "Anki / genanki": [0.75, 0.85]
+```
 
 ---
 
