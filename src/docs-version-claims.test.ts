@@ -37,10 +37,19 @@ const MANIFEST_SCHEMA_VERSION = (
     }
 ).properties.schema_version.default;
 
+/** The npm package version is a third counter, distinct from both schema
+ *  versions: docs/comparative-analysis.md names it next to the schema
+ *  version in its header and conclusion, and a release bumps one without the
+ *  other. */
+const PACKAGE_VERSION = (JSON.parse(readFileSync("package.json", "utf-8")) as {version: string}).version;
+
 /** Markdown emphasis that may wrap the version token itself. `currently
  *  `1.7`` was a stale claim in exactly the gated phrasing, and the gate read
  *  past it because the pattern had no room for the backticks. */
 const WRAPPED_VERSION = "[`*_]{0,2}v?(\\d+\\.\\d+)[`*_]{0,2}";
+
+/** Same, for a three-part package version (`0.25.0`). */
+const WRAPPED_PACKAGE_VERSION = "[`*_]{0,2}v?(\\d+\\.\\d+\\.\\d+)[`*_]{0,2}";
 
 /** Word gap that survives Markdown's own line wrapping. A literal `" "`
  *  only matches a real space - it silently misses a claim whose prose
@@ -73,6 +82,13 @@ const CLAIM_PATTERNS = [
         ),
         expected: MANIFEST_SCHEMA_VERSION,
     },
+    // "package 0.25.0" and "package is at **0.25.0**" assert the PRESENT
+    // package version; "since 0.25.0" / "as of v0.6.0" are history and stay
+    // ungated on purpose.
+    {
+        pattern: new RegExp(`package${GAP}(?:is${GAP}at${GAP})?${WRAPPED_PACKAGE_VERSION}`, "g"),
+        expected: PACKAGE_VERSION,
+    },
 ];
 
 /** One stale example per supported phrasing. A phrasing added without an
@@ -84,6 +100,8 @@ const SEEDED_STALE_CLAIMS = [
     "Tracks the lesson schema at **v0.1**.",
     "pinned to the schema at v0.1",
     "the manifest schema_version field currently defaults to 0.1",
+    "the npm package is at **0.1.0**, the lesson schema",
+    "(package 0.1.0, lesson schema 1.14)",
 ];
 
 function markdownFilesUnder(rootDir: string): string[] {
