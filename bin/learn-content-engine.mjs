@@ -15,6 +15,7 @@ import { parse as parseYaml } from "yaml";
 import { parseLintArgs, lintContent, formatReports } from "../dist/cli.js";
 import { parseMigrateArgs, migrateContent, formatMigrateReports } from "../dist/migrate.js";
 import { parseMintArgs, mintStableIds, formatMintReports } from "../dist/mint-stable-ids.js";
+import { parseQtiArgs, runQtiImport, runQtiExport, formatQtiResult } from "../dist/qti-command.js";
 import {
   computeStableIdCoverage,
   formatCoverageResult,
@@ -250,6 +251,35 @@ if (argv[0] === "check-stable-id-coverage") {
 
   const { text, exitCode } = formatCoverageResult(computeStableIdCoverage(coverageSets), baseline);
   console.log(text);
+  process.exit(exitCode);
+}
+
+// `qti import|export` converts ONE document per run (engine#164): an action
+// plus an optional --out instead of a file list, so it sits beside the
+// per-file table rather than in it. The core never touches the filesystem;
+// the document goes to --out when given, else to stdout so it composes.
+if (argv[0] === "qti") {
+  const qtiArgs = parseQtiArgs(argv);
+  if ("error" in qtiArgs) {
+    console.error(qtiArgs.error);
+    process.exit(2);
+  }
+  let input;
+  try {
+    input = readFileSync(qtiArgs.path, "utf8");
+  } catch (error) {
+    console.error(`cannot read ${qtiArgs.path}: ${String(error)}`);
+    process.exit(2);
+  }
+  const result =
+    qtiArgs.action === "import"
+      ? runQtiImport(input, { id: qtiArgs.id, title: qtiArgs.title })
+      : runQtiExport(input, qtiArgs.version);
+  if (result.ok && qtiArgs.out !== undefined) {
+    writeFileSync(qtiArgs.out, result.text);
+  }
+  const { text, exitCode } = formatQtiResult(result, { path: qtiArgs.path, out: qtiArgs.out });
+  (exitCode === 0 ? console.log : console.error)(text.endsWith("\n") ? text.slice(0, -1) : text);
   process.exit(exitCode);
 }
 

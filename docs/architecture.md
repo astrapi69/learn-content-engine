@@ -35,13 +35,14 @@ and persistence stay in the consumer because they are environment-specific
 (browser vs. server vs. CLI); keeping them out is what makes the engine reusable
 across any host. The boundary is stated without any consumer internals.
 
-## The author CLI (lint / migrate / suggest-wiring)
+## The author CLI (lint / migrate / suggest-wiring / qti)
 
 The CLI subcommands share one architecture, split along the same boundary as
 the library itself:
 
 - **A filesystem-free core per command** (`src/cli.ts`, `src/migrate.ts`,
-  `src/suggest-wiring.ts`, shared plumbing in `src/file-command.ts`): pure
+  `src/suggest-wiring.ts`, `src/qti-command.ts`, shared plumbing in
+  `src/file-command.ts`): pure
   functions from raw JSON text to a typed report: fully unit-tested, no I/O.
   Rule *definitions* stay where they live (the validator: `suggest-wiring`
   reuses the `W-CARD-UNUSED` core instead of re-deriving it); the command core

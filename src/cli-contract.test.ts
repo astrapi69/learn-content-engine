@@ -3,6 +3,7 @@ import { describe, it, expect } from "vitest";
 import { formatReports } from "./cli.js";
 import { formatMigrateReports } from "./migrate.js";
 import { formatMintReports, mintStableIds } from "./mint-stable-ids.js";
+import { formatQtiResult } from "./qti-command.js";
 import { formatCoverageResult } from "./stable-id-coverage.js";
 import { formatSuggestWiringReports } from "./suggest-wiring.js";
 
@@ -49,6 +50,12 @@ const CASES = [
     // destructuring, so it belongs under the same pin.
     command: "check-stable-id-coverage",
     format: () => formatCoverageResult({ covered: 1, total: 2, unminted: ["sets/de/b"] }, 1),
+  },
+  {
+    // Single-document command with an action and --out, handled in its own
+    // shim branch; same destructuring, same pin.
+    command: "qti",
+    format: () => formatQtiResult({ ok: false, text: "", errors: ["q-order: orderInteraction (unsupported)"] }, { path: "item.xml" }),
   },
 ] as const;
 

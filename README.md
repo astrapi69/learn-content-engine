@@ -67,7 +67,7 @@ if (!result.valid) console.error(result.errors); // [{ path, message }, …]
 - [**Authoring patterns**](docs/authoring-patterns.md) - expressing common exercise ideas (true/false, conjugation, synonyms, collocations, word order) with the existing types.
 - [**Validation**](docs/validation.md) - the strict schema, the semantic rules, the error model.
 - [**Extensions**](docs/extensions.md) - opt-in `ext:` exercise types, the portability contract, the registry.
-- [**QTI interop**](docs/qti.md) - the optional QTI import/export adapter (2.x and 3.0 dialects), mapping table, fidelity limits.
+- [**QTI interop**](docs/qti.md) - the optional QTI import/export adapter (2.x and 3.0 dialects) and its `qti import` / `qti export` command, mapping table, fidelity limits.
 - [**Architecture**](docs/architecture.md) - the engine boundary, consumer parity, roadmap.
 - [**Comparative analysis**](docs/comparative-analysis.md) - exercise types benchmarked against Moodle, H5P, QTI 3.0, Canvas and Duolingo; the core / extension / adoption tiers, why not QTI or H5P as the native format, what is still open.
 - [**API reference**](https://astrapi69.github.io/learn-content-engine/api/) - generated TypeDoc for the core and `/qti` entry points.
