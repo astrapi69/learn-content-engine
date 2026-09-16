@@ -1,8 +1,8 @@
 # **Comparative Analysis of Exercise Types in E-Learning Platforms**
 **Benchmark Study for the `learn-content-engine` (package 0.24.0, lesson schema 1.14)**
 
-**Version:** 1.3  
-**Date:** September 15, 2026  
+**Version:** 1.4  
+**Date:** September 16, 2026  
 **Author:** Asterios Raptis (astrapi69)  
 **Project:** learn-content-engine / adaptive-learner  
 **License:** MIT
@@ -441,6 +441,33 @@ flowchart TB
 1. **Parametric Tasks, first cut only:** `variables` (schema 1.14, engine#151) covers the Moodle Calculated / Canvas Formula shape with a deliberately small expression language (arithmetic, parentheses, unary minus) and exercise-level variables. Not covered yet, all additive: lesson-level shared variables, non-uniform distributions, functions and powers in expressions.
 2. **No Complex Mathematics:** No symbolic evaluation (like STACK in Moodle).
 3. **No Graded Speech Input:** The core has no audio field at all (engine#68's decision); the reference extensions cover audio stimulus and ungraded recording; grading a recording (STT, phoneme matching) remains consumer-side and unimplemented.
+
+### 5.3 Why not QTI 3.0 or H5P as the native format
+
+The matrix invites a question the first versions of this document did not ask: the six core types and the twelve reference extensions all exist elsewhere, so why a format of its own instead of adopting one? Because the exercise-type vocabulary is table stakes, not the product. Every platform in section 2 has multiple choice, cloze and matching; what differs is what the format guarantees around them.
+
+What the engine's format provides that none of the five offer as a library:
+
+1. **A strict schema plus a semantic rule layer.** `additionalProperties: false` everywhere, and rules with stable, documented ids (`E-CLOZE-MARKERS`, `E-MC-ONE-CORRECT`, `E-VAR-UNDEFINED`) that a content repository runs in CI without the application. An item with a blank count that does not match its markers is valid QTI and valid H5P; here it is `E-CLOZE-MARKERS`.
+2. **Stable identity.** `stable_id` and `retired_ids` let learner progress and SRS scheduling survive content edits and retirements. QTI item identifiers are per package; H5P content carries no identity across versions.
+3. **Content as git repositories.** Ten repositories with gates (validate, lint, stable-ids, schema drift) and a federated registry (`recommended-repos.json`, `search-index.json`). That needs a text format that diffs line by line and a schema the repository can mirror byte-for-byte.
+4. **A portability contract for extensions.** Declared per lesson, pinned to a major, refused loudly when a consumer lacks it (`E-EXT-UNSUPPORTED`). The core enum stays the portable authority.
+
+QTI 3.0 as the native format would have bought interoperability with LMS authoring tools and cost all four: it is XML (poor diffs, no strict-shape equivalent), it has no semantic-rule layer, it models tests and items rather than lessons with theory steps and cards, and its Portable Custom Interaction mechanism is the same idea as `ext:` but with a JavaScript runtime contract the engine deliberately does not carry. H5P is a runtime (content type plus player) under MIT; adopting it would have handed the app finished renderers, and with them H5P's packaging, its lack of cross-version identity, and a dependency on the player for every exercise, in an application whose exercise components are small and SRS-integrated.
+
+The interoperability need is real and is met at the boundary rather than in the core. The QTI 2.x adapter (`docs/qti.md`) maps the mappable subset in both directions at the same source-to-canonical seam every source adapter uses, and refuses unsupported interactions loudly (`QtiImportError` with the per-item list). Its fidelity limits are documented: theory steps, cards, hints and examples do not cross; scoring, timing and shuffle are not preserved. A QTI 3.0 reader plugs in as a second adapter when content demands it.
+
+```mermaid
+flowchart LR
+  QTI[QTI 2.x XML] -->|importQti| C[Canonical lesson model]
+  C -->|exportQti, documented fidelity limits| QTI
+  JSON[Lesson JSON: the native format] --> C
+  C --> V[validateLesson: strict schema plus semantic rules]
+  C --> S[stable_id and retired_ids: identity across edits]
+  C --> F[content repos with gates, federated registry]
+```
+
+So the wheel is reused where it turns, at interchange, and owned where it carries weight: validation, identity, federation.
 
 ---
 
