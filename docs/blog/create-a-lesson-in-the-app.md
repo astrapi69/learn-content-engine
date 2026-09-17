@@ -15,7 +15,7 @@ The [previous article](one-source-many-outputs.md) made a promise: you don't hav
 
 ## Where the creator lives
 
-The creator is a page in the app: open `/create-lesson` (or follow the create action from the Content area). On the classic path it is a four-step wizard, and the steps mirror exactly what a lesson *is* in the canonical schema: metadata, cards, exercises, and a final review. You can go back at any step; nothing is saved until you say so. Three more doors lead into the same wizard, and we will walk through each after the classic path: a **book-text path** that builds a knowledge lesson from a pasted textbook chapter, an **extension path** for the advanced exercise types, and an **edit mode** that reopens any lesson you own.
+The creator is a page in the app: open `/create-lesson`, or the **Create** tab in the Content area. On the classic path it is a four-step wizard, and the steps mirror exactly what a lesson *is* in the canonical schema: metadata, cards, exercises, and a final review. You can go back at any step; nothing is saved until you say so. Three more doors lead into the same wizard, and we will walk through each after the classic path: a **book-text path** that builds a knowledge lesson from a pasted textbook chapter, an **extension path** for the advanced exercise types, and an **edit mode** that reopens any lesson you own.
 
 ## Step 1: Lesson details
 
@@ -99,9 +99,11 @@ The four steps above assume vocabulary cards. The wizard has a second way in, bu
 
 ![Step 1 with the template row, including the new "Knowledge lesson from text" card](assets/create-lesson/s5-template-book.png)
 
-Choosing it switches the wizard to a shorter three-step flow: metadata, book text, review. The middle step is where the work happens, and it now takes the text two ways. The first is the original one: paste **one section of a textbook** (a chapter is the right size), optionally add the book reference, and press **Generate theory + exercises**:
+Choosing it switches the wizard to a shorter three-step flow: metadata, book text, review. The middle step is where the work happens, and it now takes the text two ways. The first is the original one: paste **one section of a textbook** (a chapter is the right size), optionally add the book reference, and press **Generate theory + exercises**.
 
-![The book-text step: pasted chapter, the rights hint, book reference fields, and the generate button](assets/create-lesson/s6-book-text.png)
+Above the text field you choose what the AI may build. The five standard types are preselected; four extension types that work from text alone (reading comprehension, graded quiz, categorization, error correction) are there to opt into; picture choice, image description and dictation are greyed out, because images and audio cannot be generated from text, and you add those later in the editor. **Generate explanations** is optional: it adds a rule, a word-for-word gloss and further examples to every exercise, shown to the learner after they answer, at roughly a third to half more AI output per exercise.
+
+![The book-text step: the exercise types to generate, the explanations option, the pasted chapter with the rights hint, and the book reference](assets/create-lesson/s6-book-text.png)
 
 The second way skips the copy-paste round-trips entirely: **Load from file** reads a whole book file (EPUB, DOCX, plain text or Markdown), detects its sections from the document structure, and shows them as a checklist. Sections that look like front or back matter (a preface, a glossary, an index) arrive unchecked; everything else is selected. Pick the chapters you want and one click generates **one lesson per selected section** in a single batch run:
 
@@ -125,7 +127,7 @@ The six core types cover the everyday drill. Some exercise shapes do not fit any
 
 Choosing it switches to a shorter three-step flow: metadata, exercises, review. No card step, because extension exercises carry their own content rather than drawing on cards. **Add extension exercise** opens the type picker, and every type the wizard supports is there, ten as of September 2026:
 
-![The extension type picker (July screenshot with the six types of that time; the picker offers ten today)](assets/create-lesson/e2-type-picker.png)
+![The extension type picker with all ten types the wizard supports](assets/create-lesson/e2-type-picker.png)
 
 The picker shows the technical type ids, which is honest about what you are authoring: each is a namespaced `ext:` type that the lesson will declare in `requires_extensions`, so a consumer without that extension refuses the lesson loudly instead of mis-rendering it. Here is what each one is for, with a small example from a French course for German speakers:
 
@@ -148,7 +150,7 @@ Dictation's editor shows what a self-contained extension payload looks like:
 
 ![The dictation editor: instruction, the audio field with upload and path, and two accepted transcriptions](assets/create-lesson/e3-dictation-fields.png)
 
-Three fields, no more: the instruction the learner sees, the **audio**, and the list of **accepted transcriptions**. The accepted list is why dictation is forgiving in the right way: you decide up front that *"a coffee please"* counts as well as *"A coffee, please."*, so the grader does not have to guess how strict to be about capitals and punctuation.
+Three fields that make the exercise: the instruction the learner sees, the **audio**, and the list of **accepted transcriptions**. A fourth, optional one, **Explanation after the answer**, sits in every exercise editor of the creator, core and extension alike: Markdown the learner sees once they have answered, right or wrong. The accepted list is why dictation is forgiving in the right way: you decide up front that *"a coffee please"* counts as well as *"A coffee, please."*, so the grader does not have to guess how strict to be about capitals and punctuation.
 
 The audio field takes the clip two ways. **Upload audio** stores it self-contained with the lesson, inlined as a data URI, which is the quick path for a lesson you keep locally. Or you type a relative path to a file in the set's `assets` folder, which is what a published repo set wants, because an inlined clip travels inside the lesson JSON and grows it.
 
