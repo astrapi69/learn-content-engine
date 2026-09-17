@@ -7,7 +7,7 @@ tags: [tutorial, authoring, adaptive-learner, walkthrough]
 
 # Eine Lektion in der App erstellen, Schritt für Schritt
 
-*Eine praktische Tour durch den Lektions-Editor in adaptive-learner: die klassischen vier Assistenten-Schritte vom leeren Formular bis zur gespeicherten, schema-gültigen Lektion, der Buch-Pfad, der aus eingefügten oder hochgeladenen Lehrbuchkapiteln Wissens-Lektionen macht, der Erweiterungs-Pfad, der die sechs fortgeschrittenen Übungstypen ohne JSON autorierbar macht, und der Bearbeitungsmodus des Assistenten. Jeder Screenshot in dieser Anleitung stammt aus der laufenden App, aufgenommen während des exakt beschriebenen Ablaufs. Die App wird aktiv weiterentwickelt, ein Detail kann sich also bis zu deiner Lektüre verschoben haben: der Ablauf selbst bleibt der verlässliche Leitfaden.*
+*Eine praktische Tour durch den Lektions-Editor in adaptive-learner: die klassischen vier Assistenten-Schritte vom leeren Formular bis zur gespeicherten, schema-gültigen Lektion, der Buch-Pfad, der aus eingefügten oder hochgeladenen Lehrbuchkapiteln Wissens-Lektionen macht, der Erweiterungs-Pfad, der die sechs fortgeschrittenen Übungstypen ohne JSON autorierbar macht, und der Bearbeitungsmodus des Assistenten. Jeder Screenshot in dieser Anleitung stammt aus der laufenden App, aufgenommen während des exakt beschriebenen Ablaufs. Die App wird aktiv weiterentwickelt, ein Detail kann sich also bis zu Ihrer Lektüre verschoben haben: der Ablauf selbst bleibt der verlässliche Leitfaden.*
 
 `adaptive-learner` · für Lehrende und Content-Autoren · Teil 3 der Serie
 
@@ -15,7 +15,7 @@ Der [vorige Artikel](one-source-many-outputs.md) machte ein Versprechen: Sie mü
 
 ## Wo der Editor lebt
 
-Der Editor ist eine Seite in der App: Öffnen Sie `/create-lesson` (oder folgen Sie der Erstellen-Aktion im Inhalte-Bereich). Auf dem klassischen Pfad ist es ein vierstufiger Assistent, und die Schritte spiegeln genau wider, was eine Lektion im kanonischen Schema *ist*: Metadaten, Karten, Übungen und eine abschließende Überprüfung. Sie können in jedem Schritt zurückgehen; nichts wird gespeichert, bevor Sie es sagen. Drei weitere Türen führen in denselben Assistenten, und wir gehen jede nach dem klassischen Pfad durch: einen **Buch-Text-Pfad**, der aus einem eingefügten Lehrbuchkapitel eine Wissens-Lektion baut, einen **Erweiterungs-Pfad** für die fortgeschrittenen Übungstypen und einen **Bearbeitungsmodus**, der jede eigene Lektion wieder öffnet.
+Der Editor ist eine Seite in der App: Öffnen Sie `/create-lesson` oder den Reiter **Erstellen** im Inhalte-Bereich. Auf dem klassischen Pfad ist es ein vierstufiger Assistent, und die Schritte spiegeln genau wider, was eine Lektion im kanonischen Schema *ist*: Metadaten, Karten, Übungen und eine abschließende Überprüfung. Sie können in jedem Schritt zurückgehen; nichts wird gespeichert, bevor Sie es sagen. Drei weitere Türen führen in denselben Assistenten, und wir gehen jede nach dem klassischen Pfad durch: einen **Buch-Text-Pfad**, der aus einem eingefügten Lehrbuchkapitel eine Wissens-Lektion baut, einen **Erweiterungs-Pfad** für die fortgeschrittenen Übungstypen und einen **Bearbeitungsmodus**, der jede eigene Lektion wieder öffnet.
 
 ## Schritt 1: Lektionsdetails
 
@@ -99,9 +99,11 @@ Die vier Schritte oben setzen Vokabelkarten voraus. Der Assistent hat einen zwei
 
 ![Schritt 1 mit der Vorlagen-Reihe, einschließlich der neuen Karte "Wissens-Lektion aus Text"](assets/create-lesson/s5-template-book.png)
 
-Sie zu wählen schaltet den Assistenten auf einen kürzeren dreistufigen Ablauf um: Metadaten, Buchtext, Überprüfung. Der mittlere Schritt ist, wo die Arbeit passiert, und er nimmt den Text inzwischen auf zwei Wegen an. Der erste ist der ursprüngliche: Sie fügen **einen Abschnitt eines Lehrbuchs** ein (ein Kapitel ist die richtige Größe), fügen optional die Buchangabe hinzu und drücken **Theorie + Übungen generieren**:
+Sie zu wählen schaltet den Assistenten auf einen kürzeren dreistufigen Ablauf um: Metadaten, Buchtext, Überprüfung. Der mittlere Schritt ist, wo die Arbeit passiert, und er nimmt den Text inzwischen auf zwei Wegen an. Der erste ist der ursprüngliche: Sie fügen **einen Abschnitt eines Lehrbuchs** ein (ein Kapitel ist die richtige Größe), fügen optional die Buchangabe hinzu und drücken **Theorie + Übungen generieren**.
 
-![Der Buch-Text-Schritt: eingefügtes Kapitel, der Rechte-Hinweis, die Buchangabe-Felder und die Generieren-Schaltfläche](assets/create-lesson/s6-book-text.png)
+Über dem Textfeld legen Sie fest, was die KI bauen darf. Die fünf Standardtypen sind vorausgewählt; vier Erweiterungstypen, die allein aus Text entstehen können (Leseverständnis, Benotetes Quiz, Kategorisierung, Fehlerkorrektur), lassen sich dazuwählen; Bildauswahl, Bildbeschreibung und Diktat sind ausgegraut, weil sich Bilder und Audio nicht aus Text erzeugen lassen, und Sie ergänzen sie später im Editor. **Erklärungen generieren** ist optional: Es ergänzt jede Übung um eine Regel, eine Wort-für-Wort-Übersetzung und weitere Beispiele, die die lernende Person nach ihrer Antwort sieht, bei etwa einem Drittel bis der Hälfte mehr KI-Ausgabe pro Übung.
+
+![Der Buch-Text-Schritt: die zu erzeugenden Übungstypen, die Erklärungs-Option, das eingefügte Kapitel mit dem Rechte-Hinweis und die Buchangabe](assets/create-lesson/s6-book-text.png)
 
 Der zweite Weg spart die Kopierrunden ganz: **Aus Datei laden** liest eine komplette Buchdatei (EPUB, DOCX, reiner Text oder Markdown), erkennt ihre Abschnitte aus der Dokumentstruktur und zeigt sie als Auswahlliste. Abschnitte, die nach Vor- oder Nachspann aussehen (ein Vorwort, ein Glossar, ein Index), kommen abgewählt an; alles andere ist ausgewählt. Wählen Sie die gewünschten Kapitel, und ein Klick generiert **eine Lektion pro gewähltem Abschnitt** in einem einzigen Batch-Lauf:
 
@@ -125,7 +127,7 @@ Die sechs Kern-Typen decken das alltägliche Einüben ab. Manche Übungsformen p
 
 Ihn zu wählen schaltet auf einen kürzeren dreistufigen Ablauf um: Metadaten, Übungen, Überprüfung. Kein Karten-Schritt, weil Erweiterungsübungen ihren eigenen Inhalt tragen, statt auf Karten zurückzugreifen. **Erweiterungsübung hinzufügen** öffnet die Typ-Auswahl, und jeder Typ, den der Assistent unterstützt, ist da, zehn mit Stand September 2026:
 
-![Die Erweiterungstyp-Auswahl (Screenshot vom Juli mit den sechs Typen von damals; heute bietet die Auswahl zehn)](assets/create-lesson/e2-type-picker.png)
+![Die Erweiterungstyp-Auswahl mit allen zehn Typen, die der Assistent unterstützt](assets/create-lesson/e2-type-picker.png)
 
 Die Auswahl zeigt die Typen unter ihren deutschen Namen. Darunter liegt jeweils ein namensraum-gebundener `ext:`-Typ, den die Lektion in `requires_extensions` deklariert, sodass ein Konsument ohne diese Erweiterung die Lektion laut ablehnt, statt sie falsch darzustellen. Wofür jeder da ist, mit seiner technischen Id und einem kleinen Beispiel aus einem Französisch-Kurs für Deutschsprachige:
 
@@ -148,7 +150,7 @@ Der Diktat-Editor zeigt, wie ein in sich geschlossenes Erweiterungs-Payload auss
 
 ![Der Diktat-Editor: Anweisung, das Audio-Feld mit Hochladen und Pfad, und zwei akzeptierte Transkriptionen](assets/create-lesson/e3-dictation-fields.png)
 
-Drei Felder, nicht mehr: die Anweisung, die die lernende Person sieht, das **Audio** und die Liste der **akzeptierten Transkriptionen**. Die Akzeptanzliste ist der Grund, warum Diktat auf die richtige Weise nachsichtig ist: Sie legen im Voraus fest, dass *"a coffee please"* genauso zählt wie *"A coffee, please."*, sodass der Bewerter nicht raten muss, wie streng er mit Groß-/Kleinschreibung und Zeichensetzung sein soll.
+Drei Felder machen die Übung aus: die Anweisung, die die lernende Person sieht, das **Audio** und die Liste der **akzeptierten Transkriptionen**. Ein viertes, optionales, **Erklärung nach der Antwort**, steht in jedem Übungs-Editor des Assistenten, bei Kern- wie Erweiterungstypen: Markdown, das die lernende Person sieht, sobald sie geantwortet hat, richtig oder falsch. Die Akzeptanzliste ist der Grund, warum Diktat auf die richtige Weise nachsichtig ist: Sie legen im Voraus fest, dass *"a coffee please"* genauso zählt wie *"A coffee, please."*, sodass der Bewerter nicht raten muss, wie streng er mit Groß-/Kleinschreibung und Zeichensetzung sein soll.
 
 Das Audio-Feld nimmt den Clip auf zwei Wegen. **Audio hochladen** legt ihn selbstständig bei der Lektion ab, eingebettet als Data-URI, was der schnelle Weg für eine lokal gehaltene Lektion ist. Oder Sie tippen einen relativen Pfad zu einer Datei im `assets`-Ordner des Sets, was ein veröffentlichtes Repo-Set möchte, weil ein eingebetteter Clip im Lektions-JSON mitreist und es aufbläht.
 
