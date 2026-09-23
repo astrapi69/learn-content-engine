@@ -633,11 +633,13 @@ export function validateManifest(input: unknown): ValidationResult {
       };
     }
   }
-  const evaluationErrors = checkSetEvaluations(normalized);
+  const evaluationIssues = checkSetEvaluations(normalized);
+  const evaluationErrors = evaluationIssues.filter((issue) => issue.severity === "error");
   return {
     valid: evaluationErrors.length === 0,
     errors: evaluationErrors,
     warnings: [
+      ...evaluationIssues.filter((issue) => issue.severity === "warning"),
       ...checkManifestLessonOrdering(manifestMetadata),
       ...checkManifestDomainVocabulary(normalized),
       ...checkRetiredIdsDuplicates(manifestMetadata),
@@ -650,7 +652,12 @@ export function validateManifest(input: unknown): ValidationResult {
  * cannot state. Two of them are "this scheme needs that field" (JSON Schema
  * could express them with if/then, at the price of an error message naming
  * a branch instead of the missing field); the third is a grade table that
- * maps one score to two grades, which no schema keyword covers.
+ * maps one score to two grades, which no schema keyword covers. The fourth
+ * is the only warning here: a table with no row at 0 leaves the runs below
+ * its lowest row without a grade, which a consumer can only paper over with
+ * a fallback label of its own - the opposite of what the block is for. It
+ * stays a warning because "below 50 there is no grade" is a defensible
+ * authoring choice, unlike the ambiguity the DUP rule catches.
  */
 function checkSetEvaluations(manifest: unknown): ValidationIssue[] {
   const sets = (manifest as { sets?: unknown }).sets;
@@ -685,6 +692,17 @@ function checkSetEvaluations(manifest: unknown): ValidationIssue[] {
             "E-EVAL-GRADES-DUP",
             `${path}/grades`,
             "two grade rows share a 'min_percent'; one score would earn two grades, so the table must use a distinct threshold per row",
+            "evaluation",
+          ),
+        );
+      }
+      const floor = thresholds.length > 0 ? Math.min(...thresholds) : 0;
+      if (floor > 0) {
+        issues.push(
+          warn(
+            "W-EVAL-GRADES-NO-FLOOR",
+            `${path}/grades`,
+            `the lowest grade row starts at ${floor} percent, so a run below it earns no grade and the consumer has to invent a label the author never wrote; add a row at 0 unless "no grade down here" is the intent`,
             "evaluation",
           ),
         );

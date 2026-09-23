@@ -729,6 +729,31 @@ describe("manifest schema 1.15 — evaluation on the set entry (engine#171)", ()
     ).toContain("E-EVAL-GRADES-DUP");
   });
 
+  it("W-EVAL-GRADES-NO-FLOOR: a table whose lowest row starts above 0 leaves a run below it without a grade", () => {
+    const checked = validateManifest(
+      setWith({
+        scheme: "grades",
+        grades: [
+          { min_percent: 90, label: "A" },
+          { min_percent: 50, label: "C" },
+        ],
+      }),
+    );
+    expect(checked.warnings.map((issue) => issue.id)).toContain("W-EVAL-GRADES-NO-FLOOR");
+    expect(checked.warnings[0]!.message).toContain("50");
+    expect(checked.valid).toBe(true);
+    expect(checked.errors).toEqual([]);
+  });
+
+  it("W-EVAL-GRADES-NO-FLOOR stays silent when a row starts at 0, whatever the row order", () => {
+    const rows = [
+      { min_percent: 0, label: "F" },
+      { min_percent: 60, label: "C" },
+    ];
+    expect(ids(setWith({ scheme: "grades", grades: rows }))).not.toContain("W-EVAL-GRADES-NO-FLOOR");
+    expect(ids(setWith({ scheme: "grades", grades: [...rows].reverse() }))).not.toContain("W-EVAL-GRADES-NO-FLOOR");
+  });
+
   it("carries no rule when the scheme is absent or percent (the default needs nothing)", () => {
     expect(ids(setWith({ pass_percent: 70 })).filter((id) => id.startsWith("E-EVAL"))).toEqual([]);
     expect(ids(setWith({ scheme: "percent" })).filter((id) => id.startsWith("E-EVAL"))).toEqual([]);

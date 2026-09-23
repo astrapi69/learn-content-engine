@@ -960,8 +960,17 @@ written in any order but each needs its own `min_percent`:
 What the engine checks beyond the shape: a scheme that needs a field has it
 (`E-EVAL-GRADES-MISSING`, `E-EVAL-PASS-MISSING`), and no two grade rows share
 a threshold (`E-EVAL-GRADES-DUP`), because one score would then earn two
-grades. Everything else is the consumer's: sampling the run, computing the
-score, rendering the summary. Absent block, unchanged behaviour.
+grades, and which one wins would depend on the row order.
+
+One table shape is a warning rather than an error: a table whose lowest row
+starts above 0 (`W-EVAL-GRADES-NO-FLOOR`). A run below that row earns no
+grade, so the consumer has to invent a fallback label, and the wording is
+no longer the author's, which is what the block exists for. It stays a
+warning because "below 50 there is simply no grade" can be the intent; the
+example above carries an `F` row at 0 for exactly this reason.
+
+Everything else is the consumer's: sampling the run, computing the score,
+rendering the summary. Absent block, unchanged behaviour.
 
 ## Content domains
 
@@ -1064,6 +1073,7 @@ drifting.
 | `W-SET-ORDER-PREFIX-WIDTH` | Set-level: `NN-` prefixes with different digit widths (`1-` next to `01-` or `10-`). Lexicographic sorting puts `10-` before `2-`; zero-pad every prefix to one fixed width. |
 | `W-SET-ORDER-NUMERIC` | Set-level: the lexicographic display order diverges from the numeric reading of the ids (`kapitel-10` displays before `kapitel-2`). This is the shape of the observed damage case (engine#106); zero-pad the embedded numbers. |
 | `W-RETIRED-IDS-DUP` | Manifest-level ([stable identity](#stable-identity-stable_id)): `metadata.retired_ids` lists the same id more than once. The retirement still works, but the duplicate usually hides a mis-edited entry (engine#131). |
+| `W-EVAL-GRADES-NO-FLOOR` | Manifest-level ([evaluation](#evaluation)): a grade table's lowest `min_percent` is above 0, so a run below it earns no grade and the consumer has to invent a fallback label the author never wrote. A warning, not an error: "below this mark there is no grade" can be the author's intent. |
 | `W-DOMAIN-UNKNOWN` | Manifest-level ([content domains](#content-domains)): a set's `domain` is outside the known vocabulary (`KNOWN_CONTENT_DOMAINS`). It stays valid - the contract is known values plus other - but consumers cannot group it with existing subjects, so the registry's subject facet fragments. Prefer a known domain, or accept the fragmentation deliberately (engine#127). |
 | `W-LEVEL-UNKNOWN` | Manifest-level ([content domains](#content-domains)): a set's `level` is neither a CEFR band (`A1`..`C2`, case-insensitive) nor, for a non-language set, the explicit `none` sentinel. A consumer's level facet would offer the free-text value (`a0`, `einsteiger`, `reflexion` are live examples) as a category (engine#127). |
 | `W-VAR-UNUSED` | A declared [variable](#variables-parametric-exercises) is referenced by no string field and used by no later expression: dead declaration, usually a typo in the reference. |

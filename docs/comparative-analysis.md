@@ -1,8 +1,8 @@
 # **Comparative Analysis of Exercise Types in E-Learning Platforms**
-**Benchmark Study for the `learn-content-engine` (package 0.26.0, lesson schema 1.14)**
+**Benchmark Study for the `learn-content-engine` (package 0.26.0, lesson schema currently 1.15)**
 
-**Version:** 1.8  
-**Date:** September 16, 2026  
+**Version:** 1.9  
+**Date:** September 23, 2026  
 **Author:** Asterios Raptis (astrapi69)  
 **Project:** learn-content-engine / adaptive-learner  
 **License:** MIT
@@ -11,13 +11,13 @@
 
 ## **Executive Summary**
 
-This document presents a systematic comparative analysis of exercise types across established e-learning platforms (Moodle, H5P, QTI 3.0, Canvas LMS, Duolingo) in the context of the `learn-content-engine`. Two version numbers matter and are easy to conflate: the npm package is at **0.26.0**, the lesson schema it validates against is at **1.14** (`x-schema-version` in `schema/lesson.schema.json`). This document benchmarks the schema's exercise types.
+This document presents a systematic comparative analysis of exercise types across established e-learning platforms (Moodle, H5P, QTI 3.0, Canvas LMS, Duolingo) in the context of the `learn-content-engine`. Two version numbers matter and are easy to conflate: the npm package is at **0.26.0**, the lesson schema it validates against is currently **1.15** (`x-schema-version` in `schema/lesson.schema.json`). This document benchmarks the schema's exercise types.
 
 The analysis demonstrates that the engine, with its six core exercise types (`matching`, `picture_choice`, `free_text`, `word_tiles`, `cloze`, `multiple_choice`), fully covers the **global standard for text-based foundational assessments**.
 
 The identified gaps (hotspot interactions, sequencing/ordering tasks, Parsons problems, categorization, audio input) are not architectural deficits, but rather the result of a deliberate **Lean-Core Design** decision. The `ext:<vendor>-<name>` extension concept aligns with modern best practices (comparable to QTI 3.0 Portable Custom Interactions) and enables the incremental introduction of specialized exercise types without bloating the core schema.
 
-**State of play (version 1.8 of this document; section 9 carries the library-level comparison and a verdict per use case):** on the engine side every row of the matrix is covered. Every one of the five extension gaps has a reference extension under `src/examples/ext-ref-*` (three existed before this document was written: ordering, categorization, three audio variants; hotspot and Parsons were added in response to it, engine#149). The sixth gap, parametric exercises, became a core field in schema 1.14 (`variables`, engine#151, references opt-in since 0.24.1). The interchange boundary speaks QTI 2.x and QTI 3.0 since 0.25.0 (engine#158). What remains open is **consumer adoption** in `adaptive-learner`, tracked as three issues: adaptive-learner#3108 (pin 0.24.1, mirror schema 1.14), adaptive-learner#3109 (the sampling, substitution and grading half of `variables`), adaptive-learner#3110 (adopt hotspot, Parsons and ordering under the app's vendor namespace).
+**State of play (version 1.9 of this document; section 9 carries the library-level comparison and a verdict per use case):** on the engine side every row of the matrix is covered. Every one of the five extension gaps has a reference extension under `src/examples/ext-ref-*` (three existed before this document was written: ordering, categorization, three audio variants; hotspot and Parsons were added in response to it, engine#149). The sixth gap, parametric exercises, became a core field in schema 1.14 (`variables`, engine#151, references opt-in since 0.24.1). The interchange boundary speaks QTI 2.x and QTI 3.0 since 0.25.0 (engine#158). What the engine cannot state here is the consumer side: whether `adaptive-learner` has adopted a given extension, and at which pin it runs, is that repository's business and no test here can hold a claim about it. The work was tracked as adaptive-learner#3108 (engine pin and schema mirror), adaptive-learner#3109 (the sampling, substitution and grading half of `variables`) and adaptive-learner#3110 (hotspot, Parsons and ordering under the app's vendor namespace); follow the issues for their status.
 
 **Recommendation:** work the three adaptive-learner issues in that order; #3109 and #3110 depend on the pin from #3108. Nothing further is needed on the engine side for the types in this analysis.
 
@@ -191,7 +191,7 @@ flowchart LR
   Author[Content author] -->|lesson JSON| Core
   Author -->|lesson JSON with requires_extensions| Ref
   subgraph Engine[learn-content-engine]
-    Core[Core types: schema 1.14, ExerciseType enum]
+    Core[Core types: schema 1.15, ExerciseType enum]
     Ref[Reference extensions: src/examples/ext-ref-*]
   end
   Core -->|guaranteed to load| App[adaptive-learner]
@@ -199,7 +199,7 @@ flowchart LR
   Ref -.->|consumer-parity gate| Core
 ```
 
-| **Exercise Type Category** | **Moodle** | **H5P** | **QTI 3.0** | **Duolingo** | **learn-content-engine (schema 1.14)** |
+| **Exercise Type Category** | **Moodle** | **H5P** | **QTI 3.0** | **Duolingo** | **learn-content-engine (schema currently 1.15)** |
 |----------------------------|------------|---------|-------------|--------------|----------------------------------|
 | **Multiple / Single Choice** | ✓ | ✓ | ✓ | ✓ | ✓ Core (`multiple_choice`, `picture_choice`) |
 | **Fill-in-the-Blank (Cloze)** | ✓ | ✓ | ✓ | ✓ | ✓ Core (`cloze`) |
@@ -473,12 +473,15 @@ So the wheel is reused where it turns, at interchange, and owned where it carrie
 
 ## **6. Recommendations for Future Development**
 
-Engine side: done for every row of the matrix (0.25.0). What follows is the consumer side in `adaptive-learner`, tracked as issues there, and two engine items that stay deliberately open.
+Engine side: done for every row of the matrix. What follows is the consumer side in `adaptive-learner` and two engine items that stay deliberately open.
 
-### 6.1 Consumer adoption in `adaptive-learner` (open issues)
-1. **adaptive-learner#3108, pin learn-content-engine 0.24.1 and mirror schema 1.14.** Prerequisite for the other two; no behaviour change by itself. The app is at 0.23.0 / 1.13 as of this document version.
-2. **adaptive-learner#3109, consumer half of `variables`.** One renderer-agnostic step per attempt: sample, evaluate expressions in declaration order, substitute every `{{name}}`, grade a numeric answer within its variable's `tolerance`, record the drawn values. An exercise without `variables` passes through byte-identical.
-3. **adaptive-learner#3110, adopt `ext:ref-hotspot`, `ext:ref-parsons` and `ext:ref-ordering`** as `ext:al-hotspot`, `ext:al-parsons`, `ext:al-ordering`, mirroring the dictation adoption. Target content: `alc-traffic-knowledge` (hotspot, ordering), `alc-programming` (Parsons), `alc-technology` (ordering). Engine halves: `refHotspotExtension`, `refParsonsExtension`, `refOrderingExtension`, all shipped.
+### 6.1 Consumer adoption in `adaptive-learner`
+
+These are the consumer tasks the analysis implies, each tracked in that repository. This document deliberately does not report their status: a statement about another repository's state cannot be held by any test here, and the earlier version of this section drifted for exactly that reason. Open the issues for where they stand.
+
+1. **[adaptive-learner#3108](https://github.com/astrapi69/adaptive-learner/issues/3108):** pin the engine and mirror the lesson schema. Prerequisite for the other two; no behaviour change by itself.
+2. **[adaptive-learner#3109](https://github.com/astrapi69/adaptive-learner/issues/3109), consumer half of `variables`.** One renderer-agnostic step per attempt: sample, evaluate expressions in declaration order, substitute every `{{name}}`, grade a numeric answer within its variable's `tolerance`, record the drawn values. An exercise without `variables` passes through byte-identical.
+3. **[adaptive-learner#3110](https://github.com/astrapi69/adaptive-learner/issues/3110), adopt `ext:ref-hotspot`, `ext:ref-parsons` and `ext:ref-ordering`** as `ext:al-hotspot`, `ext:al-parsons`, `ext:al-ordering`, mirroring the dictation adoption. Target content: `alc-traffic-knowledge` (hotspot, ordering), `alc-programming` (Parsons), `alc-technology` (ordering). Engine halves: `refHotspotExtension`, `refParsonsExtension`, `refOrderingExtension`, all shipped.
 
 ### 6.2 Content
 4. **Extend `ext:al-categorization` usage:** already adopted; target further repositories (`alc-psychology`, `alc-dog-training`).
@@ -530,7 +533,7 @@ stateDiagram-v2
 ## **7. Didactic Framework**
 
 ### 7.1 Bloom's Taxonomy
-The core types (schema 1.14) primarily cover the lower levels:
+The core types (schema currently 1.15) primarily cover the lower levels:
 - **Remembering:** `free_text`, `cloze`, `matching`
 - **Understanding:** `multiple_choice`, `picture_choice`
 - **Applying:** `word_tiles` (limited)
@@ -580,14 +583,14 @@ The extensions enable **Constructive Alignment** (Biggs, 1996): Teaching/learnin
 
 ## **8. Conclusion**
 
-The `learn-content-engine` (package 0.26.0, schema 1.14) is in an **excellent strategic position**:
+The `learn-content-engine` (package 0.26.0, schema currently 1.15) is in an **excellent strategic position**:
 1. **Standard Parity:** The six core exercise types fully cover the global standard for text-based foundational assessments, and the boundary speaks QTI 2.x and QTI 3.0.
 2. **Architectural Maturity:** The `ext:` concept matches modern best practices (QTI 3.0 PCI) and prevents schema bloat.
 3. **Didactic Growth Potential:** Every gap this analysis identified is covered, as a reference extension or as the core `variables` field; the higher Bloom levels are reachable without compromising core stability.
 4. **Cross-Domain Relevance:** The engine is not limited to language learning; the `domain` field actively supports programming, psychology, traffic knowledge, and more.
 
 **Recommended Next Step:**  
-Work adaptive-learner#3108, #3109 and #3110 in that order. After them, a learner can play every row of the matrix; the engine side is complete for the types in this analysis.
+The engine side is complete for the types in this analysis. What a learner can actually play depends on the consumer, which this document does not report on: see the three adaptive-learner issues linked in section 6.1.
 
 ---
 
