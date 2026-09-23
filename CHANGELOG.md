@@ -18,9 +18,12 @@ entry may now declare `evaluation` with `scheme` (`percent`, `pass_fail`,
 `grades` table, `report` (`compact`, `detailed`) and a `title`. The block
 describes ONE lesson run and never aggregates across the set's lessons; the
 engine validates the declaration, while sampling, scoring and rendering
-stay consumer-side. Beyond the shape, three rules: `E-EVAL-GRADES-MISSING`,
-`E-EVAL-PASS-MISSING` and `E-EVAL-GRADES-DUP` (two rows at one threshold
-would earn two grades). `asContentSetEntry` carries the block into the
+stay consumer-side. Beyond the shape, four rules: `E-EVAL-GRADES-MISSING`,
+`E-EVAL-PASS-MISSING`, `E-EVAL-GRADES-DUP` (two rows at one threshold would
+earn two grades, and which one wins would depend on the row order) and the
+one warning, `W-EVAL-GRADES-NO-FLOOR` (a table whose lowest row starts
+above 0 leaves the runs below it to a consumer-invented fallback label;
+a warning because "no grade down here" can be the intent). `asContentSetEntry` carries the block into the
 canonical entry, so a consumer reads it through the engine API.
 
 Set level only in this version; the lesson schema stays strict, so an
