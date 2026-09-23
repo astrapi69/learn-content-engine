@@ -68,9 +68,13 @@ cloze sentence, or the question stem in `multiselect` mode) or the step
 `title` is reported once per matching field, as a warning that never
 blocks. Consumers render the prompt as the heading and the sentence as the
 question box (the title in the step list), so the learner reads the same
-question twice; on a real device this showed up on 10 of 276 exercises in
-one content repo, all cloze, spread over six lessons - a pattern that
-arises while authoring, not a one-off. Compared after trimming and Unicode
+question twice. The lint is type-independent: any exercise that carries a
+`prompt` can trip it. The sample that motivated it happened to be uniform -
+10 of 276 exercises in one content repo, all cloze, spread over six lessons -
+but that was the sample, not the reach: a later run over a grown corpus found
+the same lint on `picture_choice` as well, and there every hit compared
+against the step `title` and none against `sentence`. Either way it is a
+pattern that arises while authoring, not a one-off. Compared after trimming and Unicode
 NFC normalisation (a decomposed umlaut equals its precomposed form); case
 is kept. No schema change, `schema/quality-rules.json` untouched.
 
