@@ -1,4 +1,5 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { describe, it, expect } from "vitest";
@@ -39,4 +40,66 @@ describe("rule catalog completeness", () => {
       expect(catalog).toContain(`\`${id}\``);
     });
   }
+});
+
+/**
+ * The reverse direction (engine#174). The scan above proves the CATALOG covers
+ * the validator. It cannot prove that prose outside the catalog still names
+ * rules that exist: an id quoted in the architecture text and later renamed
+ * would go stale in silence, because nothing reads that document.
+ *
+ * The known set is taken from every non-test source file, not just
+ * `ISSUE_EMITTING_SOURCES`: the `ext:` reference extensions and the parametric
+ * rules emit ids of their own, and a prose mention of one of those is the same
+ * kind of claim. Only documents listed here are scanned - `lesson-format.md`
+ * and the proposals name ids on purpose that no source emits (a retired rule
+ * in a history note, a rule a proposal has not built yet), so a blanket scan
+ * would gate history instead of claims.
+ */
+const PROSE_NAMING_RULE_IDS = ["../docs/architecture.md"];
+
+const RULE_ID_IN_PROSE = /`([EW]-[A-Z0-9-]+)`/g;
+
+/** Rule ids written as `` `X-Y` `` in a piece of prose. */
+const ruleIdsNamedIn = (prose: string): string[] =>
+  [...new Set([...prose.matchAll(RULE_ID_IN_PROSE)].map((match) => match[1]!))].sort();
+
+/** Every rule id any non-test source file emits as a string literal. */
+const knownRuleIds = (): Set<string> => {
+  const ids = new Set<string>();
+  const srcDir = fileURLToPath(new URL(".", import.meta.url));
+  const walk = (dir: string): void => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const entryPath = join(dir, entry.name);
+      if (entry.isDirectory()) walk(entryPath);
+      else if (entry.name.endsWith(".ts") && !entry.name.endsWith(".test.ts")) {
+        for (const match of readFileSync(entryPath, "utf8").matchAll(/"([EW]-[A-Z0-9-]+)"/g)) {
+          ids.add(match[1]!);
+        }
+      }
+    }
+  };
+  walk(srcDir);
+  return ids;
+};
+
+describe("rule ids named in prose still exist", () => {
+  const known = knownRuleIds();
+
+  it("collects rule ids from every non-test source file", () => {
+    expect(known.size).toBeGreaterThan(ruleIdsInSource().length);
+  });
+
+  it.each(PROSE_NAMING_RULE_IDS)("%s names only rules that exist", (docFile) => {
+    const named = ruleIdsNamedIn(read(docFile));
+    expect(named.length, `${docFile} names no rule id at all`).toBeGreaterThan(0);
+    expect(named.filter((id) => !known.has(id)), `unknown rule ids in ${docFile}`).toEqual([]);
+  });
+
+  it("catches a rule id nothing emits", () => {
+    // Negative control: a scan that never fires on a known-bad document is a
+    // gate that cannot fail.
+    const seeded = "the validator emits `W-RENAMED-AWAY` for this case";
+    expect(ruleIdsNamedIn(seeded).filter((id) => !known.has(id))).toEqual(["W-RENAMED-AWAY"]);
+  });
 });

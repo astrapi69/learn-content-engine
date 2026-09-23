@@ -97,6 +97,15 @@ exercise's `sentence` or the step `title` verbatim, so the question is read
 twice on screen (`W-PROMPT-DUP`). Full list + descriptions:
 [rule catalog](lesson-format.md#rule-catalog).
 
+Warnings are opt-in downstream, and that is easy to miss here. In this engine a
+lint is effective the moment it merges: `validateLesson` returns it and the
+author CLI prints it. In a consumer it is effective only if two things happen -
+the pin moves to the release that carries it, and the wrapper that runs the
+validation actually reads `warnings` instead of `errors` alone. A gate invoked
+without its warnings switch reports nothing about any lint in the release it
+pins, however old that lint is. See
+[pinning and currency](architecture.md#pinning-and-currency).
+
 ## The error model
 
 Each issue is `{ path, message }`:
