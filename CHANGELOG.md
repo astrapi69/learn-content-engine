@@ -5,7 +5,7 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
-## [Unreleased]
+## [0.27.0] - 2026-09-23
 
 ### Manifest: an optional `evaluation` block on a set entry (engine#171)
 
