@@ -15,7 +15,8 @@
  *      "exactly one correct", referential integrity).
  *   3. AUTHOR LINTS (warnings) - never block (``valid`` stays errors-only), but
  *      catch common authoring mistakes early (unused cards, ambiguous matching,
- *      duplicate word tiles, answer-as-distractor, length-revealing hints).
+ *      duplicate word tiles, answer-as-distractor, length-revealing hints, a
+ *      prompt that repeats the sentence or the step title).
  *
  * Every issue carries a stable ``id``, a ``severity``, and a ``docAnchor`` so
  * the message is actionable and a thin downstream validator can mirror the rule
@@ -111,6 +112,11 @@ const markerCount = (sentence: string): number => sentence.split("___").length -
 
 /** True when an array has a repeated value. */
 const hasDuplicate = <T>(values: T[]): boolean => new Set(values).size !== values.length;
+
+/** Text as an author reads it: Unicode NFC (a decomposed umlaut equals its
+ *  precomposed form) with the surrounding whitespace dropped. Case is kept:
+ *  a case difference is a different text. */
+const readableText = (text: string): string => text.normalize("NFC").trim();
 
 /** True when a hint reveals the answer length (e.g. "vier Buchstaben" / "4 letters"). */
 const mentionsAnswerLength = (hint: string): boolean =>
@@ -420,9 +426,44 @@ function checkStep(step: LessonStep, path: string, knownCardIds: Set<string>, ex
     issues.push(err("E-STEP-EXERCISE-PAYLOAD", path, "EXERCISE step requires an 'exercise' payload", "steps"));
   } else {
     checkExercise(step.exercise, `${path}/exercise`, knownCardIds, ext, issues);
+    checkPromptDuplication(step, step.exercise, `${path}/exercise/prompt`, issues);
   }
   if (step.body != null) {
     issues.push(err("E-STEP-EXERCISE-BODY", path, "EXERCISE step must not carry 'body' (use the exercise prompt instead)", "steps"));
+  }
+}
+
+/** W-PROMPT-DUP (engine#169): the prompt must not repeat the exercise's
+ *  ``sentence`` (the cloze sentence, or the question stem in multiselect
+ *  mode) nor the step's ``title``. Consumers render the prompt as the
+ *  heading and the sentence as the question box (the title in the step
+ *  list), so an equal text is read twice on screen. The pattern arises
+ *  naturally while authoring (the question typed once as the prompt, once
+ *  as the sentence), hence a rule instead of a one-off correction. One
+ *  warning per matching comparison, each naming the field and its fix;
+ *  compared after NFC + trim, never blocks. */
+function checkPromptDuplication(step: LessonStep, exercise: Exercise, path: string, issues: ValidationIssue[]): void {
+  const prompt = readableText(exercise.prompt);
+  if (prompt === "") return;
+  if (typeof exercise.sentence === "string" && readableText(exercise.sentence) === prompt) {
+    issues.push(
+      warn(
+        "W-PROMPT-DUP",
+        path,
+        "prompt equals the exercise 'sentence' (compared after trimming and Unicode NFC normalisation); consumers show the prompt as the heading and the sentence as the question, so the learner reads the same text twice - phrase the prompt as the instruction and keep the question in 'sentence'",
+        "rule-catalog",
+      ),
+    );
+  }
+  if (typeof step.title === "string" && readableText(step.title) === prompt) {
+    issues.push(
+      warn(
+        "W-PROMPT-DUP",
+        path,
+        "prompt equals the step 'title' (compared after trimming and Unicode NFC normalisation); consumers show the title in the step list or header and the prompt as the heading, so the learner reads the same text twice - shorten the title to a heading or phrase the prompt as the concrete task",
+        "rule-catalog",
+      ),
+    );
   }
 }
 

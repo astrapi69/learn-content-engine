@@ -91,8 +91,10 @@ Warnings never affect `valid` or appear in `errors`; they live in `warnings` and
 flag likely authoring mistakes: an unused card (`W-CARD-UNUSED`), an ambiguous
 `matching` (`W-MATCH-AMBIG`), duplicate word tiles without `accept_orderings`
 (`W-TILES-DUP`), a distractor equal to the answer (`W-DISTRACTOR-ANSWER`), a
-distractor image sharing the correct label (`W-PIC-DUP-LABEL`), or a hint that
-reveals the answer length (`W-HINT-LENGTH`). Full list + descriptions:
+distractor image sharing the correct label (`W-PIC-DUP-LABEL`), a hint that
+reveals the answer length (`W-HINT-LENGTH`), or a prompt that repeats the
+exercise's `sentence` or the step `title` verbatim, so the question is read
+twice on screen (`W-PROMPT-DUP`). Full list + descriptions:
 [rule catalog](lesson-format.md#rule-catalog).
 
 ## The error model

@@ -12,6 +12,7 @@ import { validateLesson, type ValidationIssue, type ValidationResult } from "./v
 interface StepInput {
   id: string;
   type: "theory" | "exercise";
+  title?: string;
   body?: string;
   exercise?: Record<string, unknown>;
 }
@@ -312,5 +313,98 @@ describe("analysis warnings", () => {
       lesson([ex({ id: "e1", type: "free_text", prompt: "?", accept: ["a"], hint: "Es gibt drei Optionen." })]),
     );
     expect(hasWarning(numberButNoLengthNoun, "W-HINT-LENGTH")).toBe(false);
+  });
+});
+
+describe("W-PROMPT-DUP: the prompt repeats the sentence or the step title (engine#169)", () => {
+  // The device finding: a multiselect cloze whose prompt and sentence carry
+  // the same question. Consumers render the prompt as the heading and the
+  // sentence as the question box, so the learner reads it twice.
+  const QUESTION = "Welche Aussagen über useEffect treffen zu?";
+  const INSTRUCTION = "Wähle alle zutreffenden Aussagen.";
+
+  const multiselect = (prompt: string, sentence: string, title?: string): ValidationResult =>
+    validateLesson(
+      lesson([
+        {
+          id: "s1",
+          type: "exercise",
+          ...(title === undefined ? {} : { title }),
+          exercise: { id: "e1", type: "cloze", cloze_mode: "multiselect", prompt, sentence, accept: ["a"], distractors: ["b"] },
+        },
+      ]),
+    );
+  const titled = (prompt: string, title: string): ValidationResult =>
+    validateLesson(
+      lesson([{ id: "s1", type: "exercise", title, exercise: { id: "e1", type: "free_text", prompt, accept: ["JavaScript XML"] } }]),
+    );
+  const promptDups = (result: ValidationResult): ValidationIssue[] =>
+    result.warnings.filter((warning) => warning.id === "W-PROMPT-DUP");
+
+  it("reproduction: prompt == sentence warns once, names 'sentence', points at the prompt, never blocks", () => {
+    const result = multiselect(QUESTION, QUESTION);
+    expect(result.valid).toBe(true);
+    expect(result.errors).toEqual([]);
+    const dups = promptDups(result);
+    expect(dups).toHaveLength(1);
+    expect(dups[0]!.severity).toBe("warning");
+    expect(dups[0]!.path).toBe("/steps/0/exercise/prompt");
+    expect(dups[0]!.message).toContain("'sentence'");
+    expect(dups[0]!.docAnchor).toBe("docs/lesson-format.md#rule-catalog");
+  });
+
+  it("prompt == step title warns once, names 'title', on any exercise type", () => {
+    const result = titled("Was ist JSX?", "Was ist JSX?");
+    expect(result.valid).toBe(true);
+    const dups = promptDups(result);
+    expect(dups).toHaveLength(1);
+    expect(dups[0]!.message).toContain("'title'");
+    expect(dups[0]!.message).not.toContain("'sentence'");
+  });
+
+  it("different texts: an instruction prompt over a question sentence under a short title is clean", () => {
+    expect(promptDups(multiselect(INSTRUCTION, QUESTION, "useEffect"))).toEqual([]);
+    expect(promptDups(titled("Was ist JSX?", "JSX"))).toEqual([]);
+  });
+
+  it.each([
+    ["surrounding whitespace", `  ${QUESTION}  `],
+    ["a trailing newline", `${QUESTION}\n`],
+    ["NFD instead of NFC (decomposed umlaut)", QUESTION.normalize("NFD")],
+    ["NFD plus surrounding whitespace", ` ${QUESTION.normalize("NFD")} `],
+  ])("a sentence that differs only by %s still counts as the same text", (_label, sentence) => {
+    expect(sentence).not.toBe(QUESTION);
+    expect(promptDups(multiselect(QUESTION, sentence))).toHaveLength(1);
+  });
+
+  it("a title that differs only by NFC form and whitespace still counts as the same text", () => {
+    const title = ` ${"Was ist Präsenz?".normalize("NFD")} `;
+    expect(title).not.toBe("Was ist Präsenz?");
+    expect(promptDups(titled("Was ist Präsenz?", title))).toHaveLength(1);
+  });
+
+  it("prompt equal to both sentence and title: one warning per comparison", () => {
+    const dups = promptDups(multiselect(QUESTION, QUESTION, QUESTION));
+    expect(dups).toHaveLength(2);
+    expect(dups.map((warning) => warning.message).join(" ")).toContain("'sentence'");
+    expect(dups.map((warning) => warning.message).join(" ")).toContain("'title'");
+  });
+
+  it("boundary: a case-only difference is a different text (exact beyond NFC + trim)", () => {
+    expect(promptDups(titled("Was ist JSX?", "was ist JSX?"))).toEqual([]);
+    expect(promptDups(multiselect(QUESTION, QUESTION.toUpperCase()))).toEqual([]);
+  });
+
+  it("edge: a whitespace-only prompt next to a whitespace-only sentence is not a repetition", () => {
+    // Structurally valid (minLength 1 accepts a blank); the lesson has other
+    // problems, but 'the prompt repeats the sentence' is not one of them.
+    expect(promptDups(multiselect("   ", " "))).toEqual([]);
+  });
+
+  it("message is engine-neutral (no consumer names, no ticket numbers)", () => {
+    for (const warning of promptDups(multiselect(QUESTION, QUESTION, QUESTION))) {
+      expect(warning.message).not.toMatch(/adaptive-learner|#\d+|\bapp\b/i);
+      expect(warning.message).toContain("twice");
+    }
   });
 });

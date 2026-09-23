@@ -5,6 +5,21 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [Unreleased]
+
+### `W-PROMPT-DUP`: a prompt that repeats the sentence or the step title (engine#169)
+
+A new author lint. An exercise `prompt` that equals its `sentence` (the
+cloze sentence, or the question stem in `multiselect` mode) or the step
+`title` is reported once per matching field, as a warning that never
+blocks. Consumers render the prompt as the heading and the sentence as the
+question box (the title in the step list), so the learner reads the same
+question twice; on a real device this showed up on 10 of 276 exercises in
+one content repo, all cloze, spread over six lessons - a pattern that
+arises while authoring, not a one-off. Compared after trimming and Unicode
+NFC normalisation (a decomposed umlaut equals its precomposed form); case
+is kept. No schema change, `schema/quality-rules.json` untouched.
+
 ## [0.26.0] - 2026-09-16
 
 ### `qti import` / `qti export` on the command line (engine#164)
