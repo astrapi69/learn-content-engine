@@ -109,6 +109,76 @@ Evolving the schema is a defined step here: see the README
 Parity is verified two ways: the conformance fixtures and doc examples (offline,
 in CI) and `make conformance-real` (on-demand, over the real content repos).
 
+## Pinning and currency
+
+A consumer does not follow this engine, it pins it. There are two ways to do
+that, and they differ in what travels with the pin:
+
+- **An application consumer** pins the package as an exact dependency version
+  and imports the parse, projection and validation code. The schema artifacts
+  ship inside that package, so the code and the schema it enforces arrive
+  together by construction. A consumer that also generates its own schema layer
+  proves the two are identical with a parity test against the pinned release.
+- **A content repo** pins a release number in `schema/engine-version.txt` and
+  commits a byte-identical mirror of that release's bundled `schema/*.json`
+  next to it. The validator is not vendored: the repo installs the pinned
+  release to run it. What the mirror buys is a reviewable diff at the moment
+  the pin moves, and a schema that a non-Node tool (a Python authoring script,
+  an editor) can read without installing anything. Nothing else is mirrored -
+  not the rules in `src/validate.ts`, not the CLI.
+
+A pin is a guarantee about the rule set, not about its age. It guarantees that
+every lesson in the repo was judged against ONE known, immutable set of rules,
+the same one every author and every CI run sees. It does not guarantee that the
+set is the current one. That difference is the point of this section: a repo can
+be perfectly consistent and several releases behind at the same time, and every
+gate it owns stays green throughout.
+
+### When the pin has to move
+
+Three classes, and they are not equally urgent:
+
+- **New schema fields.** Opt-in, no pressure. The schema evolves additively
+  (see [schema-version policy](concepts.md#schema-version-policy-additive)), so
+  content authored against an older version stays valid under a newer one: a
+  manifest that declares `schema_version: "1.2"` keeps validating although the
+  manifest schema_version field currently defaults to 1.7. A repo that does not
+  want the new field does not need the release.
+- **New error rules.** These move the pin, because content that was valid
+  before can be invalid after. Rare under the additive policy, but not
+  excluded: a rule that closes a hole the schema left open is an error by
+  nature, and the repo learns about it when it re-pins, not before.
+- **New author lints.** These move the pin although nothing in the content
+  changes. This is the class nobody has on their radar. A lint applies to
+  lessons written long before it existed, needs no migration, no manifest bump
+  and no schema change, and it reaches exactly nobody until the pin moves.
+  `W-PROMPT-DUP` is one such rule; the [rule catalog](lesson-format.md#rule-catalog)
+  marks every warning as such.
+
+A lint needs a second thing after the pin, and this is where it usually stalls:
+warnings are opt-in in the consumer pipelines (see
+[layer 3](validation.md#layer-3-author-lints-warnings)). A pin bump on its own
+changes a version number and nothing on screen.
+
+### Currency is nobody's job until somebody owns it
+
+A content repo's drift gate compares its committed mirror against the published
+artifact of the release it pins. That answers one question: has anyone
+hand-edited the mirror away from the release it claims to be? It is the right
+question for that gate, and the reason it is right is exactly why it never
+reports lag. An immutable pin compared against itself is stable forever, so the
+gate is green by construction, including on the day the engine is several
+releases ahead. Green there means consistent, not current.
+
+Finding lag needs a different comparison: the pinned number against the current
+published release, which is a value that moves. Nothing in this engine and
+nothing in a consumer performs that comparison today. A release announces
+itself in the changelog and in the GitHub release page, and no automated reader
+consumes either. This is a named gap, not a planned feature: the owner of a
+consumer decides when its pin moves, and until some job compares the pin
+against a moving value, the answer to "is this pin current" is only ever
+reached by someone asking.
+
 ## Roadmap
 
 The engine is moving from "extracted copy" to "the format authority":
