@@ -5,6 +5,33 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [Unreleased]
+
+### Docs: the pin and currency discipline (engine#174)
+
+Every rule, error id and schema decision is documented here; the mechanic in
+between was not. `docs/architecture.md` gains a "Pinning and currency" section
+covering how a consumer pins (package dependency vs `schema/engine-version.txt`
+plus mirror), what a pin guarantees (a known, immutable rule set) and what it
+does not (that the set is the current one), when the pin has to move (new
+fields: opt-in; new error rules: content can turn invalid; new author lints:
+they move the pin although nothing in the content changes, the case nobody has
+on the radar), and why a drift gate that compares a pin against itself is green
+by construction and therefore never reports lag. Finding lag needs a comparison
+against a value that moves; nothing performs it today, and the section names
+that as a gap rather than announcing a feature.
+
+`docs/validation.md` layer 3 now says that warnings are opt-in downstream: a
+lint is effective on merge here, but in a consumer only once the pin moves AND
+the wrapper reads `warnings`. `docs/concepts.md` marks the limit of the
+additive policy: it explains why old content stays valid, which makes a re-pin
+look never urgent - true for fields, not for error rules and not for lints.
+
+`src/rule-catalog.test.ts` gains the reverse scan: a rule id NAMED in
+architecture prose must still be emitted somewhere in `src/`, so a later rename
+cannot leave a stale id behind. Proven with a seeded rename plus a permanent
+negative control.
+
 ## [0.27.0] - 2026-09-23
 
 ### Manifest: an optional `evaluation` block on a set entry (engine#171)
