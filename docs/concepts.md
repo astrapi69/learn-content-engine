@@ -77,7 +77,7 @@ inherited by the set's lessons unless a lesson declares its own.
 
 ## Schema-version policy (additive)
 
-The lesson schema is versioned (`x-schema-version`, currently `1.15`) and evolves
+The lesson schema is versioned (`x-schema-version`, currently `1.16`) and evolves
 **additively**: new fields are optional, so **older content stays valid under a
 newer schema**. For example, v1.5 added the inline `examples` field; a v1.4
 lesson without `examples` validates unchanged under v1.5. v1.6 added the native
@@ -87,7 +87,9 @@ validates unchanged under v1.7. The same holds for the later additions, up to
 v1.13's post-answer `explanation` and v1.14's `variables` for parametric
 exercises: an exercise that does not carry them is unaffected by them. v1.15
 is the same move on the manifest side: an optional `evaluation` block on a
-set entry, and a set without it evaluates as before.
+set entry, and a set without it evaluates as before. v1.16 changes no field at
+all: it rewrote the em dashes in the schema descriptions, which the counter
+records because it counts edits to the schema FILE, not to its field set.
 
 Additive evolution is also why moving a pin never feels urgent, and that
 instinct is only partly right. It holds for fields: content that does not use a

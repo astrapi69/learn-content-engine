@@ -1,5 +1,5 @@
 # **Comparative Analysis of Exercise Types in E-Learning Platforms**
-**Benchmark Study for the `learn-content-engine` (package 0.27.0, lesson schema currently 1.15)**
+**Benchmark Study for the `learn-content-engine` (package 0.28.0, lesson schema currently 1.16)**
 
 **Version:** 1.9  
 **Date:** September 23, 2026  
@@ -11,7 +11,7 @@
 
 ## **Executive Summary**
 
-This document presents a systematic comparative analysis of exercise types across established e-learning platforms (Moodle, H5P, QTI 3.0, Canvas LMS, Duolingo) in the context of the `learn-content-engine`. Two version numbers matter and are easy to conflate: the npm package is at **0.27.0**, the lesson schema it validates against is currently **1.15** (`x-schema-version` in `schema/lesson.schema.json`). This document benchmarks the schema's exercise types.
+This document presents a systematic comparative analysis of exercise types across established e-learning platforms (Moodle, H5P, QTI 3.0, Canvas LMS, Duolingo) in the context of the `learn-content-engine`. Two version numbers matter and are easy to conflate: the npm package is at **0.28.0**, the lesson schema it validates against is currently **1.16** (`x-schema-version` in `schema/lesson.schema.json`). This document benchmarks the schema's exercise types.
 
 The analysis demonstrates that the engine, with its six core exercise types (`matching`, `picture_choice`, `free_text`, `word_tiles`, `cloze`, `multiple_choice`), fully covers the **global standard for text-based foundational assessments**.
 
@@ -199,7 +199,7 @@ flowchart LR
   Ref -.->|consumer-parity gate| Core
 ```
 
-| **Exercise Type Category** | **Moodle** | **H5P** | **QTI 3.0** | **Duolingo** | **learn-content-engine (schema currently 1.15)** |
+| **Exercise Type Category** | **Moodle** | **H5P** | **QTI 3.0** | **Duolingo** | **learn-content-engine (schema currently 1.16)** |
 |----------------------------|------------|---------|-------------|--------------|----------------------------------|
 | **Multiple / Single Choice** | ✓ | ✓ | ✓ | ✓ | ✓ Core (`multiple_choice`, `picture_choice`) |
 | **Fill-in-the-Blank (Cloze)** | ✓ | ✓ | ✓ | ✓ | ✓ Core (`cloze`) |
@@ -533,7 +533,7 @@ stateDiagram-v2
 ## **7. Didactic Framework**
 
 ### 7.1 Bloom's Taxonomy
-The core types (schema currently 1.15) primarily cover the lower levels:
+The core types (schema currently 1.16) primarily cover the lower levels:
 - **Remembering:** `free_text`, `cloze`, `matching`
 - **Understanding:** `multiple_choice`, `picture_choice`
 - **Applying:** `word_tiles` (limited)
@@ -583,7 +583,7 @@ The extensions enable **Constructive Alignment** (Biggs, 1996): Teaching/learnin
 
 ## **8. Conclusion**
 
-The `learn-content-engine` (package 0.27.0, schema currently 1.15) is in an **excellent strategic position**:
+The `learn-content-engine` (package 0.28.0, schema currently 1.16) is in an **excellent strategic position**:
 1. **Standard Parity:** The six core exercise types fully cover the global standard for text-based foundational assessments, and the boundary speaks QTI 2.x and QTI 3.0.
 2. **Architectural Maturity:** The `ext:` concept matches modern best practices (QTI 3.0 PCI) and prevents schema bloat.
 3. **Didactic Growth Potential:** Every gap this analysis identified is covered, as a reference extension or as the core `variables` field; the higher Bloom levels are reachable without compromising core stability.
