@@ -89,6 +89,13 @@ exercises: an exercise that does not carry them is unaffected by them. v1.15
 is the same move on the manifest side: an optional `evaluation` block on a
 set entry, and a set without it evaluates as before.
 
+Additive evolution is also why moving a pin never feels urgent, and that
+instinct is only partly right. It holds for fields: content that does not use a
+new field is unaffected by it. It does not hold for new error rules, which can
+make previously valid content invalid, and it does not hold for author lints,
+which apply to content that never changed and reach a consumer only when its pin
+moves. See [pinning and currency](architecture.md#pinning-and-currency).
+
 The schema's **canonical source is this engine** (as of v0.6.0); consumers
 (adaptive-learner, the content repos) consume it (see
 [schema authority](architecture.md#schema-authority-this-engine)). That authority
