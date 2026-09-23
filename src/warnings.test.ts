@@ -240,6 +240,116 @@ describe("analysis warnings", () => {
     expect(hasWarning(result, "W-DISTRACTOR-ANSWER")).toBe(true);
   });
 
+  it("W-CLOZE-NO-CARRIER: a select cloze whose sentence is only blanks is a multiple_choice", () => {
+    // The reproduction case: the question lives in the prompt, the sentence
+    // carries nothing but the blank. 190 exercises across three content repos
+    // have this shape, all produced before the native type existed.
+    const result = validateLesson(
+      lesson([
+        ex({
+          id: "e1",
+          type: "cloze",
+          cloze_mode: "select",
+          prompt: "Which greeting fits the evening?",
+          sentence: "___",
+          blanks: [{ accept: ["bonsoir"] }],
+          distractors: ["bonjour", "salut"],
+        }),
+      ]),
+    );
+    expect(hasWarning(result, "W-CLOZE-NO-CARRIER")).toBe(true);
+    const message = byId(result.warnings, "W-CLOZE-NO-CARRIER")?.message ?? "";
+    expect(message).toContain("multiple_choice");
+    expect(result.valid).toBe(true);
+  });
+
+  it("W-CLOZE-NO-CARRIER names free_text for a typed cloze", () => {
+    const result = validateLesson(
+      lesson([
+        ex({
+          id: "e1",
+          type: "cloze",
+          cloze_mode: "type",
+          prompt: "What is the French word for hello?",
+          sentence: "___",
+          blanks: [{ accept: ["bonjour"] }],
+        }),
+      ]),
+    );
+    const message = byId(result.warnings, "W-CLOZE-NO-CARRIER")?.message ?? "";
+    expect(message).toContain("free_text");
+    expect(message).not.toContain("multiple_choice");
+  });
+
+  it("stays silent on a cloze that has a carrier sentence", () => {
+    const result = validateLesson(
+      lesson([
+        ex({
+          id: "e1",
+          type: "cloze",
+          cloze_mode: "select",
+          prompt: "Fill the gap.",
+          sentence: "Le ___.",
+          blanks: [{ accept: ["soir"] }],
+          distractors: ["matin"],
+        }),
+      ]),
+    );
+    expect(hasWarning(result, "W-CLOZE-NO-CARRIER")).toBe(false);
+  });
+
+  it("boundary: blanks plus punctuation only still count as no carrier", () => {
+    // Two blanks and nothing to read between them: the sentence teaches
+    // nothing, so the exercise is a question with options, not a gap text.
+    const result = validateLesson(
+      lesson([
+        ex({
+          id: "e1",
+          type: "cloze",
+          cloze_mode: "select",
+          prompt: "Pick both forms.",
+          sentence: "___ / ___",
+          blanks: [{ accept: ["un"] }, { accept: ["une"] }],
+          distractors: ["des"],
+        }),
+      ]),
+    );
+    expect(hasWarning(result, "W-CLOZE-NO-CARRIER")).toBe(true);
+  });
+
+  it("boundary: one word beside the blank is a carrier", () => {
+    const result = validateLesson(
+      lesson([
+        ex({
+          id: "e1",
+          type: "cloze",
+          cloze_mode: "type",
+          prompt: "Complete it.",
+          sentence: "Bonjour ___",
+          blanks: [{ accept: ["Marie"] }],
+        }),
+      ]),
+    );
+    expect(hasWarning(result, "W-CLOZE-NO-CARRIER")).toBe(false);
+  });
+
+  it("leaves multiselect alone - its sentence IS the question by design", () => {
+    const result = validateLesson(
+      lesson([
+        ex({
+          id: "e1",
+          type: "cloze",
+          cloze_mode: "multiselect",
+          prompt: "Select all that apply.",
+          sentence: "Which words are greetings?",
+          accept: ["bonjour", "salut"],
+          distractors: ["merci"],
+        }),
+      ]),
+    );
+    expect(hasWarning(result, "W-CLOZE-NO-CARRIER")).toBe(false);
+  });
+
   it("W-PIC-DUP-LABEL when a distractor image label equals the correct label", () => {
     const result = validateLesson(
       lesson([

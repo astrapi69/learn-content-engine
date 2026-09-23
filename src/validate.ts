@@ -110,6 +110,12 @@ function toStructuralIssues(errors: ErrorObject[]): ValidationIssue[] {
 /** Count non-overlapping ``___`` markers (matches Python ``str.count('___')``). */
 const markerCount = (sentence: string): number => sentence.split("___").length - 1;
 
+/** True when a cloze sentence still reads as a sentence once its blanks are
+ *  removed: at least one letter or digit is left. A sentence of blanks,
+ *  spaces and punctuation alone carries no context for the learner. */
+const carriesClozeText = (sentence: string): boolean =>
+  /[\p{L}\p{N}]/u.test(sentence.split("___").join(" "));
+
 /** True when an array has a repeated value. */
 const hasDuplicate = <T>(values: T[]): boolean => new Set(values).size !== values.length;
 
@@ -288,6 +294,22 @@ function checkCloze(exercise: Exercise, path: string, issues: ValidationIssue[])
         "E-CLOZE-MARKERS",
         path,
         `CLOZE marker count mismatch: sentence has ${markers} '___' markers but blanks has ${blanks.length} entries`,
+        "cloze",
+      ),
+    );
+  }
+  if (!carriesClozeText(sentence)) {
+    // A gap text without text is not a gap text. The learner reads the
+    // question in the prompt and fills a blank that teaches nothing, and the
+    // native type says the same thing directly - which is why this is a
+    // warning and not a style note: the shape predates `multiple_choice`
+    // (schema 1.6) and keeps being produced.
+    const nativeType = exercise.cloze_mode === "select" ? "multiple_choice" : "free_text";
+    issues.push(
+      warn(
+        "W-CLOZE-NO-CARRIER",
+        `${path}/sentence`,
+        `the sentence carries nothing but its blanks, so the exercise is a question with an answer, not a gap text; the native '${nativeType}' type expresses it directly and a consumer renders it as such (a cloze renders a gap for the learner to read around)`,
         "cloze",
       ),
     );
