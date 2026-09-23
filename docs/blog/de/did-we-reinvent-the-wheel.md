@@ -9,7 +9,7 @@ tags: [benchmark, architecture, interoperability, documentation]
 
 *Eine fremde KI hat unsere Content-Engine gegen QTI, H5P, Moodle, Canvas und Duolingo gebenchmarkt und Lücken gefunden, die längst geschlossen waren. Die Korrektur war kein Code. Dann kam die ehrliche Frage, die ehrliche Antwort, und ein Fehler, den nur die Content-Repositories fangen konnten.*
 
-`learn-content-engine` · Schema aktuell v1.14 · framework-agnostisches TypeScript
+`learn-content-engine` · Schema aktuell v1.15 · framework-agnostisches TypeScript
 
 ## Ein Benchmark von außen
 

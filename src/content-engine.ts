@@ -32,6 +32,7 @@ import type {
   ContentLessonCard,
   ContentSetBook,
   ContentSetEntry,
+  ContentSetEvaluation,
   ContentSetSource,
   SetStatus,
   SetAttribution,
@@ -88,6 +89,9 @@ export interface ParsedSet {
   review_status?: SetReviewStatus;
   /** Attribution block (engine#90); absent means no attribution claim. */
   attribution?: SetAttribution | null;
+  /** Evaluation declaration for one lesson run (engine#171); absent leaves
+   *  the consumer's own default in charge. */
+  evaluation?: ContentSetEvaluation | null;
 }
 
 /** A parsed ``manifest.yaml`` document (repo-level or set-level). */
@@ -197,6 +201,7 @@ export function asContentSetEntry(
         ? parsed.review_status
         : "authored",
     attribution: parsed.attribution ?? null,
+    evaluation: parsed.evaluation ?? null,
   };
 }
 

@@ -7,6 +7,30 @@ All notable changes to `learn-content-engine`. The format is inspired by
 
 ## [Unreleased]
 
+### Manifest: an optional `evaluation` block on a set entry (engine#171)
+
+A consumer decides how it scores a lesson run, and the reference app's
+default (percent correct plus stars at fixed marks) is wrong for exam-like
+content, where the pass mark is part of the subject: a driving-theory test
+passes at a stated percentage, a certification set has a grade table. A set
+entry may now declare `evaluation` with `scheme` (`percent`, `pass_fail`,
+`grades`), `pass_percent`, `basis` (`elements`, one value today), a
+`grades` table, `report` (`compact`, `detailed`) and a `title`. The block
+describes ONE lesson run and never aggregates across the set's lessons; the
+engine validates the declaration, while sampling, scoring and rendering
+stay consumer-side. Beyond the shape, three rules: `E-EVAL-GRADES-MISSING`,
+`E-EVAL-PASS-MISSING` and `E-EVAL-GRADES-DUP` (two rows at one threshold
+would earn two grades). `asContentSetEntry` carries the block into the
+canonical entry, so a consumer reads it through the engine API.
+
+Set level only in this version; the lesson schema stays strict, so an
+`evaluation` inside a lesson file is rejected as before, and the name is
+reserved for a planned per-lesson override. Absent block, unchanged
+behaviour. Both manifest counters moved, because the block is a new
+set-entry key: `schema_version`'s default `1.6` to `1.7` and
+`x-schema-version` `1.14` to `1.15` (the lesson schema follows in lockstep,
+as it always has). See `docs/lesson-format.md#evaluation`.
+
 ### `W-PROMPT-DUP`: a prompt that repeats the sentence or the step title (engine#169)
 
 A new author lint. An exercise `prompt` that equals its `sentence` (the

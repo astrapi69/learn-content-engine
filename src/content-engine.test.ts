@@ -256,6 +256,42 @@ describe("Content-Engine — canonical set-entry projection", () => {
     expect(entry.review_status).toBe("generated");
   });
 
+  it("projects the evaluation block through to the canonical entry (engine#171)", () => {
+    const entry = asContentSetEntry(
+      SOURCE,
+      {
+        id: "fuehrerschein",
+        title: "Fuehrerschein",
+        target_language: "de",
+        level: "none",
+        version: "1.0.0",
+        lesson_count: 5,
+        evaluation: {
+          scheme: "pass_fail",
+          pass_percent: 70,
+          report: "detailed",
+          title: "Theorieprüfung",
+        },
+      },
+      null,
+    );
+    expect(entry.evaluation).toEqual({
+      scheme: "pass_fail",
+      pass_percent: 70,
+      report: "detailed",
+      title: "Theorieprüfung",
+    });
+  });
+
+  it("leaves evaluation null when the set declares none (absent keeps today's behaviour)", () => {
+    const entry = asContentSetEntry(
+      SOURCE,
+      { id: "fr-a1", title: "F", target_language: "fr", level: "A1", version: "1.0.0", lesson_count: 1 },
+      null,
+    );
+    expect(entry.evaluation).toBeNull();
+  });
+
   it("defaults review_status to ``authored`` when absent or out of enum (boundary)", () => {
     const bare = asContentSetEntry(
       SOURCE,

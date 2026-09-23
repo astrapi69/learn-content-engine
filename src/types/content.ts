@@ -95,6 +95,40 @@ export interface ContentSetEntry {
    *  the bounded derivation chain (oldest first). ``null`` when the
    *  manifest carries none. Attribution, not authorization. */
   attribution: SetAttribution | null;
+  /** How ONE lesson run in this set is evaluated (engine#171, manifest
+   *  schema v1.15). ``null`` when the set declares none, which leaves the
+   *  consumer's own default in charge. */
+  evaluation: ContentSetEvaluation | null;
+}
+
+/** How a run is scored: a percentage, a threshold, or a grade table. */
+export type EvaluationScheme = "percent" | "pass_fail" | "grades";
+
+/** What the percentage counts. One value today (engine#171); a further
+ *  basis is an additive change. */
+export type EvaluationBasis = "elements";
+
+/** How much the run summary shows. A display depth only: it never steers a
+ *  consumer's correction round. */
+export type EvaluationReport = "compact" | "detailed";
+
+/** One row of a grade table: the lowest score that still earns ``label``. */
+export interface ContentSetGrade {
+  min_percent: number;
+  label: string;
+  label_native?: string;
+}
+
+/** A set's manifest-level evaluation block (engine#171). Describes ONE
+ *  lesson run, never an aggregate across the set's lessons. The engine
+ *  validates the declaration; scoring and rendering stay consumer-side. */
+export interface ContentSetEvaluation {
+  scheme?: EvaluationScheme;
+  pass_percent?: number;
+  basis?: EvaluationBasis;
+  grades?: ContentSetGrade[];
+  report?: EvaluationReport;
+  title?: string;
 }
 
 /** Three-state review standing of a set (engine#94). */

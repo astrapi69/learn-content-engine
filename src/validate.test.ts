@@ -616,6 +616,136 @@ describe("schema 1.14 — variables on exercises (engine#151: parametric exercis
   });
 });
 
+describe("manifest schema 1.15 — evaluation on the set entry (engine#171)", () => {
+  const setWith = (evaluation: unknown) => ({
+    schema_version: "1.7",
+    name: "M",
+    sets: [
+      {
+        id: "x",
+        title: "X",
+        target_language: "de",
+        level: "none",
+        version: "1.0.0",
+        lesson_count: 5,
+        ...(evaluation !== undefined ? { evaluation } : {}),
+      },
+    ],
+  });
+  const ids = (manifest: unknown) => {
+    const checked = validateManifest(manifest);
+    return [...checked.errors, ...checked.warnings].map((issue) => issue.id);
+  };
+
+  it("stays optional: a set without evaluation validates exactly as before", () => {
+    const checked = validateManifest(setWith(undefined));
+    expect(checked.errors).toEqual([]);
+    expect(checked.valid).toBe(true);
+  });
+
+  it("accepts the percent scheme with a pass threshold, a title and a report depth", () => {
+    const checked = validateManifest(
+      setWith({ scheme: "percent", pass_percent: 70, basis: "elements", report: "detailed", title: "Theorieprüfung" }),
+    );
+    expect(checked.errors).toEqual([]);
+    expect(checked.valid).toBe(true);
+  });
+
+  it("accepts a grade table with native labels", () => {
+    const checked = validateManifest(
+      setWith({
+        scheme: "grades",
+        grades: [
+          { min_percent: 90, label: "A", label_native: "Sehr gut" },
+          { min_percent: 75, label: "B" },
+          { min_percent: 0, label: "F", label_native: "Ungenügend" },
+        ],
+      }),
+    );
+    expect(checked.errors).toEqual([]);
+    expect(checked.valid).toBe(true);
+  });
+
+  it("accepts pass_fail with a threshold, and an empty block (every field optional)", () => {
+    expect(validateManifest(setWith({ scheme: "pass_fail", pass_percent: 70 })).valid).toBe(true);
+    expect(validateManifest(setWith({})).valid).toBe(true);
+  });
+
+  it("structural: rejects an unknown key, an unknown scheme, an unknown basis and an unknown report", () => {
+    expect(ids(setWith({ scheme: "percent", stars: [50, 75, 90] }))).toContain("E-UNKNOWN-FIELD");
+    expect(ids(setWith({ scheme: "points" }))).toContain("E-SCHEMA");
+    expect(ids(setWith({ basis: "steps" }))).toContain("E-SCHEMA");
+    expect(ids(setWith({ report: "verbose" }))).toContain("E-SCHEMA");
+  });
+
+  it("structural: pass_percent is an integer within 0 to 100, boundaries included", () => {
+    expect(validateManifest(setWith({ pass_percent: 0 })).valid).toBe(true);
+    expect(validateManifest(setWith({ pass_percent: 100 })).valid).toBe(true);
+    expect(validateManifest(setWith({ pass_percent: 101 })).valid).toBe(false);
+    expect(validateManifest(setWith({ pass_percent: -1 })).valid).toBe(false);
+    expect(validateManifest(setWith({ pass_percent: 70.5 })).valid).toBe(false);
+  });
+
+  it("structural: a grade table needs at least two rows, each with a non-empty label and a percent in range", () => {
+    expect(validateManifest(setWith({ scheme: "grades", grades: [{ min_percent: 50, label: "Pass" }] })).valid).toBe(false);
+    expect(
+      validateManifest(setWith({ scheme: "grades", grades: [{ min_percent: 50 }, { min_percent: 0, label: "F" }] })).valid,
+    ).toBe(false);
+    expect(
+      validateManifest(setWith({ scheme: "grades", grades: [{ min_percent: 50, label: "" }, { min_percent: 0, label: "F" }] })).valid,
+    ).toBe(false);
+    expect(
+      validateManifest(setWith({ scheme: "grades", grades: [{ min_percent: 101, label: "A" }, { min_percent: 0, label: "F" }] })).valid,
+    ).toBe(false);
+    expect(
+      validateManifest(setWith({ scheme: "grades", grades: [{ min_percent: 50, label: "P", note: "x" }, { min_percent: 0, label: "F" }] })).valid,
+    ).toBe(false);
+  });
+
+  it("E-EVAL-GRADES-MISSING: the grades scheme needs its table", () => {
+    const checked = validateManifest(setWith({ scheme: "grades" }));
+    expect(checked.errors.map((issue) => issue.id)).toContain("E-EVAL-GRADES-MISSING");
+    expect(checked.valid).toBe(false);
+    expect(checked.errors[0]!.path).toBe("/sets/0/evaluation");
+  });
+
+  it("E-EVAL-PASS-MISSING: the pass_fail scheme needs its threshold", () => {
+    expect(ids(setWith({ scheme: "pass_fail" }))).toContain("E-EVAL-PASS-MISSING");
+    expect(ids(setWith({ scheme: "pass_fail", pass_percent: 60 }))).not.toContain("E-EVAL-PASS-MISSING");
+  });
+
+  it("E-EVAL-GRADES-DUP: two rows at the same threshold leave the grade ambiguous", () => {
+    expect(
+      ids(
+        setWith({
+          scheme: "grades",
+          grades: [
+            { min_percent: 50, label: "C" },
+            { min_percent: 50, label: "D" },
+            { min_percent: 0, label: "F" },
+          ],
+        }),
+      ),
+    ).toContain("E-EVAL-GRADES-DUP");
+  });
+
+  it("carries no rule when the scheme is absent or percent (the default needs nothing)", () => {
+    expect(ids(setWith({ pass_percent: 70 })).filter((id) => id.startsWith("E-EVAL"))).toEqual([]);
+    expect(ids(setWith({ scheme: "percent" })).filter((id) => id.startsWith("E-EVAL"))).toEqual([]);
+  });
+
+  it("reserves the name on the lesson: an evaluation inside a lesson is still refused", () => {
+    const lesson = {
+      id: "l1",
+      title: "L",
+      evaluation: { scheme: "percent" },
+      steps: [{ id: "s1", type: "exercise", exercise: { id: "e1", type: "free_text", prompt: "p", accept: ["a"] } }],
+    };
+    const checked = validateLesson(lesson);
+    expect(checked.errors.map((issue) => issue.id)).toContain("E-UNKNOWN-FIELD");
+  });
+});
+
 describe("schema 1.9 — attribution and review_status on the set entry (engine#90/#94)", () => {
   const manifestWith = (setExtras: Record<string, unknown>) => ({
     schema_version: "1.2",

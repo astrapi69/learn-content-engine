@@ -633,15 +633,65 @@ export function validateManifest(input: unknown): ValidationResult {
       };
     }
   }
+  const evaluationErrors = checkSetEvaluations(normalized);
   return {
-    valid: true,
-    errors: [],
+    valid: evaluationErrors.length === 0,
+    errors: evaluationErrors,
     warnings: [
       ...checkManifestLessonOrdering(manifestMetadata),
       ...checkManifestDomainVocabulary(normalized),
       ...checkRetiredIdsDuplicates(manifestMetadata),
     ],
   };
+}
+
+/**
+ * engine#171: the parts of a set's ``evaluation`` block the JSON Schema
+ * cannot state. Two of them are "this scheme needs that field" (JSON Schema
+ * could express them with if/then, at the price of an error message naming
+ * a branch instead of the missing field); the third is a grade table that
+ * maps one score to two grades, which no schema keyword covers.
+ */
+function checkSetEvaluations(manifest: unknown): ValidationIssue[] {
+  const sets = (manifest as { sets?: unknown }).sets;
+  if (!Array.isArray(sets)) return [];
+  const issues: ValidationIssue[] = [];
+  sets.forEach((rawSet, index) => {
+    const evaluation = (rawSet as { evaluation?: unknown } | null)?.evaluation;
+    if (typeof evaluation !== "object" || evaluation === null) return;
+    const { scheme, grades, pass_percent: passPercent } = evaluation as {
+      scheme?: unknown;
+      grades?: unknown;
+      pass_percent?: unknown;
+    };
+    const path = `/sets/${index}/evaluation`;
+    if (scheme === "grades" && !Array.isArray(grades)) {
+      issues.push(
+        err("E-EVAL-GRADES-MISSING", path, "evaluation scheme 'grades' requires a 'grades' table", "evaluation"),
+      );
+    }
+    if (scheme === "pass_fail" && typeof passPercent !== "number") {
+      issues.push(
+        err("E-EVAL-PASS-MISSING", path, "evaluation scheme 'pass_fail' requires 'pass_percent'", "evaluation"),
+      );
+    }
+    if (Array.isArray(grades)) {
+      const thresholds = grades
+        .map((row) => (row as { min_percent?: unknown } | null)?.min_percent)
+        .filter((value): value is number => typeof value === "number");
+      if (hasDuplicate(thresholds)) {
+        issues.push(
+          err(
+            "E-EVAL-GRADES-DUP",
+            `${path}/grades`,
+            "two grade rows share a 'min_percent'; one score would earn two grades, so the table must use a distinct threshold per row",
+            "evaluation",
+          ),
+        );
+      }
+    }
+  });
+  return issues;
 }
 
 /** engine#131: author lint on the retirement list. Duplicates never block -

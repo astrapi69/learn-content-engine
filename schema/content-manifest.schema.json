@@ -231,6 +231,19 @@
           "default": null,
           "title": "Review Status",
           "description": "engine#94 - schema 1.9 (additive). Three-state review standing derived from ORIGIN, because origin is what makes a set review-worthy: 'authored' = hand-written by a speaker/domain expert, no review required; 'generated' = machine-generated (AI/book/analysis), native-speaker or expert review PENDING; 'reviewed' = machine-generated and reviewed. Absent means 'authored' (legacy hand-written content). Consumers derive 'advertisable as reviewed' as status != 'generated'. Distinct from 'visibility' (display hint, never a quality statement) and from 'ai_validation' (AI check provenance)."
+        },
+        "evaluation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ContentSetEvaluation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional evaluation declaration for one lesson run in this set (schema v1.15, engine#171). Absent keeps the consumer's own default.",
+          "title": "Evaluation"
         }
       },
       "required": [
@@ -324,6 +337,94 @@
       ],
       "title": "ContentSetBook",
       "type": "object"
+    },
+    "ContentSetEvaluation": {
+      "additionalProperties": false,
+      "description": "How ONE lesson run in this set is evaluated (schema v1.15, engine#171). Optional: without the block a consumer keeps its own default (the reference app: percent correct plus stars). It describes a single run, never an aggregate across the set's lessons, and an author threshold wins over the consumer default (the consumer labels which one it applied). The engine validates the declaration; sampling the run, computing the score and rendering the summary stay consumer-side. Set level only in this version; a lesson-level override is planned, and the lesson schema rejects an ``evaluation`` key today.",
+      "properties": {
+        "scheme": {
+          "default": "percent",
+          "description": "How the run is scored: ``percent`` (a percentage, the default), ``pass_fail`` (a threshold, needs ``pass_percent``) or ``grades`` (a table, needs ``grades``).",
+          "enum": [
+            "percent",
+            "pass_fail",
+            "grades"
+          ],
+          "title": "Scheme"
+        },
+        "pass_percent": {
+          "description": "The percentage (0-100, inclusive) a run must reach to pass. Required for ``pass_fail``; a ``percent`` run may carry it as an advisory mark.",
+          "maximum": 100,
+          "minimum": 0,
+          "title": "Pass Percent",
+          "type": "integer"
+        },
+        "basis": {
+          "default": "elements",
+          "description": "What the percentage counts. ``elements`` is one answered exercise element, the unit the reference consumer's spaced repetition already counts. A one-value enum on purpose, so a later basis is an additive change.",
+          "enum": [
+            "elements"
+          ],
+          "title": "Basis"
+        },
+        "grades": {
+          "description": "Grade table, at least two rows. Required for the ``grades`` scheme; ignored by the other schemes.",
+          "items": {
+            "$ref": "#/$defs/ContentSetGrade"
+          },
+          "minItems": 2,
+          "title": "Grades",
+          "type": "array"
+        },
+        "report": {
+          "default": "compact",
+          "description": "How much the run summary shows: ``compact`` (the result) or ``detailed`` (the result plus the per-element breakdown). A display depth only; it never steers a consumer's correction round.",
+          "enum": [
+            "compact",
+            "detailed"
+          ],
+          "title": "Report"
+        },
+        "title": {
+          "description": "Optional name for the evaluation as the learner reads it (``Theorieprüfung``), shown by a consumer instead of its generic wording.",
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        }
+      },
+      "title": "ContentSetEvaluation",
+      "type": "object"
+    },
+    "ContentSetGrade": {
+      "additionalProperties": false,
+      "description": "One row of a grade table (schema v1.15, engine#171): the lowest score that still earns ``label``. The consumer picks the row with the highest ``min_percent`` the run reaches. Rows are a set of thresholds, not a ranking: two rows at the same ``min_percent`` leave the grade ambiguous and are refused (E-EVAL-GRADES-DUP).",
+      "properties": {
+        "min_percent": {
+          "description": "Lowest percentage (0-100, inclusive) that still earns this label.",
+          "maximum": 100,
+          "minimum": 0,
+          "title": "Min Percent",
+          "type": "integer"
+        },
+        "label": {
+          "description": "The grade as the learner reads it (``A``, ``Bestanden``, ``5``).",
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "label_native": {
+          "description": "Optional longer or localized wording for the same grade (``Sehr gut``).",
+          "minLength": 1,
+          "title": "Label Native",
+          "type": "string"
+        }
+      },
+      "required": [
+        "min_percent",
+        "label"
+      ],
+      "title": "ContentSetGrade",
+      "type": "object"
     }
   },
   "$id": "https://astrapi69.github.io/learn-content-engine/schema/content-manifest.schema.json",
@@ -360,7 +461,7 @@
       "type": "string"
     },
     "schema_version": {
-      "default": "1.6",
+      "default": "1.7",
       "description": "Manifest schema version. The Content-Loader currently understands '1.0'; later versions will be rejected with a friendly upgrade hint.",
       "title": "Schema Version",
       "type": "string"
@@ -380,5 +481,5 @@
   ],
   "title": "ContentManifest",
   "type": "object",
-  "x-schema-version": "1.14"
+  "x-schema-version": "1.15"
 }
