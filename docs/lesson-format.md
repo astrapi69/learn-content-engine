@@ -848,7 +848,10 @@ set-entry key: `schema_version`'s default `1.6` to `1.7`,
 `x-schema-version` `1.14` to `1.15`. The counters part ways when a change
 touches no field: engine#127 (the domain/level vocabulary contract) only
 reworded field descriptions and left `schema_version`'s default at `1.6` -
-yet it still bumped `x-schema-version`. When comparing your pin
+yet it still bumped `x-schema-version`. v1.16 is the same case again and the
+purest example of it: engine#180 replaced the em dashes in the schema
+descriptions and changed nothing else, so `schema_version` stayed at `1.7`
+while `x-schema-version` moved to `1.16`. When comparing your pin
 against a new engine release, `x-schema-version` tells you the schema
 DEFINITION moved; `schema_version` tells you whether your MANIFESTS need a
 field update.
