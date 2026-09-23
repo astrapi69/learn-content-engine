@@ -28,6 +28,7 @@ The canonical schema ships in the package at
   - [multiple_choice](#multiple_choice)
   - [direction](#direction)
 - [Manifest format](#manifest-format)
+  - [Evaluation](#evaluation)
 
 ## A lesson at a glance
 
@@ -804,7 +805,7 @@ top-level field: `name`. Each set requires `id`, `title`, `target_language`
 
 ```json
 {
-  "schema_version": "1.6",
+  "schema_version": "1.7",
   "name": "My French Content",
   "description": "A small repo of French lessons.",
   "sets": [
@@ -837,14 +838,17 @@ it defaults to `sets/{id}` when omitted. See
 live in the same schema file (`content-manifest.schema.json`), easy to
 conflate. `schema_version` (the manifest field above) is what a repo stamps
 into its own `manifest.yaml`; the manifest schema_version field currently
-defaults to `1.6`, and only moves when the manifest's FIELD SET changes (a
+defaults to `1.7`, and only moves when the manifest's FIELD SET changes (a
 new set-entry key, a renamed one). `x-schema-version` is the schema FILE's
 own revision counter (see [schema-version
 policy](concepts.md#schema-version-policy-additive)) - it bumps on every
-change to the schema definition, including description-only edits. For
-example, engine#127 (the domain/level vocabulary contract) only reworded
-field descriptions, touched no field, and left `schema_version`'s default at
-`1.6` - yet it still bumped `x-schema-version`. When comparing your pin
+change to the schema definition, including description-only edits. Both
+moved for engine#171, because the [evaluation](#evaluation) block is a new
+set-entry key: `schema_version`'s default `1.6` to `1.7`,
+`x-schema-version` `1.14` to `1.15`. The counters part ways when a change
+touches no field: engine#127 (the domain/level vocabulary contract) only
+reworded field descriptions and left `schema_version`'s default at `1.6` -
+yet it still bumped `x-schema-version`. When comparing your pin
 against a new engine release, `x-schema-version` tells you the schema
 DEFINITION moved; `schema_version` tells you whether your MANIFESTS need a
 field update.
@@ -864,6 +868,8 @@ absent keeps every pre-existing manifest valid):
   reviewed. Consumers derive "advertisable as reviewed" as
   `review_status != "generated"`. Distinct from `visibility` and from the
   free-form `ai_validation` provenance block.
+- `evaluation` (schema v1.15, engine#171): how one lesson run in the set is
+  evaluated, see [Evaluation](#evaluation) below.
 - `attribution` (schema v1.9, engine#90): who the set's content is attributed
   to, plus a bounded derivation chain (`derived_from`, oldest first, at most
   8 entries; when full, the origin entry stays and the oldest middle entry is
@@ -872,6 +878,90 @@ absent keeps every pre-existing manifest valid):
   travels with the set when shared; a consumer app must point that out before
   it becomes visible. Distinct from `book` (source material), repo-level
   `metadata.author` (repo operator) and the lesson-level `contributed_by`.
+
+## Evaluation
+
+A consumer decides how it scores a lesson run: the reference app counts
+percent correct and awards stars at fixed marks. That default is wrong for
+exam-like content, where the pass mark is part of the subject matter: a
+driving-theory test passes at a stated percentage, a certification set has
+a grade table. `evaluation` (schema v1.15, engine#171) lets the set say so,
+and an author threshold wins over the consumer default (a consumer labels
+which one it applied).
+
+The block sits on a SET ENTRY and describes ONE lesson run in that set. It
+never aggregates across the set's lessons, and there is no lesson-level
+override in this version: the lesson schema is strict, so an `evaluation`
+key inside a lesson file is rejected. The name is reserved there for a
+planned per-lesson override.
+
+```json
+{
+  "schema_version": "1.7",
+  "name": "Driving theory",
+  "sets": [
+    {
+      "id": "fuehrerschein-uebung",
+      "title": "Fuehrerschein: Uebungsfragen",
+      "target_language": "de",
+      "level": "none",
+      "version": "1.0.0",
+      "lesson_count": 5,
+      "evaluation": {
+        "scheme": "pass_fail",
+        "pass_percent": 70,
+        "basis": "elements",
+        "report": "detailed",
+        "title": "Theoriepruefung"
+      }
+    }
+  ]
+}
+```
+
+| Field | Type | Notes |
+|---|---|---|
+| `scheme` | `percent` \| `pass_fail` \| `grades` | Default `percent`. `pass_fail` needs `pass_percent`, `grades` needs `grades`. |
+| `pass_percent` | integer 0-100 | The mark a run must reach. A `percent` run may carry it as an advisory mark. |
+| `basis` | `elements` | What the percentage counts: one answered exercise element, the unit spaced repetition already counts. One value today; a further basis is additive. |
+| `grades` | array, at least 2 rows | Each row `{min_percent, label, label_native?}`. The consumer picks the row with the highest `min_percent` the run reaches. |
+| `report` | `compact` \| `detailed` | How much the run summary shows. A display depth only: it never steers a consumer's correction round. |
+| `title` | string | Optional name for the evaluation as the learner reads it. |
+
+A grade table is a set of thresholds, not a ranking, so the rows may be
+written in any order but each needs its own `min_percent`:
+
+```json
+{
+  "schema_version": "1.7",
+  "name": "Certification prep",
+  "sets": [
+    {
+      "id": "cert-basics",
+      "title": "Certification basics",
+      "target_language": "en",
+      "level": "none",
+      "version": "1.0.0",
+      "lesson_count": 8,
+      "evaluation": {
+        "scheme": "grades",
+        "grades": [
+          { "min_percent": 90, "label": "A", "label_native": "Excellent" },
+          { "min_percent": 75, "label": "B" },
+          { "min_percent": 60, "label": "C" },
+          { "min_percent": 0, "label": "F", "label_native": "Fail" }
+        ]
+      }
+    }
+  ]
+}
+```
+
+What the engine checks beyond the shape: a scheme that needs a field has it
+(`E-EVAL-GRADES-MISSING`, `E-EVAL-PASS-MISSING`), and no two grade rows share
+a threshold (`E-EVAL-GRADES-DUP`), because one score would then earn two
+grades. Everything else is the consumer's: sampling the run, computing the
+score, rendering the summary. Absent block, unchanged behaviour.
 
 ## Content domains
 
@@ -918,6 +1008,9 @@ drifting.
 | `E-SCHEMA` | Structural schema violation (missing required field, wrong type, bad enum value). |
 | `E-UNKNOWN-FIELD` | An unknown field is present (the schema is strict, `additionalProperties: false`). |
 | `E-STABLE-ID-DUP` | A `stable_id` is used more than once within one lesson (exercises and cards share one namespace). Set-wide uniqueness is the repo gate's job via `collectStableIds`. |
+| `E-EVAL-GRADES-MISSING` | Manifest-level ([evaluation](#evaluation)): a set's `evaluation` declares `scheme: "grades"` without a `grades` table, so nothing maps a score to a grade. |
+| `E-EVAL-PASS-MISSING` | Manifest-level ([evaluation](#evaluation)): a set's `evaluation` declares `scheme: "pass_fail"` without `pass_percent`, so nothing says what passing means. |
+| `E-EVAL-GRADES-DUP` | Manifest-level ([evaluation](#evaluation)): two grade rows share a `min_percent`, so one score would earn two grades. A grade table is a set of thresholds; each row needs its own. |
 | `E-RETIRED-IDS-TYPE` | Manifest-level ([stable identity](#stable-identity-stable_id)): `metadata.retired_ids` is present but not a list of strings. Each entry is the identity of a retired exercise or card (`stable_id`, author slug for pre-stable_id elements); a malformed list would make the consumer silently skip the retirement (engine#131). |
 | `E-STEP-THEORY-BODY` | A [theory step](#steps) has no `body`. |
 | `E-STEP-THEORY-EXERCISE` | A theory step also carries an `exercise`. |
