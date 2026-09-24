@@ -38,6 +38,7 @@ interface Preset {
   languages: string[];
   evaluation: { scheme: string; grades?: GradeRow[]; pass_percent?: number };
   pass: { label: string; min_percent: number } | null;
+  rounded_rows: { label: string; official_min_percent: number }[];
   note: string;
   sources: Source[];
 }
@@ -180,6 +181,30 @@ describe("grading-presets.json: presets", () => {
           !preset.evaluation.grades!.some((row) => row.min_percent === preset.pass!.min_percent && row.label === preset.pass!.label),
       );
     expect(misplaced.map((preset) => preset.id)).toEqual([]);
+  });
+
+  // min_percent is an integer in the schema. Where an official lower bound
+  // is not a whole percent (52 of 60 points is 86.67 %), the row carries the
+  // whole percent below it, so a run exactly at the bound earns the grade;
+  // runs up to one percentage point below it earn it too. Every such row is
+  // listed with its official value, so the rounding is visible and
+  // checkable, not only described.
+  it("lists every rounded row with its official bound, floored to the row's min_percent", () => {
+    const wrong = catalog().presets.flatMap((preset) =>
+      (preset.rounded_rows ?? [undefined as never]).flatMap((rounded) => {
+        if (rounded === undefined) return [`${preset.id}: no rounded_rows list`];
+        const row = (preset.evaluation.grades ?? []).find((candidate) => candidate.label === rounded.label);
+        if (!row) return [`${preset.id}: no row labelled ${rounded.label}`];
+        if (Number.isInteger(rounded.official_min_percent)) return [`${preset.id}: ${rounded.label} is not rounded`];
+        if (row.min_percent !== Math.floor(rounded.official_min_percent)) return [`${preset.id}: ${rounded.label} is not floored`];
+        return [];
+      }),
+    );
+    expect(wrong).toEqual([]);
+  });
+
+  it("states the rounding rule in the file", () => {
+    expect(catalog().description).toMatch(/whole percent below/i);
   });
 
   it("carries no German helper words in the labels of a scale that is not German", () => {

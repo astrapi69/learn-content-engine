@@ -1006,6 +1006,13 @@ and a content repo can read it next to the schema.
   own language. `languages` lets a consumer suggest scales by the set's
   language; for a language-learning set that is the source language (the
   learner's), not the language being learned.
+- **Rounding.** `min_percent` is an integer. Where an official lower bound
+  is not a whole percent (52 of 60 points is 86.67 %), the row carries the
+  whole percent below it: a run exactly at the bound earns the grade, and so
+  does a run up to one percentage point below it. Each such row is listed in
+  the preset's `rounded_rows` with its official value (today: the Greek
+  Lykeio and Gymnasio and Luxembourg); an empty list means exact thresholds.
+  The lowest row always sits at 0, so every run earns a grade.
 - The thresholds assume the consumer compares the **unrounded** run
   percentage: 40 of 60 points is 66.67 %, which reaches a row at 66. A
   consumer that rounds first moves each boundary by up to half a point.

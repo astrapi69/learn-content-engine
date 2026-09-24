@@ -1,6 +1,6 @@
 {
   "$schema-version": "1.16",
-  "description": "Grading presets for a content set's evaluation block (schema: content-manifest.schema.json, ContentSetEvaluation). A preset's evaluation is COPIED into a set's manifest when the author picks it; a later correction of a preset in this file does not change sets that already carry a copy, and the manifest does not record which preset it came from. Class A presets follow a primary source, class B presets are widely used conventions and say so in their note, templates carry a scale's grades and pass mark but no thresholds (the author sets them), and unavailable entries name scales that cannot be expressed as percentages, with the reason. label is the grade as written (a number, a letter or a range); label_native is the official word for it, where one exists.",
+  "description": "Grading presets for a content set's evaluation block (schema: content-manifest.schema.json, ContentSetEvaluation). A preset's evaluation is COPIED into a set's manifest when the author picks it; a later correction of a preset in this file does not change sets that already carry a copy, and the manifest does not record which preset it came from. Class A presets follow a primary source, class B presets are widely used conventions and say so in their note, templates carry a scale's grades and pass mark but no thresholds (the author sets them), and unavailable entries name scales that cannot be expressed as percentages, with the reason. label is the grade as written (a number, a letter or a range); label_native is the official word for it, where one exists. min_percent is an integer in the schema. Where an official lower bound is not a whole percent (52 of 60 points is 86.67 %), the row carries the whole percent below it: a run exactly at the bound earns the grade, and so does a run up to one percentage point below it. Every such row is listed in the preset's rounded_rows with its official value; a preset with an empty list has exact thresholds. The lowest row always sits at 0, also where a scale starts above 0 (1 of 60 points), so every run earns a grade.",
   "presets": [
     {
       "id": "pass-fail",
@@ -14,6 +14,7 @@
         "pass_percent": 60
       },
       "pass": null,
+      "rounded_rows": [],
       "note": "60 is a starting value for the author to change; the engine has no default.",
       "sources": []
     },
@@ -28,6 +29,7 @@
         "scheme": "percent"
       },
       "pass": null,
+      "rounded_rows": [],
       "note": "Shows the percentage only. A pass_percent may be added as a guide mark.",
       "sources": []
     },
@@ -79,6 +81,7 @@
         "label": "4",
         "min_percent": 50
       },
+      "rounded_rows": [],
       "note": "The 100-point key of the BIBB model examination regulation, adopted by the chambers. It is not a school grading key: German school grading is a matter for each Land.",
       "sources": [
         {
@@ -185,6 +188,7 @@
         "label": "5",
         "min_percent": 45
       },
+      "rounded_rows": [],
       "note": "Binding for written Abitur examinations in subjects with national educational standards (KMK, section 8.4.2); 05 points is the lowest result that counts.",
       "sources": [
         {
@@ -241,7 +245,25 @@
         "label": "10–13",
         "min_percent": 50
       },
-      "note": "The official bands start at 18,1 / 16,1 / 13,1 / 5,1 of 20. An integer min_percent cannot hold them exactly; each row is the nearest whole percent, so a run at exactly 18,0 of 20 is read as Άριστα.",
+      "rounded_rows": [
+        {
+          "label": "18,1–20",
+          "official_min_percent": 90.5
+        },
+        {
+          "label": "16,1–18",
+          "official_min_percent": 80.5
+        },
+        {
+          "label": "13,1–16",
+          "official_min_percent": 65.5
+        },
+        {
+          "label": "5,1–9,9",
+          "official_min_percent": 25.5
+        }
+      ],
+      "note": "The official bands start at 18,1 / 16,1 / 13,1 / 5,1 of 20. Those rows carry the whole percent below the bound (see rounded_rows), so a run at 18,0 of 20 already reads as Άριστα.",
       "sources": [
         {
           "title": "Law 4610/2019: promotion and graduation in the general Lykeio (overview of the bands)",
@@ -286,6 +308,7 @@
         "label": "5,00–6,49",
         "min_percent": 50
       },
+      "rounded_rows": [],
       "note": "The characterisations apply to the degree average. A course below 5 is not passed; no official name exists for that band.",
       "sources": [
         {
@@ -342,6 +365,7 @@
         "label": "10–11,9",
         "min_percent": 50
       },
+      "rounded_rows": [],
       "note": "The mentions describe a diploma average, not a single test. Other countries grade on 0 to 20 with a pass at 10 (Tunisia, Algeria, Morocco, Iran and others), but with their own names and bands; this preset is the French one.",
       "sources": [
         {
@@ -396,6 +420,7 @@
         "label": "10–13",
         "min_percent": 50
       },
+      "rounded_rows": [],
       "note": "The decree names only the passing bands. Secondary school also grades 0 to 20 with a pass at 10, but has no national names for the bands.",
       "sources": [
         {
@@ -451,6 +476,7 @@
         "label": "3",
         "min_percent": 50
       },
+      "rounded_rows": [],
       "note": "The percentages are the default of the national curricula for point-scored written work, unless the teacher announces otherwise. The separate scale for pupils in remedial teaching (parandusõpe) is not covered.",
       "sources": [
         {
@@ -506,6 +532,7 @@
         "label": "50–59",
         "min_percent": 50
       },
+      "rounded_rows": [],
       "note": "Lower secondary school (ortaokul) has its own regulation and names only the pass from 50.",
       "sources": [
         {
@@ -552,6 +579,7 @@
         "label": "5–6,9",
         "min_percent": 50
       },
+      "rounded_rows": [],
       "note": "Matrícula de Honor is not a row: it is awarded from 9,0 up to a quota of the enrolled students.",
       "sources": [
         {
@@ -608,7 +636,17 @@
         "label": "30–35",
         "min_percent": 50
       },
-      "note": "Marks run from 1 to 60; 30 is the pass. The thresholds are the whole percent below each official lower bound (52, 48, 40, 36 of 60), so a run at exactly that mark earns it.",
+      "rounded_rows": [
+        {
+          "label": "52–60",
+          "official_min_percent": 86.67
+        },
+        {
+          "label": "40–47",
+          "official_min_percent": 66.67
+        }
+      ],
+      "note": "Marks run from 1 to 60; 30 is the pass. 52 and 40 of 60 are not whole percents; those rows carry the whole percent below the bound (see rounded_rows).",
       "sources": [
         {
           "title": "Ministère de l'Éducation nationale: examen de fin d'études secondaires, mentions (art. 19)",
@@ -659,6 +697,7 @@
         "label": "D",
         "min_percent": 50
       },
+      "rounded_rows": [],
       "note": "Canada has no national scale; education is provincial. British Columbia, for example, starts A at 86. Ontario reports R below level 1 in grades 1 to 8 and a percentage in grades 9 to 12.",
       "sources": [
         {
@@ -681,6 +720,7 @@
         "pass_percent": 60
       },
       "pass": null,
+      "rounded_rows": [],
       "note": "The regulation fixes only the pass (60 points in the final grade). Its categories Excelente to Insuficiente form a separate qualitative scale with no mapping to points.",
       "sources": [
         {
@@ -727,6 +767,7 @@
         "label": "D",
         "min_percent": 60
       },
+      "rounded_rows": [],
       "note": "The most common scale, not a national rule: states, districts and institutions set their own, and some pass only from C.",
       "sources": [
         {
@@ -809,6 +850,7 @@
         "label": "D-",
         "min_percent": 60
       },
+      "rounded_rows": [],
       "note": "The most widely quoted plus/minus table; many institutions award no A+.",
       "sources": [
         {
@@ -855,6 +897,7 @@
         "label": "Third",
         "min_percent": 40
       },
+      "rounded_rows": [],
       "note": "The sector calls 70/60/50/40 an overarching convention; degree algorithms and borderline rules are set by each provider, and some award a pass or ordinary degree for 35 to 39.",
       "sources": [
         {
@@ -897,6 +940,7 @@
         "label": "Pass",
         "min_percent": 50
       },
+      "rounded_rows": [],
       "note": "A common convention; each university sets its own regulations.",
       "sources": [
         {
@@ -962,6 +1006,7 @@
         "label": "55–64",
         "min_percent": 55
       },
+      "rounded_rows": [],
       "note": "The 0 to 100 scale is itself a percentage; the verbal bands are a widespread convention. Universities mostly pass from 60, some from 55.",
       "sources": [
         {
@@ -987,17 +1032,17 @@
         "scheme": "grades",
         "grades": [
           {
-            "min_percent": 93,
+            "min_percent": 92,
             "label": "18,5–20",
             "label_native": "Άριστα"
           },
           {
-            "min_percent": 78,
+            "min_percent": 77,
             "label": "15,5–18,4",
             "label_native": "Πολύ καλά"
           },
           {
-            "min_percent": 63,
+            "min_percent": 62,
             "label": "12,5–15,4",
             "label_native": "Καλά"
           },
@@ -1017,7 +1062,21 @@
         "label": "10–12,4",
         "min_percent": 50
       },
-      "note": "Linear from the 20-point grade; the grade itself is awarded by the teacher. The lower bounds 18,5 / 15,5 / 12,5 are rounded up to whole percent.",
+      "rounded_rows": [
+        {
+          "label": "18,5–20",
+          "official_min_percent": 92.5
+        },
+        {
+          "label": "15,5–18,4",
+          "official_min_percent": 77.5
+        },
+        {
+          "label": "12,5–15,4",
+          "official_min_percent": 62.5
+        }
+      ],
+      "note": "Linear from the 20-point grade; the grade itself is awarded by the teacher. The lower bounds 18,5 / 15,5 / 12,5 carry the whole percent below them (see rounded_rows).",
       "sources": [
         {
           "title": "Βαθμολογική κλίμακα Γυμνασίου",
@@ -1072,6 +1131,7 @@
         "label": "4",
         "min_percent": 50
       },
+      "rounded_rows": [],
       "note": "The grading regulation (LBVO § 14) defines the grades verbally and sets no percentages; the key is set by the teacher or school. Keys with 60 percent for Genügend are also in use, for example in the standardised matriculation examination in foreign languages.",
       "sources": [
         {
@@ -1148,6 +1208,7 @@
         "label": "4",
         "min_percent": 55
       },
+      "rounded_rows": [],
       "note": "From the linear formula grade = 5 × achieved / maximum + 1, rounded to half grades with a quarter rounded up. The formula is a common convention, not a rule, and cantons and schools round differently (half grades, quarters or tenths).",
       "sources": [
         {
@@ -1207,6 +1268,7 @@
         "label": "3",
         "min_percent": 50
       },
+      "rounded_rows": [],
       "note": "The levels 1 to 5 are national; the percentage bands and their names are set by each school. These are a common set of school criteria.",
       "sources": [
         {
