@@ -10,6 +10,21 @@ plugins). The TDD workflow lives in `tdd.md`.
 - Goal: pragmatic, maintainable, quickly deliverable. No over-engineering.
 - When unclear: ask rather than guess.
 
+## Language
+
+- The project language is English: code, identifiers, comments, docs
+  (`docs/`, README, CHANGELOG), commit messages, PR and issue texts.
+- A draft handed over in another language (e.g. a German design note for
+  `docs/architecture.md`) is written in English when it lands in the
+  repository, not pasted.
+- Exception: learner-facing content. Lessons, manifests' titles and
+  descriptions and the content repositories' sets are written in the
+  languages the set declares (`source_language`, `target_language`); that
+  is data, not project text. The same holds for test fixtures and quoted
+  examples that reproduce such content.
+- German written anywhere (content, quotes, conversation) uses real
+  umlauts and ß, never the ae/oe/ue/ss substitutes.
+
 ## TypeScript
 
 - Strict mode enabled (`tsconfig.json`). No `any` without a comment.
