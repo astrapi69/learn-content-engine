@@ -92,7 +92,7 @@ wrong: correctness is a per-option boolean, not two lists that must be disjoint.
 ### Engine follow-up (after the app ships it)
 
 Vendor the regenerated schema + types; add `checkMultipleChoice` in
-`src/validate.ts` (options>=2, correct-count rule) with `E-MC-*` ids + a
+`src/validate.ts` (since 0.29.0 the semantic rules live in `src/rules.ts`) (options>=2, correct-count rule) with `E-MC-*` ids + a
 `W-MC-DUP-OPTION` warning; add a conformance fixture + rule-catalog rows; bump the
 engine minor.
 

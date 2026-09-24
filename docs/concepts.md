@@ -87,7 +87,9 @@ validates unchanged under v1.7. The same holds for the later additions, up to
 v1.13's post-answer `explanation` and v1.14's `variables` for parametric
 exercises: an exercise that does not carry them is unaffected by them. v1.15
 is the same move on the manifest side: an optional `evaluation` block on a
-set entry, and a set without it evaluates as before. v1.16 changes no field at
+set entry, and a set without it evaluates as before. An author does not have
+to type a grade table: the engine ships a catalog of national scales to copy
+from ([grading presets](lesson-format.md#grading-presets)). v1.16 changes no field at
 all: it rewrote the em dashes in the schema descriptions, which the counter
 records because it counts edits to the schema FILE, not to its field set.
 
