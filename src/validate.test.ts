@@ -889,6 +889,46 @@ describe("engine#127 — domain vocabulary + level lints (warnings, never block)
       "W-LEVEL-UNKNOWN",
     );
   });
+
+  // engine#183: a lesson may carry its own ``domain`` (schema 1.3; absent or
+  // null inherits the set's). The real case sat on the lessons, not the set:
+  // alc-books#3, both book sets exported with ``"domain": "imported"`` on
+  // every lesson (adaptive-learner#2376).
+  const lessonWithDomain = (domain: string | null): JsonObject => ({
+    ...clone(conf("free_text")),
+    domain,
+  });
+
+  it("flags an unknown lesson domain with W-DOMAIN-UNKNOWN and stays valid", () => {
+    const checked = validateLesson(lessonWithDomain("imported"));
+    expect(checked.valid).toBe(true);
+    const unknownDomain = checked.warnings.find((issue) => issue.id === "W-DOMAIN-UNKNOWN");
+    expect(unknownDomain).toBeDefined();
+    expect(unknownDomain?.path).toBe("/domain");
+    expect(unknownDomain?.severity).toBe("warning");
+    expect(unknownDomain?.message).toContain("imported");
+  });
+
+  it("says the same about an unknown value on a lesson as on a set", () => {
+    const onLesson = validateLesson(lessonWithDomain("gardening")).warnings.find(
+      (issue) => issue.id === "W-DOMAIN-UNKNOWN",
+    );
+    const onSet = validateManifest(manifestWith({ domain: "gardening" })).warnings.find(
+      (issue) => issue.id === "W-DOMAIN-UNKNOWN",
+    );
+    expect(onLesson?.message).toBe(onSet?.message);
+  });
+
+  it("draws no domain warning for a known lesson domain, in any case", () => {
+    expect(warningIds(validateLesson(lessonWithDomain("psychology")))).not.toContain("W-DOMAIN-UNKNOWN");
+    expect(warningIds(validateLesson(lessonWithDomain("AI")))).not.toContain("W-DOMAIN-UNKNOWN");
+  });
+
+  it("draws no domain warning when the lesson inherits the set's domain", () => {
+    expect(warningIds(validateLesson(clone(conf("free_text"))))).not.toContain("W-DOMAIN-UNKNOWN");
+    expect(warningIds(validateLesson(lessonWithDomain(null)))).not.toContain("W-DOMAIN-UNKNOWN");
+    expect(warningIds(validateLesson(lessonWithDomain("")))).not.toContain("W-DOMAIN-UNKNOWN");
+  });
 });
 
 describe("validateManifest — retired_ids unlocked (engine#131; adaptive-learner#2188 decided AND shipped)", () => {
