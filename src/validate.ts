@@ -545,6 +545,8 @@ function semanticIssues(lesson: Lesson, registry: ExtensionRegistry): Validation
   checkUnusedCards(lesson, issues);
   checkInvisibleChars(lesson, issues);
   checkStableIdDuplicates(lesson, issues);
+  // engine#183: a lesson's own domain (absent or null inherits the set's).
+  issues.push(...unknownDomainIssues(typeof lesson.domain === "string" ? lesson.domain : undefined, "/domain"));
   return issues;
 }
 
@@ -760,6 +762,21 @@ function checkRetiredIdsDuplicates(
   ];
 }
 
+/** W-DOMAIN-UNKNOWN for one ``domain`` value at ``path``: none when the
+ *  value is absent, empty or known (case-insensitive). Shared by the set
+ *  entry (manifest) and the lesson (engine#183), so both say the same. */
+function unknownDomainIssues(domain: string | undefined, path: string): ValidationIssue[] {
+  if (isKnownContentDomain(domain)) return [];
+  return [
+    warn(
+      "W-DOMAIN-UNKNOWN",
+      path,
+      `domain '${domain}' is outside the known vocabulary (${KNOWN_CONTENT_DOMAINS.join(", ")}); it stays valid ('other' contract), but consumers cannot group it with existing subjects - prefer a known domain or accept the fragmentation deliberately`,
+      "content-domains",
+    ),
+  ];
+}
+
 /** engine#127: the "known values + other" vocabulary lints. Both are
  *  warnings - unknown values stay VALID (additive contract, no break to
  *  published content), but silent fragmentation of the subject facet
@@ -774,16 +791,7 @@ function checkManifestDomainVocabulary(normalized: unknown): ValidationIssue[] {
     if (typeof rawSet !== "object" || rawSet === null) return;
     const setEntry = rawSet as { domain?: unknown; level?: unknown };
     const domain = typeof setEntry.domain === "string" ? setEntry.domain : undefined;
-    if (domain !== undefined && !isKnownContentDomain(domain)) {
-      issues.push(
-        warn(
-          "W-DOMAIN-UNKNOWN",
-          `/sets/${setIndex}/domain`,
-          `domain '${domain}' is outside the known vocabulary (${KNOWN_CONTENT_DOMAINS.join(", ")}); it stays valid ('other' contract), but consumers cannot group it with existing subjects - prefer a known domain or accept the fragmentation deliberately`,
-          "content-domains",
-        ),
-      );
-    }
+    issues.push(...unknownDomainIssues(domain, `/sets/${setIndex}/domain`));
     if (typeof setEntry.level === "string" && !isKnownLevel(domain, setEntry.level)) {
       issues.push(
         warn(

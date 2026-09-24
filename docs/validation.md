@@ -94,7 +94,9 @@ flag likely authoring mistakes: an unused card (`W-CARD-UNUSED`), an ambiguous
 distractor image sharing the correct label (`W-PIC-DUP-LABEL`), a hint that
 reveals the answer length (`W-HINT-LENGTH`), a cloze whose sentence is nothing
 but its blanks and is therefore a `multiple_choice` or a `free_text`
-(`W-CLOZE-NO-CARRIER`), or a prompt that repeats the
+(`W-CLOZE-NO-CARRIER`), a lesson `domain` outside the known vocabulary
+(`W-DOMAIN-UNKNOWN`, the same lint `validateManifest` applies to a set), or a
+prompt that repeats the
 exercise's `sentence` or the step `title` verbatim, so the question is read
 twice on screen (`W-PROMPT-DUP`). Full list + descriptions:
 [rule catalog](lesson-format.md#rule-catalog).
