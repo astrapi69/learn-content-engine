@@ -130,6 +130,24 @@ one-item-per-file layout with `assessmentItemRef` hrefs.
 Only the mappable subset is representable: an exercise whose type is outside the
 subset throws `QtiExportError` listing the offending exercise ids.
 
+## API
+
+What `learn-content-engine/qti` exports; the full signatures are in the
+[API reference](https://astrapi69.github.io/learn-content-engine/api/).
+
+| Export | Kind | Purpose |
+|---|---|---|
+| `importQti` | fn | `importQti(xml, meta?)`: a QTI item or test, 2.x or 3.0, to a lesson. `meta` sets the lesson `id` and `title`. |
+| `qtiLessonAdapter` | fn | `importQti` as a `LessonSourceAdapter`, so a QTI file enters the engine through the same source-adapter boundary as the canonical JSON; it fills the language pair and `domain` from the set context, which a QTI document does not carry. |
+| `exportQti` | fn | `exportQti(lesson, options?)`: a lesson to one `assessmentTest` with inline items. |
+| `QtiExportOptions` | type | The options of `exportQti`: `version`, `"2.x"` (the default) or `"3.0"`. |
+| `QtiVersion` | type | `"2.x" \| "3.0"`, the dialect names. |
+| `QtiImportError` | class | Thrown when a document cannot be mapped in full; `issues` is the complete per-item list, so the caller sees every problem at once. |
+| `QtiMappingIssue` | type | One entry of `QtiImportError.issues`: `itemIdentifier`, `interaction`, `reason`. |
+| `QtiExportError` | class | Thrown when a lesson carries an exercise type outside the mappable subset; the message lists the offending exercise ids. |
+| `QTI_2_NAMESPACE` | const | `http://www.imsglobal.org/xsd/imsqti_v2p1`, the namespace `exportQti` writes for 2.x. |
+| `QTI_3_NAMESPACE` | const | `http://www.imsglobal.org/xsd/imsqtiasi_v3p0`, the namespace for 3.0. |
+
 ## Round-trip guarantee
 
 For a lesson whose steps are all mappable exercise types (`multiple_choice`,

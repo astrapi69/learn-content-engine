@@ -87,3 +87,53 @@ describe("README public-surface table", () => {
     expect(phantomTypes, "README lists types the package does not export").toEqual([]);
   });
 });
+
+/**
+ * The subpath entries were the same gap one entry point further: the table
+ * above is checked against the package root only, so `learn-content-engine/rules`
+ * shipped in 0.29.0 with two of its seven runtime exports (`unusedCardIds`,
+ * `normalizeManifestAliases`) missing from its README row, and five of the ten
+ * `learn-content-engine/qti` exports were named in no doc at all. Each subpath
+ * is checked where its exports are documented: the `/rules` row names every
+ * export itself; the `/qti` row abbreviates with "..." and points to
+ * docs/qti.md, so that page carries the full list.
+ */
+const readSource = (relative: string): string => readFileSync(fileURLToPath(new URL(relative, import.meta.url)), "utf8");
+
+const EXPORTED_NAME_FORMS = [
+  /^export (?:async )?(?:function|const|class|let) ([A-Za-z_][A-Za-z0-9_]*)/gm,
+  /^export (?:interface|type) ([A-Za-z_][A-Za-z0-9_]*)/gm,
+];
+const exportedNamesIn = (source: string): string[] => {
+  const declared = EXPORTED_NAME_FORMS.flatMap((form) => [...source.matchAll(form)].map((match) => match[1]!));
+  const listed = [...source.matchAll(/^export (?:type )?\{([\s\S]*?)\}/gm)]
+    .flatMap((match) => match[1]!.split(","))
+    .map((name) => name.trim())
+    .filter((name) => name.length > 0);
+  return [...new Set([...declared, ...listed])].sort();
+};
+
+describe("subpath entries: every export is documented where the README points", () => {
+  const rulesRow = README.split("\n").find((line) => line.startsWith("| `learn-content-engine/rules` |")) ?? "";
+  const rulesExports = exportedNamesIn(readSource("./rules.ts"));
+
+  it("finds the /rules row and its exports (the scan is not blind)", () => {
+    expect(rulesRow).not.toBe("");
+    expect(rulesExports.length).toBeGreaterThanOrEqual(5);
+  });
+
+  it.each(rulesExports)("the README's /rules row names `%s`", (exportName) => {
+    expect(rulesRow.includes(`\`${exportName}\``), `${exportName} is exported by /rules but missing from its README row`).toBe(true);
+  });
+
+  const qtiDoc = readSource("../docs/qti.md");
+  const qtiExports = exportedNamesIn(readSource("./qti/index.ts"));
+
+  it("finds the /qti exports (the scan is not blind)", () => {
+    expect(qtiExports.length).toBeGreaterThanOrEqual(5);
+  });
+
+  it.each(qtiExports)("docs/qti.md names `%s`", (exportName) => {
+    expect(qtiDoc.includes(`\`${exportName}\``), `${exportName} is exported by /qti but named nowhere in docs/qti.md`).toBe(true);
+  });
+});

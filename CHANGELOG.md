@@ -5,6 +5,21 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [Unreleased]
+
+### Correction to 0.28.0: something did compare a pin with the current release
+
+The 0.28.0 entry "Docs: the pin and currency discipline" says that comparing a
+pin against the current release is something "nothing performs today". That
+did not hold when it was written. The reference app's Dependabot had opened
+grouped `/frontend` update PRs that carried engine bumps since 2026-07-11
+(adaptive-learner#1562, #1587, #2923), although they arrive 3 to 10 days after
+a release and fail the app's pin and schema parity tests every time. And the
+content template and the hub had carried `engine-currency.yml`, which compares
+the pin with the tracked npm dist-tag, since 11:08 UTC on 2026-09-23, about 90
+minutes before 0.28.0 was published. `docs/architecture.md` ("Pinning and currency") carries
+the measured account.
+
 ## [0.29.0] - 2026-09-24
 
 No schema change: `x-schema-version` stays 1.16, and every manifest and
@@ -129,26 +144,6 @@ of the two counters parting ways, and it is documented as such in
 
 Bundled with the lint on purpose: two releases in a row would mean two re-pin
 rounds through ten repositories for one typography fix and one warning.
-
-
-### `W-CLOZE-NO-CARRIER`: a cloze without a carrier sentence (engine#178)
-
-A `cloze` whose `sentence` is nothing but its blanks has no gap text to read
-around: the question sits in the `prompt`, and the blank teaches nothing. That
-exercise is a question with an answer, and a native type says so directly -
-`multiple_choice` in `select` mode, `free_text` in `type` mode. Both exist
-(`multiple_choice` since schema v1.6), so the cloze spelling is a workaround
-that outlived its reason.
-
-A warning, not an error: the content is valid and the shape can be deliberate.
-The carrier test is deliberately blunt - a sentence carries text when at least
-one letter or digit survives the removal of the `___` markers, so blanks,
-whitespace and punctuation alone do not count. `multiselect` is exempt by
-design: its `sentence` IS the question and carries no markers at all.
-
-Measured before shipping: over the content repos the rule fires on 195 of 1406
-cloze exercises (190 `select`, 5 `type`), concentrated in three repositories,
-and on nothing else.
 
 
 ### Docs: the pin and currency discipline (engine#174)

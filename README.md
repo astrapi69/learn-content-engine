@@ -151,7 +151,7 @@ Two subpath entries sit next to the package root:
 
 | Entry | Exports | Purpose |
 |---|---|---|
-| `learn-content-engine/rules` | `validateLessonRules`, `validateManifestRules`, `isSlugId`, `SLUG_ID_PATTERN`, `SLUG_ID_MAX_LENGTH` | the semantic rules and author lints without the structural layer: no ajv, no `node:*`, for a browser consumer that has already shape-checked its input ([Validation](docs/validation.md#the-rules-without-the-structural-layer-learn-content-enginerules)) |
+| `learn-content-engine/rules` | `validateLessonRules`, `validateManifestRules`, `isSlugId`, `SLUG_ID_PATTERN`, `SLUG_ID_MAX_LENGTH`, plus two helpers the structural layer composes: `unusedCardIds` (the detection core of `W-CARD-UNUSED`) and `normalizeManifestAliases` (maps the legacy `language` alias to `target_language` before validation) | the semantic rules and author lints without the structural layer: no ajv, no `node:*`, for a browser consumer that has already shape-checked its input ([Validation](docs/validation.md#the-rules-without-the-structural-layer-learn-content-enginerules)) |
 | `learn-content-engine/qti` | `importQti`, `exportQti`, `qtiLessonAdapter`, ... | the optional QTI adapter and its XML parser ([QTI interop](docs/qti.md)) |
 
 ## Scope
