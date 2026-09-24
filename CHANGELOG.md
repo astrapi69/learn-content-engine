@@ -131,26 +131,6 @@ Bundled with the lint on purpose: two releases in a row would mean two re-pin
 rounds through ten repositories for one typography fix and one warning.
 
 
-### `W-CLOZE-NO-CARRIER`: a cloze without a carrier sentence (engine#178)
-
-A `cloze` whose `sentence` is nothing but its blanks has no gap text to read
-around: the question sits in the `prompt`, and the blank teaches nothing. That
-exercise is a question with an answer, and a native type says so directly -
-`multiple_choice` in `select` mode, `free_text` in `type` mode. Both exist
-(`multiple_choice` since schema v1.6), so the cloze spelling is a workaround
-that outlived its reason.
-
-A warning, not an error: the content is valid and the shape can be deliberate.
-The carrier test is deliberately blunt - a sentence carries text when at least
-one letter or digit survives the removal of the `___` markers, so blanks,
-whitespace and punctuation alone do not count. `multiselect` is exempt by
-design: its `sentence` IS the question and carries no markers at all.
-
-Measured before shipping: over the content repos the rule fires on 195 of 1406
-cloze exercises (190 `select`, 5 `type`), concentrated in three repositories,
-and on nothing else.
-
-
 ### Docs: the pin and currency discipline (engine#174)
 
 Every rule, error id and schema decision is documented here; the mechanic in
