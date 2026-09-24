@@ -171,13 +171,192 @@ gate is green by construction, including on the day the engine is several
 releases ahead. Green there means consistent, not current.
 
 Finding lag needs a different comparison: the pinned number against the current
-published release, which is a value that moves. Nothing in this engine and
-nothing in a consumer performs that comparison today. A release announces
-itself in the changelog and in the GitHub release page, and no automated reader
-consumes either. This is a named gap, not a planned feature: the owner of a
-consumer decides when its pin moves, and until some job compares the pin
-against a moving value, the answer to "is this pin current" is only ever
-reached by someone asking.
+published release, which is a value that moves. The content repos run that
+comparison nightly since 2026-09-23 (`engine-currency.yml`, owned by the content
+template): it compares `schema/engine-version.txt` against the npm dist-tag the
+repo tracks, opens or updates one issue while they differ, and closes it once
+the pin catches up. It never moves the pin itself; moving it stays a deliberate
+change that refreshes the mirror in the same commit. An application consumer
+has no such job: its parity test compares its generated layer with the release
+it pins, which answers the consistency question again, not the currency one.
+There, "is this pin current" is still only answered by someone asking.
+
+## Rule ownership: which layer owns which rule
+
+State as of 2026-09-24.
+
+### Why this section exists
+
+A rule about content can live in three places: in this engine, in the
+authoring tooling of the content template (mirrored into every content repo),
+and in the reference app. Until now nothing recorded which place owns a rule,
+and nothing compared the versions with each other.
+
+The result is not theoretical. The quality minimums exist in three
+implementations that differ in substance, and the hint-length rule existed in
+two that differed even in severity. A set could pass its repo's gate and fail
+to be shared in the app, and the author could not see while writing which of
+the two counts applied.
+
+### The guideline
+
+**The engine owns every rule about the content itself.** Lessons, exercises,
+cards, manifests: what is valid, what is counted, what is warned about. The
+engine is the only place that knows the whole schema, and it exists exactly
+once.
+
+**The content template's tooling owns what the engine cannot see.** The prose
+of repo files, pins, mirrors, workflow wiring, the directory layout. Everything
+about a repo's environment rather than its content.
+
+**The app owns render-time decisions.** What it renders, which extensions it
+has adopted, how a run is graded. It may be stricter than the engine where it
+cannot display something, but it may not define the same term differently.
+
+#### The assignment test
+
+A rule belongs in the engine when it can be answered from a lesson and a
+manifest alone. When it needs the file system, CI, a pin or another repo, it
+belongs in the template. When it needs a renderer or a running learner, it
+belongs in the app.
+
+By this test the quality minimums, the hint length, the language-pair checks
+and every rule about `domain`, `stable_id` or exercise types belong in the
+engine. The directory layout (`sets/<source>/<target-level>`) stays in the
+template: it needs the file system.
+
+#### What is not a reason
+
+- **"The engine only warns, we need an error."** Severity is a property of the
+  check, not of the rule, and a repo sets it in its own state, not in a second
+  copy of the rule. The content template's workflows are byte-identical in every
+  repo, and a repo's own decisions live in `.github/quality-state.json`
+  (today: a prose-gate backlog and accepted warnings). A switch there that makes
+  a named warning block does not exist yet (adaptive-learner-content-template#83),
+  and removing `continue-on-error` from the warnings step does not replace it:
+  the engine runner exits 0 when it only finds warnings, so that surfaces a
+  crash, not a warning. Until the switch exists, a repo that needs a warning to
+  block has only one way, a second implementation at error level, which is how
+  the hint-length rule forked. That gap is why the switch matters: without it
+  this guideline asks a repo to give up a capability with nothing in its place.
+  A second implementation of the same rule at another severity is not a
+  tightening, it is a fork.
+- **"The engine does not check it yet."** Then an engine rule is missing.
+  Rebuilding it in the template moves the gap instead of closing it, and the
+  copy lands in ten repos through the mirror.
+- **"It is only one line."** The hint-length rule was one line too, and
+  drifted from the engine's version in several ways (below).
+
+### Known violations, as of 2026-09-24
+
+#### Quality minimums: three versions
+
+The engine ships `schema/quality-rules.json` as data and applies none of the
+minimums. They are applied in the template's `validate_content.py`, in a
+diverging copy in alc-books, and in the app's `validateSetForSharing`.
+
+| | Template (mirrored into ten repos) | alc-books | App |
+|---|---|---|---|
+| Exemption for a multiple-choice-only lesson | yes | yes | no |
+| Exemption for a bridge lesson | no | yes | no |
+| `matching` with `from_cards` | counts `card_ids` | counts `card_ids` | counts `pairs` only |
+
+The third row weighs most: the same exercise counts or does not count
+depending on the checker, so a set can pass its repo gate and fail when
+shared in the app.
+
+It also settles the question of the canonical version: **none of the three
+is canonical.** Template and alc-books differ in an exemption, the app in the
+counting, and the engine does not have the rule at all. The canonical version
+is written during the move, not selected. For `from_cards` in particular only
+the engine knows the field and what it means, so it is the one place that can
+decide whether a derived pairing counts as an exercise.
+
+#### Further content rules in the template's validator
+
+The template's `validate_content.py` also checks the language pair, requires
+`title_native`, and, for a source language with a non-Latin script, checks
+that card backs are written in that script. All of it can be answered from the
+manifest and the lesson alone, so by the assignment test it belongs in the
+engine (engine#190). The language check cuts a tag down to its primary subtag
+and requires two letters: `de-AT`, `pt-BR` and `zh-Hant` pass, but the
+three-letter primary subtags BCP-47 uses for languages without an ISO 639-1
+code (`gsw` Swiss German, `yue` Cantonese, `fil` Filipino) fail. The schema
+allows them, so such a set is schema-valid and fails in its repository; here the
+stricter version is the wrong one.
+
+#### Hint length: two versions, merged (engine#186)
+
+| | Engine `W-HINT-LENGTH` (0.28.0) | Template |
+|---|---|---|
+| Severity | warning | error |
+| "vier Leerzeichen pro Ebene" | reported | not reported |
+| "ein einzelnes Zeichen", "a single character" | missed | reported |
+| Hints of a single blank | not checked | checked |
+
+The engine's version matched a number word and a length noun anywhere in the
+hint, without word boundaries. Measured over the ten content repos it reported
+44 warnings, all false ("Achte" read as "acht", "bestimmten" as "ten",
+"Fragezeichen" as a length noun); the template's version reported none. The two
+sides together made the complete rule. engine#186 merged them into the engine
+(word boundaries, the template's count forms, blank hints) and kept the
+warning; the template's copy is dropped after the next pin.
+
+#### The app repeats an engine error
+
+The app's content validator re-implements `E-MATCH-DUP-LEFT` so that an author
+sees it before an export or a share. The intent is right; the means is a second
+implementation of a rule the engine already reports, and the copy already
+differs: it compares left terms case-sensitively, the engine does not, so
+"Empathie" next to "empathie" passes the app and fails the repo gate
+(adaptive-learner#3222). The app keeps the engine's validators out of its
+bundle to avoid the structural ajv layer; an engine entry point for the
+semantic rules alone would remove the reason for the copy.
+
+### Fixed: a lesson's `domain`
+
+Until engine#184, `W-DOMAIN-UNKNOWN` checked only `sets[].domain` in a
+manifest, not a lesson's own `domain`. A content repo had a local rule for it,
+and the advice to drop that rule would have been a step back without the
+engine change: the real case sat exactly in the gap, `"domain": "imported"` on
+every lesson of an exported set.
+
+The outcome is the regular case for this class. The gap was closed in the
+engine, the local rule goes after the next pin, and the value that triggered
+the warning is fixed at its origin, the app's export (adaptive-learner#2376). A
+consumer's origin marker is **not** added to the engine's vocabulary: the engine
+knows no consumers, and the existing warning already says the right thing.
+
+### Moving a rule: two conditions
+
+**Decide the canonical version first.** Where several versions exist, that is
+a decision with a reason, not a pick of the best copy. Otherwise the
+reconciliation between the hub repo and the template repeats on a smaller
+scale.
+
+**Measure per repo before building.** A move changes what turns red. The
+template's version shrinks, but the engine then reports things nobody reported
+before. Without measuring first, a clean-up release becomes the day nine repos
+turn red at once.
+
+### Open items
+
+- **engine#185**: the quality minimums move into the engine, tied to the
+  question of what a lesson is for. A bridge lesson is not a special type but a
+  lesson without an assessment intent; a field the author declares, instead of
+  one heuristic per exemption, and the same field answers the
+  multiple-choice-only exemption.
+- **engine#186** (fixed): one hint-length rule, kept as a warning; the template
+  drops its copy after the next pin.
+- **adaptive-learner-content-template#83**: a switch in
+  `.github/quality-state.json` that makes selected warning ids blocking for one
+  repo, without duplicating the rule or editing the shared workflow.
+- **engine#190**: the language-pair and set-metadata checks move from the
+  template into the engine; the three-letter primary subtags decide the
+  canonical version.
+- **adaptive-learner#3222**: the app's copy of `E-MATCH-DUP-LEFT`.
+- **adaptive-learner#2376**: the export writes an internal origin marker into a
+  published artifact.
 
 ## Roadmap
 
