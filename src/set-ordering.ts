@@ -12,7 +12,7 @@
  * caller decides which lesson ids form the set.
  */
 
-import { warn, type ValidationIssue } from "./validate.js";
+import { warn, type ValidationIssue } from "./issues.js";
 
 const NN_PREFIX_RE = /^([0-9]+)-/;
 

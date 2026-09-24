@@ -1,6 +1,10 @@
 {
   "$schema": "https://typedoc.org/schema.json",
-  "entryPoints": ["src/index.ts", "src/qti/index.ts"],
+  "entryPoints": [
+    "src/index.ts",
+    "src/rules.ts",
+    "src/qti/index.ts"
+  ],
   "out": "docs-api",
   "name": "learn-content-engine",
   "includeVersion": true,

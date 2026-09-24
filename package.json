@@ -34,6 +34,10 @@
       "types": "./dist/qti/index.d.ts",
       "import": "./dist/qti/index.js"
     },
+    "./rules": {
+      "types": "./dist/rules.d.ts",
+      "import": "./dist/rules.js"
+    },
     "./schema/lesson.schema.json": "./schema/lesson.schema.json",
     "./schema/content-manifest.schema.json": "./schema/content-manifest.schema.json",
     "./schema/quality-rules.json": "./schema/quality-rules.json",
