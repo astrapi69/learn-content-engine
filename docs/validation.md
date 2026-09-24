@@ -133,7 +133,8 @@ const { valid, errors, warnings } = validateLessonRules(lesson); // same result 
   characters), for a consumer that needs the slug rule without a schema
   validator. `SLUG_ID_PATTERN` is the pattern string itself.
 - The entry imports neither ajv nor `node:*`; `src/rules.test.ts` keeps it that
-  way. Measured with esbuild (minified, browser): about 21.6 kB, 8.3 kB gzip.
+  way. Measured with esbuild on 2026-09-24 (minified, browser): about 21.6 kB,
+  8.3 kB gzip.
   `validateLesson` alone is about 145 kB, most of it ajv, and it reads the
   schema from the file system, which a browser does not have (engine#191).
 

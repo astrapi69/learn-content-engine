@@ -116,7 +116,7 @@ a **new `ExerciseType` now starts here**:
    run `make sync-types` to regenerate `src/types/lesson-schema.generated.ts`.
    The [byte baseline](src/schema-baseline.test.ts) intentionally goes red on a
    schema change - update it in the same commit so the change is deliberate.
-2. Mirror the new type's cross-field rule in `src/validate.ts` (RED first: add a
+2. Mirror the new type's cross-field rule in `src/rules.ts` (RED first: add a
    rejecting negative test, then implement) with `E-*`/`W-*` rule ids + catalog
    rows.
 3. Add a valid fixture under `src/__fixtures__/conformance/` and a tested

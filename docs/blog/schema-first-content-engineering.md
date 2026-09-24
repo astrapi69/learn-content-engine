@@ -15,7 +15,7 @@ tags: [architecture, schema-design, typescript, content-engineering]
 
 `learn-content-engine` is a framework-agnostic TypeScript library that parses and validates learning content: language courses foremost, though a `domain` field (a known-values-plus-other vocabulary since engine 0.20.0) lets the same shape carry other knowledge domains (tech courses, driving-test prep, psychology). It turns raw sources (lesson JSON plus a `manifest.yaml`) into a canonical internal shape, and it is the single source of truth for the lesson schema, currently version 1.16.
 
-The core is deliberately small. No rendering, no persistence, no networking; its runtime dependencies are a YAML parser and a JSON-Schema validator, and the QTI adapter's XML parser sits behind its own subpath so it never enters the core import. What it offers is pure validation and transformation. That minimalism is the point, and it forces one hard question: *how do you evolve a content schema without breaking every consumer that depends on it?*
+The core is deliberately small. No rendering, no persistence, no networking; its runtime dependencies are a YAML parser and a JSON-Schema validator, and the QTI adapter's XML parser sits behind its own subpath so it never enters the core import. Since 0.29.0 the semantic rules have a subpath of their own too, without the JSON-Schema validator, so a browser app can run them without carrying it. What it offers is pure validation and transformation. That minimalism is the point, and it forces one hard question: *how do you evolve a content schema without breaking every consumer that depends on it?*
 
 Language-learning content does not hold still. New exercise types keep appearing (categorization, error-correction, graded quizzes), old ones fade, and edge cases surface in production that no one designed for. A content schema has to be stable enough to version content across several repositories, yet loose enough to absorb pedagogical ideas that weren't imagined when it was written. Stability versus evolution: that tension is the whole design problem, and the rest of this note is how we resolved it.
 
@@ -43,7 +43,7 @@ Trace what a single core type touches:
 - **Mirrors.** Eleven content repositories mirror the schema (the official repo, the test/starter repo, the template, and eight `alc-*` domain repos, plus the app's own generated copy), and byte-parity gates keep them honest.
 - **Dispatcher & renderer.** The app's exercise dispatcher needs a new branch and a new renderer component.
 - **i18n.** Eleven language catalogs need instruction keys, feedback, and error strings.
-- **Validation.** `validate.ts` needs rules for the new shape: well-formedness, cross-field integrity.
+- **Validation.** The new shape needs rules: well-formedness in the schema that `validate.ts` checks, cross-field integrity in `rules.ts`.
 - **Migration & docs.** Existing content may need migrating; architecture and contributor docs need updating.
 
 None of that is exotic on its own. The cost is the coordination: synchronized releases across repositories, backward-compatibility guarantees, and testing that spans the whole content ecosystem. And it is a one-way door. Once content in the wild uses a core type, removing it means a deprecation cycle, a migration path, and a breaking change for every consumer. A core type is permanent in a way most code is not, which is exactly why it should never be a casual decision.

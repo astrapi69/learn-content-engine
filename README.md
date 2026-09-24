@@ -65,7 +65,7 @@ if (!result.valid) console.error(result.errors); // [{ path, message }, …]
 - [**Lesson format reference**](docs/lesson-format.md) - every field and exercise type, with tested examples.
 - [**Schema diagrams**](docs/schema-diagrams.md) - four pictures of the format; the two schema-derived ones are generated and drift-gated.
 - [**Authoring patterns**](docs/authoring-patterns.md) - expressing common exercise ideas (true/false, conjugation, synonyms, collocations, word order) with the existing types.
-- [**Validation**](docs/validation.md) - the strict schema, the semantic rules, the error model.
+- [**Validation**](docs/validation.md) - the strict schema, the semantic rules, the error model, and the `/rules` entry for browser consumers.
 - [**Extensions**](docs/extensions.md) - opt-in `ext:` exercise types, the portability contract, the registry.
 - [**QTI interop**](docs/qti.md) - the optional QTI import/export adapter (2.x and 3.0 dialects) and its `qti import` / `qti export` command, mapping table, fidelity limits.
 - [**Architecture**](docs/architecture.md) - the engine boundary, consumer parity, roadmap.
@@ -144,6 +144,15 @@ The gap analysis behind this list is
 
 The bundled JSON-Schema ships too, so a content repo can mirror against it
 directly: `import schema from "learn-content-engine/schema/lesson.schema.json"`.
+The same holds for `quality-rules.json` and `grading-presets.json` (the
+[grading presets](docs/lesson-format.md#grading-presets) catalog).
+
+Two subpath entries sit next to the package root:
+
+| Entry | Exports | Purpose |
+|---|---|---|
+| `learn-content-engine/rules` | `validateLessonRules`, `validateManifestRules`, `isSlugId`, `SLUG_ID_PATTERN`, `SLUG_ID_MAX_LENGTH` | the semantic rules and author lints without the structural layer: no ajv, no `node:*`, for a browser consumer that has already shape-checked its input ([Validation](docs/validation.md#the-rules-without-the-structural-layer-learn-content-enginerules)) |
+| `learn-content-engine/qti` | `importQti`, `exportQti`, `qtiLessonAdapter`, ... | the optional QTI adapter and its XML parser ([QTI interop](docs/qti.md)) |
 
 ## Scope
 
@@ -227,7 +236,7 @@ The lesson schema's `$id` is engine-owned:
 To evolve the schema, edit the artifact here (the frozen byte baseline in
 `src/schema-baseline.test.ts` guards against accidental content drift), run
 `make sync-types` to regenerate `src/types/lesson-schema.generated.ts` from it,
-mirror any new cross-field rule in `src/validate.ts`, extend the fixtures + rule
+mirror any new cross-field rule in `src/rules.ts`, extend the fixtures + rule
 catalog, and bump the version; consumers then re-pin. The TypeScript types are
 generated here (in-engine, `scripts/generate-lesson-types.mjs`), so they cannot
 drift from the schema; the drift gate runs in `release-check` + CI.

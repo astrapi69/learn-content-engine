@@ -625,7 +625,7 @@ Excluded on purpose: Learnosity (proprietary, no public source), Open edX OLX (b
 | `ankitects/anki` | AGPL-3.0 (own LICENSE file) | Rust | 30612 | 2026-09-16 | Anki team |
 | `moodle/moodle` | GPL-3.0 | PHP | 7410 | 2026-09-16 | Moodle HQ and community |
 
-Runtime footprint of `learn-content-engine`: three dependencies (`yaml`, `ajv`; `@rgrove/parse-xml` only behind the `/qti` subpath), 1146 tests, no framework. Stars measure attention, not quality, but they are the honest proxy for the size of the community that will answer a question or fix a bug.
+Runtime footprint of `learn-content-engine`: three dependencies (`yaml`; `ajv` only for the structural layer, the `/rules` subpath runs without it; `@rgrove/parse-xml` only behind the `/qti` subpath), about 1,300 tests (September 2026), no framework. Stars measure attention, not quality, but they are the honest proxy for the size of the community that will answer a question or fix a bug.
 
 ### 9.3 Criteria
 

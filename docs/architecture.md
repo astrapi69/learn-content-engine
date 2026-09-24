@@ -125,7 +125,7 @@ that, and they differ in what travels with the pin:
   release to run it. What the mirror buys is a reviewable diff at the moment
   the pin moves, and a schema that a non-Node tool (a Python authoring script,
   an editor) can read without installing anything. Nothing else is mirrored -
-  not the rules in `src/validate.ts`, not the CLI.
+  not the rules in `src/rules.ts`, not the CLI.
 
 A pin is a guarantee about the rule set, not about its age. It guarantees that
 every lesson in the repo was judged against ONE known, immutable set of rules,
@@ -309,9 +309,11 @@ sees it before an export or a share. The intent is right; the means is a second
 implementation of a rule the engine already reports, and the copy already
 differs: it compares left terms case-sensitively, the engine does not, so
 "Empathie" next to "empathie" passes the app and fails the repo gate
-(adaptive-learner#3222). The app keeps the engine's validators out of its
-bundle to avoid the structural ajv layer; an engine entry point for the
-semantic rules alone would remove the reason for the copy.
+(adaptive-learner#3222). The app kept the engine's validators out of its
+bundle to avoid the structural ajv layer. Since 0.29.0 the engine offers the
+semantic rules alone, `learn-content-engine/rules` (engine#191): no ajv, no
+`node:*`, about 21.6 kB minified. That removes the reason for the copy; the
+app has not switched yet.
 
 ### Fixed: a lesson's `domain`
 
@@ -380,7 +382,7 @@ The engine is moving from "extracted copy" to "the format authority":
    Pydantic layer from this engine's schema mirror too (adaptive-learner
    PR #1529). Only its semantic cross-field validators stay hand-written,
    mirroring this engine's own split between the authored schema and
-   `src/validate.ts`. New schema features (e.g. `multiple_choice`, `from_cards`)
+   the semantic rules in `src/rules.ts`. New schema features (e.g. `multiple_choice`, `from_cards`)
    originate here; consumers re-pin and regenerate.
 
 Each stage is independent and additive; none requires a consumer to know

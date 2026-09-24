@@ -80,7 +80,13 @@ an error or a warning. See [Grading presets](docs/lesson-format.md#grading-prese
   engine owns every rule about the content itself; the content template's
   tooling owns what the engine cannot see; the app owns render-time decisions.
   With the known violations, as of 2026-09-24, and where each is tracked.
-- The project language is English (`.claude/rules/coding-standards.md`).
+- The grading presets explain why flooring a threshold is exact on a point
+  scale, and that it maps the national scale, not a consumer's run (a run on
+  its own grid can land between two reachable scale points).
+- Every guide that pointed at `src/validate.ts` for adding a rule now points at
+  `src/rules.ts`; README lists the two subpath entries.
+- `CONTRIBUTING.md`: a release now brings every doc up to date first, with the
+  audit recorded in the release PR.
 
 ## [0.28.0] - 2026-09-23
 
