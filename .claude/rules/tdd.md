@@ -9,76 +9,71 @@ minimal code, then cleanup.
 Adapted from the adaptive-learner project for this TypeScript library.
 The tools here are `tsc` + Vitest (there is no Python/pytest side).
 
-## Pflicht für Code-Änderungen mit Logik
+## Mandatory for code changes with logic
 
-Code-Änderungen mit Verhalten/Logik folgen dem Red-Green-Refactor-Zyklus.
-"Mit Logik" heißt: ein neues Verhalten, ein geänderter Code-Pfad, eine
-Bedingung, eine Berechnung, eine Validierung, ein Mapping (z. B. ein
-neuer Source-Adapter, ein neuer Manifest-Zweig, eine geänderte
-`resolve*`-Regel). Reine Mechanik ohne Verhaltensänderung fällt unter
-die Ausnahmen unten.
+Code changes with behaviour or logic follow the red-green-refactor cycle.
+"With logic" means: a new behaviour, a changed code path, a condition, a
+calculation, a validation, a mapping (e.g. a new source adapter, a new
+manifest branch, a changed `resolve*` rule). Pure mechanics without a
+change in behaviour fall under the exceptions below.
 
-### Phase 1: RED (Test zuerst)
+### Phase 1: RED (test first)
 
-- Test schreiben, der die gewünschte Änderung beschreibt.
-- Der Test MUSS fehlschlagen (beweist, dass das Feature/der Fix noch
-  nicht existiert).
-- Kein Produktionscode vor dem fehlschlagenden Test.
+- Write a test that describes the desired change.
+- The test MUST fail (proof that the feature or fix does not exist yet).
+- No production code before the failing test.
 
-### Phase 2: GREEN (minimale Implementierung)
+### Phase 2: GREEN (minimal implementation)
 
-- Nur den Code schreiben, der den Test grün macht.
-- YAGNI: keine vorzeitige Optimierung, kein Code "für später".
-- `npm run typecheck` (`tsc --noEmit`) + `npm test` (Vitest) grün.
+- Write only the code that makes the test pass.
+- YAGNI: no premature optimisation, no code "for later".
+- `npm run typecheck` (`tsc --noEmit`) + `npm test` (Vitest) green.
 
-### Phase 3: REFACTOR (aufräumen)
+### Phase 3: REFACTOR (clean up)
 
-- Code-Smells, Duplikation, Benennung verbessern (Boy-Scout-Rule,
+- Improve code smells, duplication, naming (Boy Scout Rule,
   `coding-standards.md`).
-- Tests bleiben grün.
+- Tests stay green.
 
-## Test-Menge pro Feature/Fix
+## Number of tests per feature or fix
 
-Der MINIMAL-Boden für triviale neue Funktionen ist happy path + ein
-Fehlerfall. Für ein echtes Feature oder einen Fix ist das ZIEL die
-folgende Aufteilung - mindestens vier Tests, die zusammen das Verhalten
-absichern:
+The MINIMUM floor for trivial new functions is happy path + one error
+case. For a real feature or fix the TARGET is the following split - at
+least four tests that together secure the behaviour:
 
-1. **Reproduktionstest** - der Red-Test vor dem Fix/Feature.
-2. **Happy-Path** - der erwartete Normalfall.
-3. **Edge-Cases** - leere/fehlende/unerwartete Eingaben (fehlendes
-   `title`, leerer YAML-String, ungültiges JSON, nullish Felder).
-4. **Grenzwerte / Boundary** - die Ränder des gültigen Bereichs
-   (Legacy-`language`-Alias vs. `target_language`, `?? "en"`-Default,
-   `cached_version === version` als Grenze zu `update_available`).
+1. **Reproduction test** - the red test before the fix or feature.
+2. **Happy path** - the expected normal case.
+3. **Edge cases** - empty, missing or unexpected input (missing `title`,
+   empty YAML string, invalid JSON, nullish fields).
+4. **Boundaries** - the edges of the valid range (legacy `language`
+   alias vs. `target_language`, the `?? "en"` default,
+   `cached_version === version` as the boundary to `update_available`).
 
-Boden und Ziel sind KEIN Widerspruch: der Boden gilt für triviale neue
-Funktionen, das Ziel für Features und Fixes. Mehr Tests sind erlaubt,
-weniger als der Boden nicht. Keine künstlichen Tests nur zum Zählen -
-jeder Test prüft eine echte Verhaltenseigenschaft. Sinnvolle Abdeckung
-ist das Ziel, nicht die Prozentzahl: neue Verhaltenszweige (jeder `??`,
-jedes `? :`, jede Guard-Clause) gehören abgedeckt.
+Floor and target do NOT contradict each other: the floor applies to
+trivial new functions, the target to features and fixes. More tests are
+allowed, fewer than the floor are not. No artificial tests just to reach
+a count - every test checks a real behavioural property. Meaningful
+coverage is the goal, not the percentage: new behaviour branches (every
+`??`, every `? :`, every guard clause) get covered.
 
-## Bug-Fixes
+## Bug fixes
 
-- IMMER zuerst einen Test, der den Bug reproduziert (RED, beweist den
-  Bug).
-- Dann fixen bis GREEN.
-- Der Reproduktionstest bleibt als Regressions-Guard im Repo.
-- Erst den Fehler reproduzierbar machen, dann fixen - kein Fix ohne
-  verstandene Ursache.
+- ALWAYS first a test that reproduces the bug (RED, proves the bug).
+- Then fix until GREEN.
+- The reproduction test stays in the repository as a regression guard.
+- Make the failure reproducible first, then fix - no fix without an
+  understood cause.
 
-## Ausnahmen (etablierte Projektpraxis)
+## Exceptions (established project practice)
 
-TDD wird NICHT erzwungen für:
+TDD is NOT enforced for:
 
-- Reine Doku-Änderungen (kein Code).
-- Reine Konfiguration (CI, Makefile, `tsconfig`, YAML) ohne Logik.
-- Mechanische Refactors mit bestehender Testabdeckung: Datei-Splits,
-  Barrel-/Re-Export-Umzüge, Schema-/Typ-Generierung
-  (`lesson-schema.generated.ts`). Hier MUSS die bestehende Suite grün
-  bleiben (beweist, dass nichts brach), aber es werden keine neuen
-  Verhaltenstests erzwungen.
+- Pure documentation changes (no code).
+- Pure configuration (CI, Makefile, `tsconfig`, YAML) without logic.
+- Mechanical refactors with existing test coverage: file splits,
+  barrel or re-export moves, schema and type generation
+  (`lesson-schema.generated.ts`). Here the existing suite MUST stay green
+  (proof that nothing broke), but no new behaviour tests are enforced.
 
-Die Ausnahmen entbinden nicht von der harten Regel "`npm test` muss
-nach jeder Änderung grün bleiben".
+The exceptions do not release anyone from the hard rule "`npm test` must
+stay green after every change".
