@@ -1008,11 +1008,18 @@ and a content repo can read it next to the schema.
   learner's), not the language being learned.
 - **Rounding.** `min_percent` is an integer. Where an official lower bound
   is not a whole percent (52 of 60 points is 86.67 %), the row carries the
-  whole percent below it: a run exactly at the bound earns the grade, and so
-  does a run up to one percentage point below it. Each such row is listed in
-  the preset's `rounded_rows` with its official value (today: the Greek
+  whole percent below it. On the national scale that is exact: only whole
+  points are reachable, and no reachable value lies between 51 points (85 %)
+  and 52 points (86.67 %), so a row at 86 separates them as the regulation
+  does, while 87 would give 52 points the lower grade. Each such row is listed
+  in the preset's `rounded_rows` with its official value (today: the Greek
   Lykeio and Gymnasio and Luxembourg); an empty list means exact thresholds.
   The lowest row always sits at 0, so every run earns a grade.
+- **The scale, not the run.** The rounding maps the national scale. A
+  consumer's run counts answered units on its own grid (40 units: 2.5 %
+  steps), so it can land between two reachable points of the scale, at
+  86.25 % for example, and then earns the upper grade. That is expected, not
+  a defect of the preset.
 - The thresholds assume the consumer compares the **unrounded** run
   percentage: 40 of 60 points is 66.67 %, which reaches a row at 66. A
   consumer that rounds first moves each boundary by up to half a point.
