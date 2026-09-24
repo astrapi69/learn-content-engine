@@ -5,6 +5,21 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [Unreleased]
+
+### Correction to 0.28.0: something did compare a pin with the current release
+
+The 0.28.0 entry "Docs: the pin and currency discipline" says that comparing a
+pin against the current release is something "nothing performs today". That
+did not hold when it was written. The reference app's Dependabot had opened
+grouped `/frontend` update PRs that carried engine bumps since 2026-07-11
+(adaptive-learner#1562, #1587, #2923), although they arrive 3 to 10 days after
+a release and fail the app's pin and schema parity tests every time. And the
+content template and the hub had carried `engine-currency.yml`, which compares
+the pin with the tracked npm dist-tag, since 11:08 UTC on 2026-09-23, about 90
+minutes before 0.28.0 was published. `docs/architecture.md` ("Pinning and currency") carries
+the measured account.
+
 ## [0.29.0] - 2026-09-24
 
 No schema change: `x-schema-version` stays 1.16, and every manifest and
