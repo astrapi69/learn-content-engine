@@ -238,7 +238,7 @@ engine is not either. In the hint-length case (below) the template's copy, a
 blocking error in every content repo's gate, was right on the real content, and
 the engine's version, the one the guideline gives the rule to, was wrong there. That is why every
 existing version is measured per repo before a move
-([Moving a rule](#moving-a-rule-two-conditions)).
+([Moving a rule](#moving-a-rule-the-conditions)).
 
 #### The assignment test
 
@@ -358,7 +358,7 @@ Had the template's copy been deleted first, the engine's version would have
 been the only one left, the comparison that showed the warnings to be false
 could not have been made, and the forms only the template caught would have
 gone unchecked. The case is the evidence for the second condition under
-[Moving a rule](#moving-a-rule-two-conditions), in the opposite direction from
+[Moving a rule](#moving-a-rule-the-conditions), in the opposite direction from
 the one it was set up for: it was meant to keep a move from turning repos red,
 and here it showed that the engine's version was the imprecise one.
 
@@ -384,34 +384,82 @@ engine change: the real case sat exactly in the gap, `"domain": "imported"` on
 every lesson of an exported set.
 
 The outcome is the regular case for this class. The gap was closed in the
-engine, the local rule goes after the next pin, and the value that triggered
-the warning is fixed at its origin, the app's export (adaptive-learner#2376). A
+engine, the local rule went with the 0.29.0 pin (alc-books#24), and a
 consumer's origin marker is **not** added to the engine's vocabulary: the engine
 knows no consumers, and the existing warning already says the right thing.
 
-### Moving a rule: two conditions
+The origin of the value is fixed only in part. adaptive-learner#2376 (closed
+2026-08-05 by adaptive-learner#2425) filters the manifest's `domain` in the
+app's repo export. The lesson files are written as the app holds them, and a
+lesson without its own `domain` inherits the set's (`parseLesson`), which for a
+user set is its origin marker. That path is traced in the code, not reproduced
+by an export; no content repo holds such a lesson today.
+
+### Moving a rule: the conditions
 
 **Decide the canonical version first.** Where several versions exist, that is
 a decision with a reason, not a pick of the best copy. Otherwise the
 reconciliation between the hub repo and the template repeats on a smaller
 scale.
 
-**Measure per repo before building.** A move changes what turns red. The
-template's version shrinks, but the engine then reports things nobody reported
-before. Without measuring first, a clean-up release becomes the day every
-content repo turns red at once.
+**Measure before building, in three parts.** A move changes what turns red, and
+it can let the worse version win. Before the canonical version is decided:
 
-The measurement has a second job, as an input to the first condition: a move
-can let the worse version win. Every existing version, the engine's included
-where it has one, is run over the real content and their findings are compared
-before the canonical version is decided, so where a version lives does not
-pick the winner. For the hint length that run showed which version was wrong: the
-engine's reported 44 warnings, all false, and the template's copy none,
-correctly. The forms the merged rule keeps came from both sides' patterns, test
-cases and probe cases. By 2026-09 the content held no real case for either
-version to find: the length hints adaptive-learner-content#100 and #102 found in
-2026-07 had been replaced then (several of the template's test cases are those
-hints), and the template's error gate kept new ones out.
+1. **Every version, per repo, over the real content.** Every existing version,
+   the engine's included where it has one, runs over the content of every repo,
+   and the findings are compared. The template's version shrinks, but the
+   engine then reports things nobody reported before; without this, a clean-up
+   release becomes the day every content repo turns red at once. Where a
+   version lives does not pick the winner.
+2. **Precision and completeness, separately.** Different means test them, and
+   neither replaces the other.
+   - *Precision*, are the hits right: blocking makes a false hit costly and
+     therefore visible, because whoever it stops has to look at it. That is a
+     guarantee about what would happen, not a claim about what did, and it
+     holds whether a rule was corrected once or was right from its first
+     version. A warning that stops nobody gives no such guarantee. Record for
+     each version its severity and where and since when it ran at that
+     severity, next to its measured hits and how many of them are false.
+   - *Completeness*, are the cases complete: a miss stops nobody at any
+     severity, so pressure says nothing about it. Only a comparison of cases
+     finds it: both sides' test cases plus probe cases in one table, run
+     against every version.
+3. **The severity at the new place.** A move carries the severity along. Check
+   whether the canonical version can reach, at its new place, the severity of
+   the version it replaces. When the engine only warns and a repo cannot make
+   that warning block, the move switches off the pressure that guaranteed the
+   old precision. That is a finding, not a detail. Today a repo cannot make a
+   warning block (adaptive-learner-content-template#83), so that switch is the
+   missing half of this guideline, not a convenience: without it, unifying
+   tells a repo to give up its blocking rule and take a warning back.
+
+**The hint length, measured this way.**
+
+- *Every version over the content*: the engine's version reported 44 warnings,
+  all false; the template's none.
+- *Precision*: the template's copy ran as a blocking error in every content
+  repo from its first commit, so a false hit would have stopped someone. There
+  is no known case of one; a false hit an author cleared at once by rewriting
+  the hint would have left no trace, so the absence is not proof. The one
+  precision check that demonstrably happened was at its start: introduced
+  against the hub's real content, every hit had to be looked at (about 60 hints
+  replaced in adaptive-learner-content#100, 6 more in #102), and one false hit
+  among them would have forced a pattern change. The engine's version ran as a
+  warning that stopped nobody, in CI only since 2026-09-23; its 44 false hits
+  stood as ordinary findings (adaptive-learner-content#222). The asymmetry
+  rests on those 44, not on the template's clean record.
+- *Completeness*: the blocking copy missed "Anzahl der Buchstaben: vier." for
+  eleven weeks; only the case table in engine#186 found it. The forms the
+  merged rule keeps came from both sides' patterns, test cases and probe cases.
+  By 2026-09 the content held no real case for either version to find: the
+  length hints #100 and #102 found in 2026-07 had been replaced then (several
+  of the template's test cases are those hints), and the template's error gate
+  kept new ones out.
+- *Severity*: since 0.29.0 the merged rule is a warning in all ten content
+  repos, and the blocking copy is gone. Its content is better, but it now runs
+  under the conditions in which the engine's version collected its 44. The
+  third part was not met; it stays a finding until
+  adaptive-learner-content-template#83 lets a repo make the warning block.
 
 ### Open items
 
@@ -421,16 +469,19 @@ hints), and the template's error gate kept new ones out.
   one heuristic per exemption, and the same field answers the
   multiple-choice-only exemption.
 - **engine#186** (closed, 0.29.0): one hint-length rule, kept as a warning; the
-  template's copy is gone in all ten content repos.
+  template's copy is gone in all ten content repos. Its severity dropped with
+  the move (above).
 - **adaptive-learner-content-template#83**: a switch in
   `.github/quality-state.json` that makes selected warning ids blocking for one
-  repo, without duplicating the rule or editing the shared workflow.
+  repo, without duplicating the rule or editing the shared workflow. The
+  missing half of this guideline: the way a moved rule gets its severity back.
 - **engine#190**: the language-pair and set-metadata checks move from the
   template into the engine; the three-letter primary subtags decide the
   canonical version.
 - **adaptive-learner#3222**: the app's copy of `E-MATCH-DUP-LEFT`.
-- **adaptive-learner#2376**: the export writes an internal origin marker into a
-  published artifact.
+- **The app's repo export, lesson files**: a lesson can inherit the set's
+  origin marker as its `domain` (above); adaptive-learner#2376 fixed the
+  manifest only.
 
 ## Roadmap
 
