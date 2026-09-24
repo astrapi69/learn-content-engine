@@ -171,15 +171,28 @@ gate is green by construction, including on the day the engine is several
 releases ahead. Green there means consistent, not current.
 
 Finding lag needs a different comparison: the pinned number against the current
-published release, which is a value that moves. The content repos run that
-comparison nightly since 2026-09-23 (`engine-currency.yml`, owned by the content
-template): it compares `schema/engine-version.txt` against the npm dist-tag the
-repo tracks, opens or updates one issue while they differ, and closes it once
-the pin catches up. It never moves the pin itself; moving it stays a deliberate
-change that refreshes the mirror in the same commit. An application consumer
-has no such job: its parity test compares its generated layer with the release
-it pins, which answers the consistency question again, not the currency one.
-There, "is this pin current" is still only answered by someone asking.
+published release, which is a value that moves. The content repos have had that
+comparison since 2026-09-23 and run it nightly from 2026-09-24
+(`engine-currency.yml`, owned by the content template): it compares
+`schema/engine-version.txt` against the npm dist-tag the repo tracks, opens or
+updates one issue while they differ, and closes it once the pin catches up. It
+never moves the pin itself; moving it stays a deliberate change that refreshes
+the mirror in the same commit.
+
+Its record so far (adaptive-learner-content-template#70, 2026-09-24): dispatched
+runs opened an issue and closed it again in all ten repos. The first scheduled
+runs, one per repo, found the pin current in seven and the lag in three, where
+they updated the issue a dispatch had opened 20 to 30 minutes earlier. No
+scheduled run has opened an issue yet. That case is not staged on purpose: both
+triggers run the same steps and differ only in an optional input that falls
+back to the tracked tag. The first scheduled run that meets a lag with no issue
+open decides it: it opens the issue or it does not, and if it does not, that is
+a finding. Until then it is an open point, not a defect.
+
+An application consumer has no such job: its parity test compares its generated
+layer with the release it pins, which answers the consistency question again,
+not the currency one. There, "is this pin current" is still only answered by
+someone asking.
 
 ## Rule ownership: which layer owns which rule
 
@@ -213,6 +226,16 @@ about a repo's environment rather than its content.
 has adopted, how a run is graded. It may be stricter than the engine where it
 cannot display something, but it may not define the same term differently.
 
+**What the guideline promises, and what it does not.** One rule in the engine
+replaces several versions with one, so every consumer on the same release gives
+a set the same answer. It does not make that one version better than the copies
+it replaces. A unification can let the worse version win: the version with the
+widest reach is not automatically the precise one. In the hint-length case
+(below) the template's copy, which ran only in the repo gates, was right on the
+real content and the engine's version was wrong there. That is why every
+existing version is measured per repo before a move
+([Moving a rule](#moving-a-rule-two-conditions)).
+
 #### The assignment test
 
 A rule belongs in the engine when it can be answered from a lesson and a
@@ -236,16 +259,17 @@ template: it needs the file system.
   and removing `continue-on-error` from the warnings step does not replace it:
   the engine runner exits 0 when it only finds warnings, so that surfaces a
   crash, not a warning. Until the switch exists, a repo that needs a warning to
-  block has only one way, a second implementation at error level, which is how
-  the hint-length rule forked. That gap is why the switch matters: without it
-  this guideline asks a repo to give up a capability with nothing in its place.
+  block has only one way, a second implementation at error level. That gap is
+  why the switch matters: without it this guideline asks a repo to give up a
+  capability with nothing in its place.
   A second implementation of the same rule at another severity is not a
   tightening, it is a fork.
 - **"The engine does not check it yet."** Then an engine rule is missing.
   Rebuilding it in the template moves the gap instead of closing it, and the
   copy lands in ten repos through the mirror.
-- **"It is only one line."** The hint-length rule was one line too, and
-  drifted from the engine's version in several ways (below).
+- **"It is only one line."** The hint-length rule was one line too, and its
+  two versions, written separately four days apart, differed from the start in
+  several ways (below).
 
 ### Known violations, as of 2026-09-24
 
@@ -292,28 +316,42 @@ Before 0.29.0:
 | | Engine `W-HINT-LENGTH` (0.28.0) | Template |
 |---|---|---|
 | Severity | warning | error |
-| "vier Leerzeichen pro Ebene" | reported | not reported |
+| "vier Leerzeichen pro Ebene" | reported, falsely | not reported |
+| "Anzahl der Buchstaben: vier." | reported | not reported |
 | "ein einzelnes Zeichen", "a single character" | missed | reported |
-| Hints of a single blank | not checked | checked |
+| `blanks[].hint` | not checked | checked |
 
-The engine's version matched a number word and a length noun anywhere in the
-hint, without word boundaries. Measured over the ten content repos it reported
-44 warnings, all false (42 in adaptive-learner-content, 2 in alc-psychology:
-"Achte" read as "acht", "bestimmten" as "ten", "Fragezeichen" as a length
-noun). The template's version reported none, and it was right. The two sides
-together made the complete rule. engine#186 merged them into the engine (word
-boundaries, the template's count forms, blank hints) and kept the warning.
+The template's version came first, an error-level check from
+adaptive-learner-content#100 (2026-07-06); the engine's followed on 2026-07-10
+with its own pattern, unchanged through 0.28.0. The engine's version matched a
+number word and a length noun anywhere in the hint, without word boundaries.
+Measured over the ten content repos it reported 44 warnings, all false (42 in
+adaptive-learner-content, 2 in alc-psychology: "Achte" read as "acht",
+"bestimmten" as "ten", "Fragezeichen" as a length noun). The template's version
+reported none, and it was right. Each side also caught forms the other missed
+(the table). engine#186 merged them into the engine from one table of both
+sides' test cases plus probe cases (word boundaries, the template's count forms,
+`blanks[].hint`, the engine's reversed colon form) and kept the warning.
 
 Closed on 2026-09-24: all ten content repos pin 0.29.0, the engine rule reports
 **0** there (the 44 false warnings are gone), and the template's copy is gone
 from `validate_content.py` in all of them (adaptive-learner-content-template#87
 and the wave after it).
 
-What the case shows: the second copy did not make the rule safer. The version
-with the reach, the engine's, which every consumer runs, was the wrong one, and
-the precise one sat in a mirrored file that nobody compared with it. The false
-warnings stood unnoticed until the two were measured side by side, and one
-rule in the engine ended them.
+What the case shows: the guideline still holds, but the case is not evidence
+for it; it marks its limit. The version with the reach, the engine's, which
+every content repo's warning run executes, was the wrong one on the real
+content, and the precise one sat in a mirrored file that nobody had compared
+with it. The false warnings were not hidden: the 42 in the hub stood as ordinary
+findings in adaptive-learner-content#222 on 2026-09-23. They were recognized as
+false only when both versions were measured per repo side by side (engine#186).
+Had the template's copy been deleted first, the engine's version would have
+been the only one left, the comparison that showed the warnings to be false
+could not have been made, and the forms only the template caught would have
+gone unchecked. The case is the evidence for the second condition under
+[Moving a rule](#moving-a-rule-two-conditions), in the opposite direction from
+the one it was set up for: it was meant to keep a move from turning repos red,
+and here it showed that the version with the reach was the imprecise one.
 
 #### The app repeats an engine error
 
@@ -351,8 +389,17 @@ scale.
 
 **Measure per repo before building.** A move changes what turns red. The
 template's version shrinks, but the engine then reports things nobody reported
-before. Without measuring first, a clean-up release becomes the day nine repos
-turn red at once.
+before. Without measuring first, a clean-up release becomes the day every
+content repo turns red at once.
+
+The measurement has a second job, as an input to the first condition: a move
+can let the worse version win. Every existing version, the engine's included
+where it has one, is run over the real content and their findings are compared
+before the canonical version is decided, so reach alone does not pick the
+winner. For the hint length that run showed which version was wrong: the
+engine's reported 44 warnings, all false, and the template's copy none,
+correctly. The forms the merged rule keeps came from comparing both sides' test
+cases; the content held no real case for either version to find.
 
 ### Open items
 
