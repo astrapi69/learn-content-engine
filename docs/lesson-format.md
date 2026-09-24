@@ -905,7 +905,7 @@ planned per-lesson override.
   "sets": [
     {
       "id": "fuehrerschein-uebung",
-      "title": "Fuehrerschein: Uebungsfragen",
+      "title": "Führerschein: Übungsfragen",
       "target_language": "de",
       "level": "none",
       "version": "1.0.0",
@@ -915,7 +915,7 @@ planned per-lesson override.
         "pass_percent": 70,
         "basis": "elements",
         "report": "detailed",
-        "title": "Theoriepruefung"
+        "title": "Theorieprüfung"
       }
     }
   ]
@@ -974,6 +974,51 @@ example above carries an `F` row at 0 for exactly this reason.
 
 Everything else is the consumer's: sampling the run, computing the score,
 rendering the summary. Absent block, unchanged behaviour.
+
+### Grading presets
+
+`schema/grading-presets.json` (exported as
+`learn-content-engine/schema/grading-presets.json`) is a catalog of grading
+scales an author can pick instead of typing a table: national school and
+university scales, plus the two schemeless base forms (pass/fail and
+percent). It is data, not code; a consumer offers it when a set is created,
+and a content repo can read it next to the schema.
+
+- **A preset is copied.** Picking one writes its `evaluation` block into the
+  set's manifest. A later correction of a preset in this file does not change
+  sets that already carry a copy, and the manifest does not record which
+  preset it came from.
+- **Class A** presets follow a primary source (a regulation, a statute, a
+  ministry): Abitur points, German chamber examinations, the Greek Lykeio,
+  French diploma mentions, Estonian school grades and others. **Class B**
+  presets are widely used conventions (US letter grades, UK degree classes,
+  Swiss half grades) and each says what the convention is in its `note`.
+  Every entry names its `sources`.
+- **Templates** carry a scale's grades in order and its pass mark, but no
+  thresholds: for most national scales no source maps them to percentages,
+  and the file does not pretend one. The author sets the thresholds.
+- **Unavailable** entries name scales that cannot be expressed as
+  percentages at all, with the reason: ECTS grades (a distribution over the
+  passing cohort), GCSE and A-level grades (boundaries set per series), the
+  German state law examination (points awarded directly).
+- `label` is the grade as written (a number, a letter or a range),
+  `label_native` the official word for it where one exists, in the scale's
+  own language. `languages` lets a consumer suggest scales by the set's
+  language; for a language-learning set that is the source language (the
+  learner's), not the language being learned.
+- **Rounding.** `min_percent` is an integer. Where an official lower bound
+  is not a whole percent (52 of 60 points is 86.67 %), the row carries the
+  whole percent below it: a run exactly at the bound earns the grade, and so
+  does a run up to one percentage point below it. Each such row is listed in
+  the preset's `rounded_rows` with its official value (today: the Greek
+  Lykeio and Gymnasio and Luxembourg); an empty list means exact thresholds.
+  The lowest row always sits at 0, so every run earns a grade.
+- The thresholds assume the consumer compares the **unrounded** run
+  percentage: 40 of 60 points is 66.67 %, which reaches a row at 66. A
+  consumer that rounds first moves each boundary by up to half a point.
+
+`src/grading-presets.test.ts` holds every preset to what `validateManifest`
+accepts without an error or a warning, and every entry to having a source.
 
 ## Content domains
 

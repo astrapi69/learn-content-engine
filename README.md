@@ -210,7 +210,7 @@ the same validator locally that CI enforces):
 
 The **canonical source** of the lesson schema is this engine's
 [`schema/lesson.schema.json`](schema/lesson.schema.json) (+
-`content-manifest.schema.json`, `quality-rules.json`). It is an **authored**
+`content-manifest.schema.json`, `quality-rules.json`, `grading-presets.json`). It is an **authored**
 artifact here; consumers mirror the schema shipped in each pinned engine release:
 
 - **[adaptive-learner](https://github.com/astrapi69/adaptive-learner)** (the
