@@ -155,9 +155,10 @@ Three classes, and they are not equally urgent:
   `W-PROMPT-DUP` is one such rule; the [rule catalog](lesson-format.md#rule-catalog)
   marks every warning as such.
 
-A lint needs a second thing after the pin, and this is where it usually stalls:
-warnings are opt-in in the consumer pipelines (see
-[layer 3](validation.md#layer-3-author-lints-warnings)). A pin bump on its own
+A lint needs a second thing after the pin: warnings are opt-in in a consumer
+pipeline (see [layer 3](validation.md#layer-3-author-lints-warnings)). The
+content repos opted in on 2026-09-23 with a non-blocking warning step in the
+template's `engine-validate.yml`; in a pipeline without such a step, a pin bump
 changes a version number and nothing on screen.
 
 ### Currency is nobody's job until somebody owns it
@@ -182,17 +183,19 @@ the mirror in the same commit.
 Its record so far (adaptive-learner-content-template#70, 2026-09-24): dispatched
 runs opened an issue and closed it again in all ten repos. The first scheduled
 runs, one per repo, found the pin current in seven and the lag in three, where
-they updated the issue a dispatch had opened 20 to 30 minutes earlier. No
-scheduled run has opened an issue yet. That case is not staged on purpose: both
-triggers run the same steps and differ only in an optional input that falls
-back to the tracked tag. The first scheduled run that meets a lag with no issue
+they updated the issue a dispatch had opened 21 to 32 minutes earlier. No
+scheduled run has opened an issue yet. That case is deliberately not staged:
+both triggers run the same steps and differ only in an optional input that
+falls back to the tracked tag. The first scheduled run that meets a lag with no issue
 open decides it: it opens the issue or it does not, and if it does not, that is
 a finding. Until then it is an open point, not a defect.
 
-An application consumer has no such job: its parity test compares its generated
-layer with the release it pins, which answers the consistency question again,
-not the currency one. There, "is this pin current" is still only answered by
-someone asking.
+An application consumer has no engine-specific job: its parity test compares
+its generated layer with the release it pins, which answers the consistency
+question again, not the currency one. In the reference app the only automatic
+signal is Dependabot's weekly grouped update PR for `/frontend`, which has
+carried engine bumps (adaptive-learner#2923, 0.22.0 to 0.23.0) among dozens of
+other updates; nothing there tracks the engine pin on its own.
 
 ## Rule ownership: which layer owns which rule
 
@@ -230,9 +233,10 @@ cannot display something, but it may not define the same term differently.
 replaces several versions with one, so every consumer on the same release gives
 a set the same answer. It does not make that one version better than the copies
 it replaces. A unification can let the worse version win: the version with the
-widest reach is not automatically the precise one. In the hint-length case
-(below) the template's copy, which ran only in the repo gates, was right on the
-real content and the engine's version was wrong there. That is why every
+widest reach is not automatically the precise one, and the version in the
+engine is not either. In the hint-length case (below) the template's copy, a
+blocking error in every content repo's gate, was right on the real content, and
+the engine's version, the one the guideline gives the rule to, was wrong there. That is why every
 existing version is measured per repo before a move
 ([Moving a rule](#moving-a-rule-two-conditions)).
 
@@ -339,10 +343,15 @@ from `validate_content.py` in all of them (adaptive-learner-content-template#87
 and the wave after it).
 
 What the case shows: the guideline still holds, but the case is not evidence
-for it; it marks its limit. The version with the reach, the engine's, which
-every content repo's warning run executes, was the wrong one on the real
-content, and the precise one sat in a mirrored file that nobody had compared
-with it. The false warnings were not hidden: the 42 in the hub stood as ordinary
+that one rule in the engine is the better rule. It shows two versions nobody
+compared, which is why this section exists, and it marks the guideline's limit.
+The engine's version, the one the guideline keeps and the package ships to
+every consumer that calls it, was the wrong one on the real content. The
+precise one sat in the template's Python validator, mirrored into every content
+repo, and nobody had compared the two. In practice both ran in the same ten
+repos: the template's as a blocking error since each repo's first commit, the
+engine's as a non-blocking warning, in CI only since 2026-09-23 and before that
+only for whoever ran `make lint-warnings`. The false warnings were not hidden: the 42 in the hub stood as ordinary
 findings in adaptive-learner-content#222 on 2026-09-23. They were recognized as
 false only when both versions were measured per repo side by side (engine#186).
 Had the template's copy been deleted first, the engine's version would have
@@ -351,7 +360,7 @@ could not have been made, and the forms only the template caught would have
 gone unchecked. The case is the evidence for the second condition under
 [Moving a rule](#moving-a-rule-two-conditions), in the opposite direction from
 the one it was set up for: it was meant to keep a move from turning repos red,
-and here it showed that the version with the reach was the imprecise one.
+and here it showed that the engine's version was the imprecise one.
 
 #### The app repeats an engine error
 
@@ -395,11 +404,14 @@ content repo turns red at once.
 The measurement has a second job, as an input to the first condition: a move
 can let the worse version win. Every existing version, the engine's included
 where it has one, is run over the real content and their findings are compared
-before the canonical version is decided, so reach alone does not pick the
-winner. For the hint length that run showed which version was wrong: the
+before the canonical version is decided, so where a version lives does not
+pick the winner. For the hint length that run showed which version was wrong: the
 engine's reported 44 warnings, all false, and the template's copy none,
-correctly. The forms the merged rule keeps came from comparing both sides' test
-cases; the content held no real case for either version to find.
+correctly. The forms the merged rule keeps came from both sides' patterns, test
+cases and probe cases. By 2026-09 the content held no real case for either
+version to find: the length hints adaptive-learner-content#100 and #102 found in
+2026-07 had been replaced then (several of the template's test cases are those
+hints), and the template's error gate kept new ones out.
 
 ### Open items
 
