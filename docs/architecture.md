@@ -193,9 +193,16 @@ a finding. Until then it is an open point, not a defect.
 An application consumer has no engine-specific job: its parity test compares
 its generated layer with the release it pins, which answers the consistency
 question again, not the currency one. In the reference app the only automatic
-signal is Dependabot's weekly grouped update PR for `/frontend`, which has
-carried engine bumps (adaptive-learner#2923, 0.22.0 to 0.23.0) among dozens of
-other updates; nothing there tracks the engine pin on its own.
+signal is Dependabot's weekly grouped update for `/frontend`, and it arrives
+late and red. A release has to age past Dependabot's cooldown (between 2.2 and
+3.4 days, measured from its skipped runs) and then wait for the weekly run, so
+the PR comes 3 to 10 days after the release; and since it moves only
+`package.json` and the lockfile, it fails the app's pin and schema parity tests
+every time. Of 73 Dependabot PRs up to 2026-09-24, three touched the engine:
+two were closed unmerged in favour of a manual re-pin, one was merged after a
+manual repair, as one of 36 updates (adaptive-learner#2923). Manual re-pins
+reached 38 of 39 releases first, with a median lag of about three hours. The
+signal exists; in practice the re-pin by hand is the signal.
 
 ## Rule ownership: which layer owns which rule
 
@@ -325,17 +332,20 @@ Before 0.29.0:
 | "ein einzelnes Zeichen", "a single character" | missed | reported |
 | `blanks[].hint` | not checked | checked |
 
-The template's version came first, an error-level check from
-adaptive-learner-content#100 (2026-07-06); the engine's followed on 2026-07-10
-with its own pattern, unchanged through 0.28.0. The engine's version matched a
-number word and a length noun anywhere in the hint, without word boundaries.
-Measured over the ten content repos it reported 44 warnings, all false (42 in
-adaptive-learner-content, 2 in alc-psychology: "Achte" read as "acht",
-"bestimmten" as "ten", "Fragezeichen" as a length noun). The template's version
-reported none, and it was right. Each side also caught forms the other missed
-(the table). engine#186 merged them into the engine from one table of both
-sides' test cases plus probe cases (word boundaries, the template's count forms,
-`blanks[].hint`, the engine's reversed colon form) and kept the warning.
+The template's version came first: adaptive-learner-content#100/#101 introduced
+it on 2026-07-06 as an error in the hub's validator, #102/#103 widened it the
+same day (English count words, the single-character forms), and the content
+template's scaffold took the narrow first version on 2026-07-07. The engine's
+followed on 2026-07-10 with its own pattern, unchanged through 0.28.0. It
+matched a number word and a length noun anywhere in the hint, without word
+boundaries. Measured over the ten content repos it reported 44 warnings, all
+false (42 in adaptive-learner-content, 2 in alc-psychology: "Achte" read as
+"acht", "bestimmten" as "ten", "Fragezeichen" as a length noun), and every one
+of those hints was older than the rule. The template's version reported none.
+Each side also caught forms the other missed (the table). engine#186 merged
+them into the engine from one table of both sides' test cases plus probe cases
+(word boundaries, the template's count forms, `blanks[].hint`, the engine's
+reversed colon form) and kept the warning.
 
 Closed on 2026-09-24: all ten content repos pin 0.29.0, the engine rule reports
 **0** there (the 44 false warnings are gone), and the template's copy is gone
@@ -346,18 +356,39 @@ What the case shows: the guideline still holds, but the case is not evidence
 that one rule in the engine is the better rule. It shows two versions nobody
 compared, which is why this section exists, and it marks the guideline's limit.
 The engine's version, the one the guideline keeps and the package ships to
-every consumer that calls it, was the wrong one on the real content. The
-precise one sat in the template's Python validator, mirrored into every content
-repo, and nobody had compared the two. In practice both ran in the same ten
-repos: the template's as a blocking error since each repo's first commit, the
-engine's as a non-blocking warning, in CI only since 2026-09-23 and before that
-only for whoever ran `make lint-warnings`. The false warnings were not hidden: the 42 in the hub stood as ordinary
-findings in adaptive-learner-content#222 on 2026-09-23. They were recognized as
-false only when both versions were measured per repo side by side (engine#186).
-Had the template's copy been deleted first, the engine's version would have
-been the only one left, the comparison that showed the warnings to be false
-could not have been made, and the forms only the template caught would have
-gone unchecked. The case is the evidence for the second condition under
+every consumer that calls it, was the wrong one on the real content. The other
+sat in the template's Python validator, mirrored into every content repo, and
+nobody had compared the two. In practice both ran in the same ten repos: the
+template's as a blocking error (in the hub since 2026-07-06, in the repos built
+from the template since their first commit), the engine's as a non-blocking
+warning, in CI only since 2026-09-23 and before that only for whoever ran
+`make lint-warnings`.
+
+What made the difference was not the severity in operation: after its first
+day the template's rule had no hit at all (below). It lay in how each version
+started, and in where a false hit went.
+
+- The template's rule was introduced against the hub's real content, and every
+  hit was settled: it reported 56 exercise and blank hints, all real, and
+  adaptive-learner-content#101 rewrote them. The one false hit the scan found, a card hint
+  where a character count is teaching content ("s[0:3] liefert 3 Zeichen"),
+  changed the rule: card hints are exempt.
+- The engine's rule shipped with four unit cases and no run over real content;
+  on its release day it would have reported 45 hits over the content of the
+  time, all false. It was looked at once: adaptive-learner-content-test#70
+  (2026-07-14), working towards zero warnings, diagnosed a false hit with the
+  cause engine#186 later fixed ("ten" in "verboten", "zeichen" in
+  "Leerzeichen") and reworded the hint. No engine issue followed, and the rule
+  stayed as it was for 72 more days.
+
+The false warnings were not hidden either: anyone who ran the lint by hand could
+read them for about 75 days, and the 42 in the hub stood as ordinary findings in
+adaptive-learner-content#222 on 2026-09-23. They were recognized as the rule's
+defect only when both versions were measured per repo side by side
+(engine#186). Had the template's copy been deleted first, the engine's version
+would have been the only one left, the comparison that exposed it could not
+have been made, and the forms only the template caught would have gone
+unchecked. The case is the evidence for the measurement under
 [Moving a rule](#moving-a-rule-the-conditions), in the opposite direction from
 the one it was set up for: it was meant to keep a move from turning repos red,
 and here it showed that the engine's version was the imprecise one.
@@ -383,14 +414,18 @@ and the advice to drop that rule would have been a step back without the
 engine change: the real case sat exactly in the gap, `"domain": "imported"` on
 every lesson of an exported set.
 
-The outcome is the regular case for this class. The gap was closed in the
-engine, the local rule went with the 0.29.0 pin (alc-books#24), and a
-consumer's origin marker is **not** added to the engine's vocabulary: the engine
-knows no consumers, and the existing warning already says the right thing.
+The outcome is the regular case for this class, with one gap. The gap in the
+rule was closed in the engine, the local rule went with the 0.29.0 pin
+(alc-books#24), and a consumer's origin marker is **not** added to the engine's
+vocabulary: the engine knows no consumers, and the existing warning already
+says the right thing. The severity did not move with it: alc-books'
+`validate_domain` was an error, `W-DOMAIN-UNKNOWN` is a warning, so the third
+part under [Moving a rule](#moving-a-rule-the-conditions) is not met here
+either, until adaptive-learner-content-template#83.
 
-The origin of the value is fixed only in part. adaptive-learner#2376 (closed
-2026-08-05 by adaptive-learner#2425) filters the manifest's `domain` in the
-app's repo export. The lesson files are written as the app holds them, and a
+The origin of the value is fixed only in part. adaptive-learner#2425 (closing
+adaptive-learner#2376 on 2026-08-05) filters the `domain` in the set-level files
+of the app's repo export: manifest, search index and README. The lesson files are written as the app holds them, and a
 lesson without its own `domain` inherits the set's (`parseLesson`), which for a
 user set is its origin marker. That path is traced in the code, not reproduced
 by an export; no content repo holds such a lesson today.
@@ -403,7 +438,9 @@ reconciliation between the hub repo and the template repeats on a smaller
 scale.
 
 **Measure before building, in three parts.** A move changes what turns red, and
-it can let the worse version win. Before the canonical version is decided:
+it can let the worse version win. The first two parts are the input to deciding
+the canonical version; the third checks the decided version before the move is
+built.
 
 1. **Every version, per repo, over the real content.** Every existing version,
    the engine's included where it has one, runs over the content of every repo,
@@ -414,52 +451,58 @@ it can let the worse version win. Before the canonical version is decided:
 2. **Precision and completeness, separately.** Different means test them, and
    neither replaces the other.
    - *Precision*, are the hits right: blocking makes a false hit costly and
-     therefore visible, because whoever it stops has to look at it. That is a
-     guarantee about what would happen, not a claim about what did, and it
-     holds whether a rule was corrected once or was right from its first
-     version. A warning that stops nobody gives no such guarantee. Record for
-     each version its severity and where and since when it ran at that
-     severity, next to its measured hits and how many of them are false.
+     therefore visible. That is a guarantee about what would happen, not a
+     claim about what did. Whether it ever acted is measurable, per version:
+     the severity and whether anything enforces it (a required check, or a
+     recorded target such as "zero warnings"); how many hits it produced on
+     real content, since a rule without hits was never observed at any
+     severity; how each hit was settled; and where a false hit went. A false
+     hit that changes the rule closes the loop; one that is worded around in
+     the content hides the defect and leaves the rule as it was.
    - *Completeness*, are the cases complete: a miss stops nobody at any
-     severity, so pressure says nothing about it. Only a comparison of cases
-     finds it: both sides' test cases plus probe cases in one table, run
-     against every version.
-3. **The severity at the new place.** A move carries the severity along. Check
-   whether the canonical version can reach, at its new place, the severity of
-   the version it replaces. When the engine only warns and a repo cannot make
-   that warning block, the move switches off the pressure that guaranteed the
-   old precision. That is a finding, not a detail. Today a repo cannot make a
-   warning block (adaptive-learner-content-template#83), so that switch is the
-   missing half of this guideline, not a convenience: without it, unifying
-   tells a repo to give up its blocking rule and take a warning back.
+     severity, so pressure says nothing about it. Only a deliberate search
+     finds it: a re-scan of the content, one version's tests run against the
+     other's code, or both sides' test cases plus probe cases in one table,
+     next to the comparison over the real content in the first part.
+3. **The severity at the new place.** A move has to carry the severity along,
+   not only the pattern. Check whether the canonical version can reach, at its
+   new place, the severity of the version it replaces. When the engine only
+   warns and a repo cannot make that warning block, the move switches off the
+   cost that made a false hit visible. That is a finding, not a detail. Today a
+   repo cannot make a warning block (adaptive-learner-content-template#83), so
+   that switch is the missing half of this guideline, not a convenience:
+   without it, unifying tells a repo to give up its blocking rule and take a
+   warning back. The switch restores the cost, not the way back: a false hit
+   that stops a repo has to reach the engine as a report, or it gets worded
+   around in the content, as in adaptive-learner-content-test#70.
 
 **The hint length, measured this way.**
 
 - *Every version over the content*: the engine's version reported 44 warnings,
   all false; the template's none.
-- *Precision*: the template's copy ran as a blocking error in every content
-  repo from its first commit, so a false hit would have stopped someone. There
-  is no known case of one; a false hit an author cleared at once by rewriting
-  the hint would have left no trace, so the absence is not proof. The one
-  precision check that demonstrably happened was at its start: introduced
-  against the hub's real content, every hit had to be looked at (about 60 hints
-  replaced in adaptive-learner-content#100, 6 more in #102), and one false hit
-  among them would have forced a pattern change. The engine's version ran as a
-  warning that stopped nobody, in CI only since 2026-09-23; its 44 false hits
-  stood as ordinary findings (adaptive-learner-content#222). The asymmetry
-  rests on those 44, not on the template's clean record.
-- *Completeness*: the blocking copy missed "Anzahl der Buchstaben: vier." for
-  eleven weeks; only the case table in engine#186 found it. The forms the
-  merged rule keeps came from both sides' patterns, test cases and probe cases.
-  By 2026-09 the content held no real case for either version to find: the
-  length hints #100 and #102 found in 2026-07 had been replaced then (several
-  of the template's test cases are those hints), and the template's error gate
-  kept new ones out.
+- *Precision*: the template's rule was enforced by convention only: no content
+  repo protects its main branch, and red validation runs reached main four
+  times. It settled all its hits once, at its introduction (above), and its one
+  false hit changed its scope. After that it had no hit at all: about 900
+  validation runs over about 80 days, with about 286 hand-written hints, none
+  within its reach. After its first day it was never observed; its record is
+  clean because it was empty. The engine's version had a cost once, under a
+  zero-warnings target in adaptive-learner-content-test, and the one false hit
+  it met there was worded around instead of reported. Nowhere else did its hits
+  cost anyone anything.
+- *Completeness*: pressure found no miss on either side. The template's
+  scaffold carried the narrow first pattern of #100, so in the nine repos
+  built from it the English count words and the single-character forms that
+  #102 had found in real hub content on day one went unchecked from 2026-07-07
+  to 2026-09-23. Running the hub's tests against the template's code found that
+  (adaptive-learner-content-template#79), and the engine's warning, the
+  imprecise one, caught three of those real forms ("Two letters." among them).
+  The reversed colon form ("Anzahl der Buchstaben: vier.") occurred in no
+  content; only the case table in engine#186 showed the gap.
 - *Severity*: since 0.29.0 the merged rule is a warning in all ten content
-  repos, and the blocking copy is gone. Its content is better, but it now runs
-  under the conditions in which the engine's version collected its 44. The
-  third part was not met; it stays a finding until
-  adaptive-learner-content-template#83 lets a repo make the warning block.
+  repos, and the blocking copy is gone. The third part was not met; it stays a
+  finding until adaptive-learner-content-template#83 lets a repo make the
+  warning block.
 
 ### Open items
 
@@ -479,9 +522,11 @@ it can let the worse version win. Before the canonical version is decided:
   template into the engine; the three-letter primary subtags decide the
   canonical version.
 - **adaptive-learner#3222**: the app's copy of `E-MATCH-DUP-LEFT`.
+- **alc-books' domain rule** (moved with 0.29.0): now the engine's
+  `W-DOMAIN-UNKNOWN`; its severity dropped with the move (above).
 - **The app's repo export, lesson files**: a lesson can inherit the set's
   origin marker as its `domain` (above); adaptive-learner#2376 fixed the
-  manifest only.
+  set-level files only.
 
 ## Roadmap
 
