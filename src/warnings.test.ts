@@ -426,6 +426,90 @@ describe("analysis warnings", () => {
   });
 });
 
+describe("W-HINT-LENGTH: one rule for engine and template (engine#186)", () => {
+  // The case table joins the engine's cases and the template's
+  // (adaptive-learner-content#100/#102), which checked the same thing twice
+  // with different results. The rule: a count word directly before a length
+  // noun, with word boundaries, so compounds and word parts stay silent.
+  const withHint = (hint: string) =>
+    validateLesson(lesson([ex({ id: "e1", type: "free_text", prompt: "?", accept: ["x"], hint })]));
+
+  it.each([
+    "Vier Buchstaben.",
+    "Zwei Zeichen, das zweite klein.",
+    "Genau drei Buchstaben tippen.",
+    "Nur 8 Zeichen lang.",
+    "Die Antwort hat vier Buchstaben.",
+    "It is 4 letters long.",
+    "Two letters.",
+    "Two short words; the first is two letters long.",
+    "Four letters, starts with C.",
+    "A five-letter word.",
+    // the template's forms the engine missed
+    "Eine Kurzform mit einem Buchstaben.",
+    "A single character is enough.",
+    "Ein einzelnes Zeichen, kein Doppelzeichen.",
+    "Elf Buchstaben, beginnt mit K.",
+    "Twelve letters.",
+    "Ein fünfbuchstabiges Wort.",
+    // the reversed form the engine found and the template missed
+    "Anzahl der Buchstaben: vier.",
+    "Länge in Zeichen: 5",
+  ])("warns on %j", (hint) => {
+    expect(hasWarning(withHint(hint), "W-HINT-LENGTH")).toBe(true);
+  });
+
+  it.each([
+    "Einrückung: vier Leerzeichen pro Ebene.",
+    "Object pronoun: *The letter she wrote…*",
+    "Ein einzelner Kleinbuchstabe, für 'general'.",
+    "Erster Buchstabe von 'write'.",
+    "Montag: im Englischen IMMER mit großem Anfangsbuchstaben.",
+    "Es gibt drei Optionen, der erste Buchstabe ist groß.",
+    "Das Wort hat 3 Silben und beginnt mit dem Buchstaben K.",
+    "Achte auf das Zeichen: ein Kreis.",
+    // the 44 live false positives of engine 0.28.0 (word parts read as
+    // count words or length nouns), one per trigger
+    "Achte auf ähnlich aussehende Zeichen.",
+    "Das zweite Zeichen steht im neutralen Ton.",
+    "Two parts: alta = characteristic (ser → soy), feliz = feeling (estar → estoy).",
+    "Die Kurve hat die Form eines bestimmten Buchstabens.",
+    "Jeder Buchstabe steht für ein Merkmal der überrepräsentierten Gesellschaften.",
+    "Ja/Nein-Frage: normale Satzstellung, kein Fragezeichen; Zeitenverschiebung.",
+    "Drei Teile: Höflichkeitseinstieg + die Frage + höflicher Abschluss, am Ende ein Fragezeichen.",
+  ])("stays silent on %j", (hint) => {
+    expect(hasWarning(withHint(hint), "W-HINT-LENGTH")).toBe(false);
+  });
+
+  it("checks the hint of a single blank too, at that blank", () => {
+    const result = validateLesson(
+      lesson([
+        ex({
+          id: "e1",
+          type: "cloze",
+          cloze_mode: "type",
+          prompt: "Fill in the blank.",
+          sentence: "Je ___ ici.",
+          blanks: [{ accept: ["suis"], hint: "Vier Buchstaben." }],
+        }),
+      ]),
+    );
+    const warning = byId(result.warnings, "W-HINT-LENGTH");
+    expect(warning).toBeDefined();
+    expect(warning?.path).toBe("/steps/0/exercise/blanks/0");
+  });
+
+  it("does not check a card's hint: a character count can be teaching content there", () => {
+    const result = validateLesson(
+      lesson(
+        [ex({ id: "e1", type: "free_text", prompt: "Slice it.", card_ids: ["c1"], accept: ["abc"] })],
+        [{ id: "c1", front: "s[0:3]", back: "die ersten drei Zeichen", hint: "s[0:3] liefert 3 Zeichen." }],
+      ),
+    );
+    expect(hasWarning(result, "W-HINT-LENGTH")).toBe(false);
+  });
+});
+
 describe("W-PROMPT-DUP: the prompt repeats the sentence or the step title (engine#169)", () => {
   // The device finding: a multiselect cloze whose prompt and sentence carry
   // the same question. Consumers render the prompt as the heading and the
