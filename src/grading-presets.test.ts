@@ -207,6 +207,14 @@ describe("grading-presets.json: presets", () => {
     expect(catalog().description).toMatch(/whole percent below/i);
   });
 
+  it("says the rule maps the national scale, not a consumer's run", () => {
+    // On a point scale only multiples of a point are reachable, so the floor
+    // is exact there. A run counts answered units instead, whose grid differs
+    // (40 units: 2.5 % steps, 85.0 < 86.25 < 86.67), so values between two
+    // reachable scale points occur in a run although not on the scale.
+    expect(catalog().description).toMatch(/scale, not (?:of )?(?:a|the) (?:consumer's )?run/i);
+  });
+
   it("carries no German helper words in the labels of a scale that is not German", () => {
     const leaking = catalog()
       .presets.filter((preset) => !preset.languages.includes("de"))
