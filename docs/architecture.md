@@ -232,9 +232,15 @@ template: it needs the file system.
   copy of the rule. The content template's workflows are byte-identical in every
   repo, and a repo's own decisions live in `.github/quality-state.json`
   (today: a prose-gate backlog and accepted warnings). A switch there that makes
-  a named warning block does not exist yet; when a repo needs one, that switch
-  is the change to make. A second implementation of the same rule at another
-  severity is not a tightening, it is a fork.
+  a named warning block does not exist yet (adaptive-learner-content-template#83),
+  and removing `continue-on-error` from the warnings step does not replace it:
+  the engine runner exits 0 when it only finds warnings, so that surfaces a
+  crash, not a warning. Until the switch exists, a repo that needs a warning to
+  block has only one way, a second implementation at error level, which is how
+  the hint-length rule forked. That gap is why the switch matters: without it
+  this guideline asks a repo to give up a capability with nothing in its place.
+  A second implementation of the same rule at another severity is not a
+  tightening, it is a fork.
 - **"The engine does not check it yet."** Then an engine rule is missing.
   Rebuilding it in the template moves the gap instead of closing it, and the
   copy lands in ten repos through the mirror.
@@ -268,14 +274,18 @@ decide whether a derived pairing counts as an exercise.
 
 #### Further content rules in the template's validator
 
-The template's `validate_content.py` also checks the language pair (a
-two-letter ISO 639-1 code, source differs from target), requires
+The template's `validate_content.py` also checks the language pair, requires
 `title_native`, and, for a source language with a non-Latin script, checks
-that card backs are written in that script. All of it can be answered from the manifest and the lesson
-alone, so by the assignment test it belongs in the engine; the manifest
-schema itself allows any BCP-47 tag (`de-AT`), which the template rejects.
+that card backs are written in that script. All of it can be answered from the
+manifest and the lesson alone, so by the assignment test it belongs in the
+engine (engine#190). The language check cuts a tag down to its primary subtag
+and requires two letters: `de-AT`, `pt-BR` and `zh-Hant` pass, but the
+three-letter primary subtags BCP-47 uses for languages without an ISO 639-1
+code (`gsw` Swiss German, `yue` Cantonese, `fil` Filipino) fail. The schema
+allows them, so such a set is schema-valid and fails in its repository; here the
+stricter version is the wrong one.
 
-#### Hint length: two versions, being merged (engine#186)
+#### Hint length: two versions, merged (engine#186)
 
 | | Engine `W-HINT-LENGTH` (0.28.0) | Template |
 |---|---|---|
@@ -288,16 +298,20 @@ The engine's version matched a number word and a length noun anywhere in the
 hint, without word boundaries. Measured over the ten content repos it reported
 44 warnings, all false ("Achte" read as "acht", "bestimmten" as "ten",
 "Fragezeichen" as a length noun); the template's version reported none. The two
-sides together made the complete rule. engine#186 merges them into the engine
-(word boundaries, the template's count forms, blank hints) and keeps the
+sides together made the complete rule. engine#186 merged them into the engine
+(word boundaries, the template's count forms, blank hints) and kept the
 warning; the template's copy is dropped after the next pin.
 
 #### The app repeats an engine error
 
 The app's content validator re-implements `E-MATCH-DUP-LEFT` so that an author
 sees it before an export or a share. The intent is right; the means is a second
-implementation of a rule the engine already reports, which is the class this
-section is about.
+implementation of a rule the engine already reports, and the copy already
+differs: it compares left terms case-sensitively, the engine does not, so
+"Empathie" next to "empathie" passes the app and fails the repo gate
+(adaptive-learner#3222). The app keeps the engine's validators out of its
+bundle to avoid the structural ajv layer; an engine entry point for the
+semantic rules alone would remove the reason for the copy.
 
 ### Fixed: a lesson's `domain`
 
@@ -332,8 +346,15 @@ turn red at once.
   lesson without an assessment intent; a field the author declares, instead of
   one heuristic per exemption, and the same field answers the
   multiple-choice-only exemption.
-- **engine#186**: one hint-length rule, kept as a warning; afterwards the
-  template drops its copy.
+- **engine#186** (fixed): one hint-length rule, kept as a warning; the template
+  drops its copy after the next pin.
+- **adaptive-learner-content-template#83**: a switch in
+  `.github/quality-state.json` that makes selected warning ids blocking for one
+  repo, without duplicating the rule or editing the shared workflow.
+- **engine#190**: the language-pair and set-metadata checks move from the
+  template into the engine; the three-letter primary subtags decide the
+  canonical version.
+- **adaptive-learner#3222**: the app's copy of `E-MATCH-DUP-LEFT`.
 - **adaptive-learner#2376**: the export writes an internal origin marker into a
   published artifact.
 
