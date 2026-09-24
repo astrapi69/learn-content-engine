@@ -285,7 +285,9 @@ code (`gsw` Swiss German, `yue` Cantonese, `fil` Filipino) fail. The schema
 allows them, so such a set is schema-valid and fails in its repository; here the
 stricter version is the wrong one.
 
-#### Hint length: two versions, merged (engine#186)
+#### Hint length: two versions, closed (engine#186, 0.29.0)
+
+Before 0.29.0:
 
 | | Engine `W-HINT-LENGTH` (0.28.0) | Template |
 |---|---|---|
@@ -296,11 +298,22 @@ stricter version is the wrong one.
 
 The engine's version matched a number word and a length noun anywhere in the
 hint, without word boundaries. Measured over the ten content repos it reported
-44 warnings, all false ("Achte" read as "acht", "bestimmten" as "ten",
-"Fragezeichen" as a length noun); the template's version reported none. The two
-sides together made the complete rule. engine#186 merged them into the engine
-(word boundaries, the template's count forms, blank hints) and kept the
-warning; the template's copy is dropped after the next pin.
+44 warnings, all false (42 in adaptive-learner-content, 2 in alc-psychology:
+"Achte" read as "acht", "bestimmten" as "ten", "Fragezeichen" as a length
+noun). The template's version reported none, and it was right. The two sides
+together made the complete rule. engine#186 merged them into the engine (word
+boundaries, the template's count forms, blank hints) and kept the warning.
+
+Closed on 2026-09-24: all ten content repos pin 0.29.0, the engine rule reports
+**0** there (the 44 false warnings are gone), and the template's copy is gone
+from `validate_content.py` in all of them (adaptive-learner-content-template#87
+and the wave after it).
+
+What the case shows: the second copy did not make the rule safer. The version
+with the reach, the engine's, which every consumer runs, was the wrong one, and
+the precise one sat in a mirrored file that nobody compared with it. The false
+warnings stood unnoticed until the two were measured side by side, and one
+rule in the engine ended them.
 
 #### The app repeats an engine error
 
@@ -348,8 +361,8 @@ turn red at once.
   lesson without an assessment intent; a field the author declares, instead of
   one heuristic per exemption, and the same field answers the
   multiple-choice-only exemption.
-- **engine#186** (fixed): one hint-length rule, kept as a warning; the template
-  drops its copy after the next pin.
+- **engine#186** (closed, 0.29.0): one hint-length rule, kept as a warning; the
+  template's copy is gone in all ten content repos.
 - **adaptive-learner-content-template#83**: a switch in
   `.github/quality-state.json` that makes selected warning ids blocking for one
   repo, without duplicating the rule or editing the shared workflow.
