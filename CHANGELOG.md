@@ -5,6 +5,83 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [0.29.0] - 2026-09-24
+
+No schema change: `x-schema-version` stays 1.16, and every manifest and
+lesson valid under 0.28.0 is valid under 0.29.0. What moves are two author
+lints, a new package subpath and a new data file.
+
+### `W-DOMAIN-UNKNOWN` also on a lesson's own `domain` (engine#183)
+
+The lint checked only the `domain` of a manifest's set entries. A lesson may
+carry its own `domain` (absent or `null` inherits the set's), and the real
+case sat exactly there: two exported book sets with `"domain": "imported"` on
+every lesson. `validateLesson` now reports the same warning at `/domain`,
+through the helper the manifest check uses, so both say the same thing. No
+value is special-cased: the engine does not know the origin markers of
+individual consumers. Measured over the ten content repos before shipping:
+no lesson draws it today.
+
+### One `W-HINT-LENGTH` rule (engine#186)
+
+The hint-length rule existed twice, as this warning and as an error in the
+content template's validator, and the two disagreed. The engine's version
+matched a number word and a length noun anywhere in the hint, without word
+boundaries: over the ten content repos it reported 44 warnings, all false
+("Achte" read as "acht", "bestimmten" as "ten", "Fragezeichen" and
+"characteristic" as length nouns). It also missed the article and
+single-character forms ("mit einem Buchstaben", "ein einzelnes Zeichen", "a
+single character"), eleven and twelve, the "-buchstabig" adjectives, and
+every blank hint.
+
+The rule is now a count directly before a length noun, with Unicode-aware
+boundaries, plus the reversed colon form ("Buchstaben: 4", plural counts only)
+and the "-buchstabig" adjectives. It checks the exercise `hint` and every
+`blanks[].hint`, each at its own path; card hints stay unchecked. It stays a
+warning. Measured with the build over the ten content repos: 44 warnings
+before, 0 after.
+
+### `learn-content-engine/rules`: the semantic rules without ajv or `node:fs` (engine#191)
+
+A browser consumer that has already shape-checked its input can now call the
+engine's rules instead of re-implementing them: `validateLessonRules`,
+`validateManifestRules`, `isSlugId` (the schema's `$defs/SlugId`),
+`SLUG_ID_PATTERN` and `SLUG_ID_MAX_LENGTH`. `validateLesson` and
+`validateManifest` check the shape with ajv and then call exactly these
+functions, so the two cannot disagree; a test pins the parity on every
+conformance fixture. The entry imports neither ajv nor `node:*`, and a test
+walks its module graph to keep it that way. Measured with esbuild (minified,
+browser): the entry is 21,590 bytes (8,320 gzip); `validateLesson` alone is
+144,637 bytes, 114,312 of them ajv, and it reads the schema with `node:fs`.
+
+Internally, `src/validate.ts` is cut along its three layers: `issues.ts`
+(issue types and helpers), `rules.ts` (semantic rules and author lints),
+`validate.ts` (the structural layer). The public API of the package root is
+unchanged.
+
+### `schema/grading-presets.json`: a sourced catalog of grading scales
+
+Exported as `learn-content-engine/schema/grading-presets.json`: grading scales
+an author can copy into a set's `evaluation` block instead of typing a table.
+23 presets (2 base forms, 12 class A following a primary source, 9 class B
+naming their convention), 31 templates that carry a scale's grades and pass
+mark but no thresholds, and 3 scales that cannot be expressed as percentages
+(ECTS, GCSE/A-level, the German state law examination), each with the reason.
+Every entry names its sources. A preset is copied: a later correction does
+not reach sets that already carry it. `label` is the grade as written,
+`label_native` the official word. Where an official lower bound is not a whole
+percent, the row carries the whole percent below it and lists the official
+value in `rounded_rows`. Tests hold every preset to `validateManifest` without
+an error or a warning. See [Grading presets](docs/lesson-format.md#grading-presets).
+
+### Docs
+
+- `docs/architecture.md`: "Rule ownership: which layer owns which rule". The
+  engine owns every rule about the content itself; the content template's
+  tooling owns what the engine cannot see; the app owns render-time decisions.
+  With the known violations, as of 2026-09-24, and where each is tracked.
+- The project language is English (`.claude/rules/coding-standards.md`).
+
 ## [0.28.0] - 2026-09-23
 
 ### `W-CLOZE-NO-CARRIER`: a cloze without a carrier sentence (engine#178)
