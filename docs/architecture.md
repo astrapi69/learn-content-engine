@@ -591,6 +591,27 @@ built.
   finding until adaptive-learner-content-template#83 lets a repo make the
   warning block.
 
+**The slug id, caught before the move.** The second case, and the first in
+which the conditions acted before the damage instead of after it.
+
+- *The move*: adaptive-learner#3222 set out to replace the app's own slug
+  regex with `isSlugId` from `learn-content-engine/rules`, the copy with the
+  canonical version.
+- *Every version over the content*: the app's regex and `isSlugId` agree on
+  every one of 225,229 generated strings up to 120 UTF-16 code units; they
+  differ only beyond it.
+- *Completeness, by a probe case*: `isSlugId` counts UTF-16 code units, the
+  schema's `SlugId` counts characters. An id of 61 to 120 letters outside the
+  Basic Multilingual Plane passes the schema and fails `isSlugId`. Switching
+  would have made the app stricter than the schema the engine itself ships:
+  the unification would have let the worse version win.
+- *Outcome*: the app deleted its regex instead (adaptive-learner#3247). The
+  schema shape layer already applies `SlugId` at all five places before the
+  regex ran, so the regex could never fire; 35 cases (every rejection per
+  place, "über-uns" and 120 characters accepted) pass against the old and the
+  new code. Which unit the 120 limit means stays open in engine#205; until it
+  is decided, aligning the two only makes two numbers agree.
+
 ### Open items
 
 - **engine#185**: the quality minimums move into the engine, tied to the
