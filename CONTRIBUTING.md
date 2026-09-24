@@ -67,17 +67,23 @@ versions - do not let that recur):
 1. **Bump** `version` in `package.json` (semver: additive feature -> minor,
    docs/fix -> patch; skip only for changes that alter nothing shipped).
 2. **Changelog** - add a dated section to [`CHANGELOG.md`](CHANGELOG.md) (Keep-a-Changelog style; the README only links there).
-3. **`make release-check`** - must be green (lint + typecheck + test + build).
-4. **Commit + push** the bump + changelog to `main`.
-5. **Tag** `vX.Y.Z` on that commit (annotated) and push it:
+3. **Docs** - bring every doc up to date with what the release ships, not only
+   the ones its PRs touched: README, CONTRIBUTING, `docs/`, both blog
+   languages, in-code docs. Search the docs for each change (rule ids, moved
+   files, version numbers, counts, "nothing does X" claims) and record the
+   audit in the release PR. The checklist is
+   [`.claude/rules/release.md`](.claude/rules/release.md).
+4. **`make release-check`** - must be green (lint + typecheck + test + build).
+5. **Commit + push** the bump + changelog + docs to `main`.
+6. **Tag** `vX.Y.Z` on that commit (annotated) and push it:
    `git tag -a vX.Y.Z -m "vX.Y.Z - <summary>" && git push origin vX.Y.Z`.
    Verify the target rather than assume it (`git log -S '"version": "X.Y.Z"'`).
-6. **`make publish`** - re-runs `release-check`, then `npm publish`
+7. **`make publish`** - re-runs `release-check`, then `npm publish`
    (`npm whoami` first). Confirm with `npm view learn-content-engine version`.
-7. **GitHub release** for the tag, body = the changelog excerpt
+8. **GitHub release** for the tag, body = the changelog excerpt
    (`gh release create vX.Y.Z --latest --notes-file ...`).
 
-Do steps 5-7 for every release, in this order. **npm before the GitHub
+Do steps 6-8 for every release, in this order. **npm before the GitHub
 release, not after** - the Release parity workflow
 (`.github/workflows/release-parity.yml`) triggers on `release: published`
 and checks npm immediately; publishing to npm first means that check is
