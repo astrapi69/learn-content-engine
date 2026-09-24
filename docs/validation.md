@@ -110,6 +110,37 @@ without its warnings switch reports nothing about any lint in the release it
 pins, however old that lint is. See
 [pinning and currency](architecture.md#pinning-and-currency).
 
+## The rules without the structural layer (`learn-content-engine/rules`)
+
+Layers 2 and 3 are also a package subpath of their own, for a consumer that
+has already checked the shape of its input and must not carry the structural
+layer, typically a browser app:
+
+```ts
+import { validateLessonRules, validateManifestRules, isSlugId } from "learn-content-engine/rules";
+
+const { valid, errors, warnings } = validateLessonRules(lesson); // same result as validateLesson for a shape-valid lesson
+```
+
+- `validateLessonRules(lesson, { extensions })` and
+  `validateManifestRules(manifest)` return exactly what `validateLesson` /
+  `validateManifest` return for input that passes the structural layer: those
+  two check the shape with ajv and then call these functions, so the two can
+  never disagree. For input that does not have the schema's shape the result is
+  unspecified; check the shape first.
+- `isSlugId(value)` is the schema's `$defs/SlugId` (lowercase Unicode letters
+  and digits in hyphen-separated runs, at most `SLUG_ID_MAX_LENGTH`
+  characters), for a consumer that needs the slug rule without a schema
+  validator. `SLUG_ID_PATTERN` is the pattern string itself.
+- The entry imports neither ajv nor `node:*`; `src/rules.test.ts` keeps it that
+  way. Measured with esbuild (minified, browser): about 21.6 kB, 8.3 kB gzip.
+  `validateLesson` alone is about 145 kB, most of it ajv, and it reads the
+  schema from the file system, which a browser does not have (engine#191).
+
+Why it exists: a consumer that re-implements a rule instead of calling it ends
+up with a copy that drifts (see
+[rule ownership](architecture.md#rule-ownership-which-layer-owns-which-rule)).
+
 ## The error model
 
 Each issue is `{ path, message }`:

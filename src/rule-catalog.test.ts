@@ -15,8 +15,9 @@ const read = (relativePath: string): string =>
 
 // Every module that emits ValidationIssues; a new emitter belongs on this
 // list, or its rule ids escape the catalog check (the gap engine#106 closed:
-// the scan only ever covered validate.ts).
-const ISSUE_EMITTING_SOURCES = ["./validate.ts", "./set-ordering.ts"];
+// the scan only ever covered validate.ts). Since engine#191 the semantic
+// rules live in rules.ts; validate.ts keeps the structural layer.
+const ISSUE_EMITTING_SOURCES = ["./validate.ts", "./rules.ts", "./set-ordering.ts"];
 
 const ruleIdsInSource = (): string[] => {
   const ids = new Set<string>();

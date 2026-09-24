@@ -17,7 +17,7 @@
 
 import type { ContentLesson } from "./types/index.js";
 import type { Exercise } from "./types/lesson-schema.generated.js";
-import type { ValidationIssue } from "./validate.js";
+import type { ValidationIssue } from "./issues.js";
 
 /**
  * The engine-side implementation of one ``ext:`` exercise type.
