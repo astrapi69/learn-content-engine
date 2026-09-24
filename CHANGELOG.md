@@ -87,6 +87,9 @@ an error or a warning. See [Grading presets](docs/lesson-format.md#grading-prese
   `src/rules.ts`; README lists the two subpath entries.
 - `CONTRIBUTING.md`: a release now brings every doc up to date first, with the
   audit recorded in the release PR.
+- The project language is English: code, comments, docs, commit messages, PR
+  and issue texts (`.claude/rules/coding-standards.md`); `tdd.md` is
+  translated without a rule change.
 
 ## [0.28.0] - 2026-09-23
 
