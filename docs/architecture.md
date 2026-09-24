@@ -186,9 +186,20 @@ runs, one per repo, found the pin current in seven and the lag in three, where
 they updated the issue a dispatch had opened 21 to 32 minutes earlier. No
 scheduled run has opened an issue yet. That case is deliberately not staged:
 both triggers run the same steps and differ only in an optional input that
-falls back to the tracked tag. The first scheduled run that meets a lag with no issue
-open decides it: it opens the issue or it does not, and if it does not, that is
-a finding. Until then it is an open point, not a defect.
+falls back to the tracked tag. The first scheduled run that meets a lag with no
+issue open decides it: it opens the issue or it does not, and if it does not,
+that is a finding. Until then it is an open point, not a defect.
+
+That run needs two things at once: a release still unpinned when the scheduled
+run fires (which, with cron running hours late, is the next morning around
+10:15 UTC rather than 05:30), and no issue a dispatch opened before it. Neither
+held so far. 0.29.0 was pinned in all ten repos about ten minutes after it was
+published. 0.28.0 did stand unpinned overnight in three repos, and the
+scheduled runs did meet that lag, but a dispatch had opened their issues 21 to
+32 minutes earlier. As long as re-pins follow a release within hours and the
+release routine dispatches the check by hand, the case may never occur. That is
+a side effect of the discipline, not a gap; nobody should wait for this proof
+as if it were due.
 
 An application consumer has no engine-specific job: its parity test compares
 its generated layer with the release it pins, which answers the consistency
