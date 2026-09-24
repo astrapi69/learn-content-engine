@@ -124,10 +124,37 @@ const hasDuplicate = <T>(values: T[]): boolean => new Set(values).size !== value
  *  a case difference is a different text. */
 const readableText = (text: string): string => text.normalize("NFC").trim();
 
-/** True when a hint reveals the answer length (e.g. "vier Buchstaben" / "4 letters"). */
-const mentionsAnswerLength = (hint: string): boolean =>
-  /(\d+|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|two|three|four|five|six|seven|eight|nine|ten)/i.test(hint) &&
-  /(buchstabe|zeichen|letter|character)/i.test(hint);
+// W-HINT-LENGTH (engine#186): a count directly before a length noun. The
+// boundaries are Unicode-aware (JavaScript's \b is ASCII only), so word parts
+// stay silent: "Achte" is not "acht", "bestimmten" not "ten", "Fragezeichen"
+// and "Leerzeichen" not "Zeichen", "characteristic" not "character".
+const NOT_WORD_BEFORE = String.raw`(?<![\p{L}\p{N}])`;
+const NOT_WORD_AFTER = String.raw`(?![\p{L}\p{N}])`;
+/** Numbers from two on: digits and number words up to twelve. */
+const PLURAL_COUNT = String.raw`\d+|zwei|drei|vier|f(?:ü|ue)nf|sechs|sieben|acht|neun|zehn|elf|zw(?:ö|oe)lf|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve`;
+/** Answer length one: the article forms ("mit einem Buchstaben"), "one" and
+ *  the single-character adjectives ("ein einzelnes Zeichen", "a single
+ *  character"). */
+const SINGULAR_COUNT = String.raw`ein(?:e[nmrs]?)?|one|einzeln\p{L}*|single`;
+const LENGTH_NOUN = String.raw`buchstaben?|zeichen|letters?|characters?`;
+const ANSWER_LENGTH = new RegExp(
+  [
+    // "vier Buchstaben", "a five-letter word", "ein einzelnes Zeichen"
+    `${NOT_WORD_BEFORE}(?:${PLURAL_COUNT}|${SINGULAR_COUNT})[-\\s]+(?:${LENGTH_NOUN})${NOT_WORD_AFTER}`,
+    // "Anzahl der Buchstaben: vier", "Länge in Zeichen: 5"; the reversed form
+    // takes plural counts only, so "das Zeichen: ein Kreis" stays silent
+    `${NOT_WORD_BEFORE}(?:${LENGTH_NOUN})\\s*:\\s*(?:${PLURAL_COUNT})${NOT_WORD_AFTER}`,
+    // "fünfbuchstabig", "dreibuchstabige"
+    String.raw`\p{L}*buchstabig`,
+  ].join("|"),
+  "iu",
+);
+
+/** True when a hint reveals the answer length: a count directly before a
+ *  length noun ("vier Buchstaben", "4 letters", "a five-letter word", "ein
+ *  einzelnes Zeichen"), the reversed form with a colon ("Buchstaben: 4"), or
+ *  a "-buchstabig" adjective. Compounds and word parts do not count. */
+const mentionsAnswerLength = (hint: string): boolean => ANSWER_LENGTH.test(hint);
 
 function checkMatching(exercise: Exercise, path: string, issues: ValidationIssue[]): void {
   if (exercise.from_cards) {
@@ -409,6 +436,23 @@ function checkExtExercise(exercise: Exercise, path: string, ext: ExtContext, iss
   issues.push(...extension.validate(exercise));
 }
 
+const HINT_LENGTH_MESSAGE =
+  "hint reveals the answer length - redundant on consumers that display the answer length automatically, revealing on the rest";
+
+/** W-HINT-LENGTH on the exercise hint and on every blank's hint, each at its
+ *  own path. A card's hint is not checked: a character count there can be
+ *  teaching content ("s[0:3] liefert 3 Zeichen"). */
+function checkHintLengths(exercise: Exercise, path: string, issues: ValidationIssue[]): void {
+  if (exercise.hint && mentionsAnswerLength(exercise.hint)) {
+    issues.push(warn("W-HINT-LENGTH", path, HINT_LENGTH_MESSAGE, "rule-catalog"));
+  }
+  (exercise.blanks ?? []).forEach((blank, index) => {
+    if (blank.hint && mentionsAnswerLength(blank.hint)) {
+      issues.push(warn("W-HINT-LENGTH", `${path}/blanks/${index}`, HINT_LENGTH_MESSAGE, "rule-catalog"));
+    }
+  });
+}
+
 function checkExercise(
   exercise: Exercise,
   path: string,
@@ -421,11 +465,7 @@ function checkExercise(
       issues.push(err("E-CARD-REF", `${path}/card_ids`, `exercise references unknown card '${cardId}'`, "cards"));
     }
   }
-  if (exercise.hint && mentionsAnswerLength(exercise.hint)) {
-    issues.push(
-      warn("W-HINT-LENGTH", path, "hint reveals the answer length - redundant on consumers that display the answer length automatically, revealing on the rest", "rule-catalog"),
-    );
-  }
+  checkHintLengths(exercise, path, issues);
   for (const issue of variableIssues(exercise, path)) {
     issues.push(makeIssue(issue.severity, issue.id, issue.path, issue.message, "variables-parametric-exercises"));
   }

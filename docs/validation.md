@@ -91,8 +91,8 @@ Warnings never affect `valid` or appear in `errors`; they live in `warnings` and
 flag likely authoring mistakes: an unused card (`W-CARD-UNUSED`), an ambiguous
 `matching` (`W-MATCH-AMBIG`), duplicate word tiles without `accept_orderings`
 (`W-TILES-DUP`), a distractor equal to the answer (`W-DISTRACTOR-ANSWER`), a
-distractor image sharing the correct label (`W-PIC-DUP-LABEL`), a hint that
-reveals the answer length (`W-HINT-LENGTH`), a cloze whose sentence is nothing
+distractor image sharing the correct label (`W-PIC-DUP-LABEL`), an exercise or
+blank hint that reveals the answer length (`W-HINT-LENGTH`), a cloze whose sentence is nothing
 but its blanks and is therefore a `multiple_choice` or a `free_text`
 (`W-CLOZE-NO-CARRIER`), a lesson `domain` outside the known vocabulary
 (`W-DOMAIN-UNKNOWN`, the same lint `validateManifest` applies to a set), or a
