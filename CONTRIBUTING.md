@@ -83,9 +83,12 @@ versions - do not let that recur):
    Verify the target rather than assume it (`git log -S '"version": "X.Y.Z"'`).
 7. **`make publish`** - re-runs `release-check`, then `npm publish`
    (`npm whoami` first). Then wait until `npm view learn-content-engine version`
-   prints the new version before step 8: a successful publish takes about a
-   minute to become visible (0.30.0: about 60 s), and the parity check below
-   reads the registry, not the publish output.
+   prints the new version before step 8: a successful publish takes one to
+   several minutes to become visible (0.30.0: about 60 s; 0.31.0: about
+   8 minutes, after npm announced "Your package is being processed"), and the
+   parity check below reads the registry, not the publish output. Poll the
+   registry (`curl -s https://registry.npmjs.org/learn-content-engine`) rather
+   than trust the publish output's `+ learn-content-engine@X.Y.Z`.
 8. **GitHub release** for the tag, body = the changelog excerpt
    (`gh release create vX.Y.Z --latest --notes-file ...`).
 
