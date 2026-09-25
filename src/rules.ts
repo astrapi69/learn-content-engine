@@ -558,9 +558,65 @@ function semanticIssues(lesson: Lesson, registry: ExtensionRegistry): Validation
   checkUnusedCards(lesson, issues);
   checkInvisibleChars(lesson, issues);
   checkStableIdDuplicates(lesson, issues);
+  checkElementIdDuplicates(lesson, issues);
   // engine#183: a lesson's own domain (absent or null inherits the set's).
   issues.push(...unknownDomainIssues(typeof lesson.domain === "string" ? lesson.domain : undefined, "/domain"));
   return issues;
+}
+
+/** Each id that occurs more than once among ``entries`` (id, 1-based
+ *  position), with all its positions, in the order of its first occurrence. */
+function duplicatePositions(entries: Array<[string, number]>): Array<{ id: string; positions: number[] }> {
+  const positionsById = new Map<string, number[]>();
+  for (const [id, position] of entries) {
+    const positions = positionsById.get(id);
+    if (positions) positions.push(position);
+    else positionsById.set(id, [position]);
+  }
+  return [...positionsById]
+    .filter(([, positions]) => positions.length > 1)
+    .map(([id, positions]) => ({ id, positions }));
+}
+
+/** E-CARD-ID-DUP / E-STEP-ID-DUP / E-EXERCISE-ID-DUP (engine#202): card, step
+ *  and exercise ids are each unique within the lesson, as the schema's
+ *  descriptions say. Three namespaces, not one: a step and its exercise
+ *  sharing an id is the norm in real content. One error per duplicated id,
+ *  naming every position; an exercise's position is its step's. Exact string
+ *  comparison: the slug pattern already rejects case and NFD variants. */
+function checkElementIdDuplicates(lesson: Lesson, issues: ValidationIssue[]): void {
+  const cards = (lesson.cards ?? []).map((card, index): [string, number] => [card.id, index + 1]);
+  for (const { id, positions } of duplicatePositions(cards)) {
+    issues.push(
+      err("E-CARD-ID-DUP", "/cards", `card id '${id}' is used at positions ${positions.join(", ")}; card ids must be unique within the lesson`, "cards", {
+        cardId: id,
+        positions,
+      }),
+    );
+  }
+  const steps = lesson.steps.map((step, index): [string, number] => [step.id, index + 1]);
+  for (const { id, positions } of duplicatePositions(steps)) {
+    issues.push(
+      err("E-STEP-ID-DUP", "/steps", `step id '${id}' is used at positions ${positions.join(", ")}; step ids must be unique within the lesson`, "steps", {
+        stepId: id,
+        positions,
+      }),
+    );
+  }
+  const exercises = lesson.steps.flatMap((step, index): Array<[string, number]> =>
+    step.exercise ? [[step.exercise.id, index + 1]] : [],
+  );
+  for (const { id, positions } of duplicatePositions(exercises)) {
+    issues.push(
+      err(
+        "E-EXERCISE-ID-DUP",
+        "/steps",
+        `exercise id '${id}' is used by the exercises of the steps at positions ${positions.join(", ")}; exercise ids must be unique within the lesson`,
+        "exercises",
+        { exerciseId: id, positions },
+      ),
+    );
+  }
 }
 
 /** E-STABLE-ID-DUP: a stable_id must be unique across the exercises and

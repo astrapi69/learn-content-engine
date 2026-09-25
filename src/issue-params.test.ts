@@ -322,6 +322,33 @@ const CASES: ParamCase[] = [
     params: { displayedFirst: "lesson-10", numericFirst: "lesson-2" },
   },
   {
+    id: "E-CARD-ID-DUP",
+    label: "two cards with one id",
+    issues: () => all(lesson([ex({ id: "f1", type: "free_text", prompt: "?", accept: ["x"], card_ids: ["hund"] })], [{ id: "hund", front: "Hund", back: "dog" }, { id: "hund", front: "Katze", back: "cat" }])),
+    path: "/cards",
+    params: { cardId: "hund", positions: [1, 2] },
+  },
+  {
+    id: "E-STEP-ID-DUP",
+    label: "two steps with one id",
+    issues: () => all(lesson([{ id: "s1", type: "theory", body: "a" }, { id: "s1", type: "theory", body: "b" }])),
+    path: "/steps",
+    params: { stepId: "s1", positions: [1, 2] },
+  },
+  {
+    id: "E-EXERCISE-ID-DUP",
+    label: "two exercises with one id, at their step positions",
+    issues: () =>
+      all(
+        lesson([
+          { id: "s1", type: "exercise", exercise: { id: "ex-a", type: "free_text", prompt: "?", accept: ["x"] } },
+          { id: "s2", type: "exercise", exercise: { id: "ex-a", type: "free_text", prompt: "!", accept: ["y"] } },
+        ]),
+      ),
+    path: "/steps",
+    params: { exerciseId: "ex-a", positions: [1, 2] },
+  },
+  {
     id: "E-QUALITY-EXERCISES",
     label: "one exercise in a practice lesson",
     issues: () => quality(lesson([theoryStep, ex({ id: "f1", type: "free_text", prompt: "?", accept: ["x", "y"] })])),

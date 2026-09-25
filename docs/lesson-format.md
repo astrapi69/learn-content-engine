@@ -186,7 +186,7 @@ the lesson's `cards` (referential integrity is enforced).
 
 | Field | Type | Notes |
 |---|---|---|
-| `id` | string, required | [Slug id](#slug-ids), unique within the lesson. |
+| `id` | string, required | [Slug id](#slug-ids), unique among the lesson's cards (`E-CARD-ID-DUP`). |
 | `stable_id` | string \| null | Version-stable identity (schema v1.9, see [Stable identity](#stable-identity-stable_id)). |
 | `front` | string, required | What the learner sees first (usually the target term). |
 | `back` | string, required | What they recall (translation / definition). |
@@ -208,7 +208,11 @@ A step is either a **theory** step (`type: "theory"`) or an **exercise** step
 - An exercise step **requires** an `exercise` payload and must **not** carry a
   `body`.
 
-Common step fields: `id` (required, a [slug id](#slug-ids)), `type` (required), `title`.
+Common step fields: `id` (required, a [slug id](#slug-ids), unique among the lesson's steps: `E-STEP-ID-DUP`), `type` (required), `title`.
+
+Card ids, step ids and exercise ids are three separate namespaces: a step and
+its exercise may share an id (most content does), a card and a step may too;
+only two ids of the same kind may not.
 
 ### Theory steps
 
@@ -233,8 +237,8 @@ both, or neither. Both are shown together in the glance example above.
 
 ## Exercises
 
-An exercise lives inside an exercise step. Every exercise requires `id`, `type`,
-and `prompt`. `type` is one of `matching`, `picture_choice`, `free_text`,
+An exercise lives inside an exercise step. Every exercise requires `id` (unique
+among the lesson's exercises: `E-EXERCISE-ID-DUP`), `type`, and `prompt`. `type` is one of `matching`, `picture_choice`, `free_text`,
 `word_tiles`, `cloze`. Each type reads a specific set of fields; the wrong-field-
 for-type combinations are rejected (see [validation.md](validation.md)).
 
@@ -1124,6 +1128,9 @@ itself instead of parsing the English message.
 |---|---|
 | `E-SCHEMA` | Structural schema violation (missing required field, wrong type, bad enum value). |
 | `E-UNKNOWN-FIELD` | An unknown field is present (the schema is strict, `additionalProperties: false`). |
+| `E-CARD-ID-DUP` | Two [cards](#cards) of the lesson share an `id`. `from_cards` and every card lookup key cards by id, so the later card would silently replace the earlier one (engine#202). One error per duplicated id, naming its positions. |
+| `E-STEP-ID-DUP` | Two [steps](#steps) of the lesson share an `id`. |
+| `E-EXERCISE-ID-DUP` | Two [exercises](#exercises) of the lesson share an `id` (the QTI export writes it as the item identifier). The position named is the step's. A step and its own exercise may share an id; card, step and exercise ids are separate namespaces. |
 | `E-STABLE-ID-DUP` | A `stable_id` is used more than once within one lesson (exercises and cards share one namespace). Set-wide uniqueness is the repo gate's job via `collectStableIds`. |
 | `E-EVAL-GRADES-MISSING` | Manifest-level ([evaluation](#evaluation)): a set's `evaluation` declares `scheme: "grades"` without a `grades` table, so nothing maps a score to a grade. |
 | `E-EVAL-PASS-MISSING` | Manifest-level ([evaluation](#evaluation)): a set's `evaluation` declares `scheme: "pass_fail"` without `pass_percent`, so nothing says what passing means. |
@@ -1227,9 +1234,11 @@ an extension's issues, whose paths are relative to its exercise
 
 | ID | `params` |
 |---|---|
+| `E-CARD-ID-DUP` | `cardId`, `positions` (1-based, in the card list) |
 | `E-CARD-REF` | `cardId` |
 | `E-CLOZE-MARKERS` | `markers`, `blanks` (counts) |
 | `E-CLOZE-MS-DISJOINT` | `shared` (the options in both lists) |
+| `E-EXERCISE-ID-DUP` | `exerciseId`, `positions` (1-based step positions) |
 | `E-EXT-UNDECLARED` | `type` |
 | `E-EXT-UNSUPPORTED` | `type`, `major` |
 | `E-MATCH-DUP-LEFT` | `term` (as first written), `positions` (1-based) |
@@ -1239,6 +1248,7 @@ an extension's issues, whose paths are relative to its exercise
 | `E-QUALITY-THEORY` | `count`, `min` |
 | `E-QUALITY-TYPES` | `count`, `min`, `types` (the types found, sorted) |
 | `E-STABLE-ID-DUP` | `stableId`, `elementKinds`, `elementIds` (parallel lists, one entry per element carrying it) |
+| `E-STEP-ID-DUP` | `stepId`, `positions` (1-based) |
 | `E-TILES-ORDERING` | `ordering` (the entry), `maxIndex` |
 | `E-UNKNOWN-FIELD` | `field` |
 | `E-VAR-DUP` | `name` |

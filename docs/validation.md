@@ -50,8 +50,12 @@ If any structural error is found, validation stops and returns those errors
 
 ## Layer 2: semantic (cross-field rules)
 
-These rules cannot be expressed in JSON-Schema; they mirror the reference
-consumer's (adaptive-learner) Pydantic `model_validator`s one-for-one:
+These rules cannot be expressed in JSON-Schema. They began as a mirror of the
+reference consumer's (adaptive-learner) Pydantic `model_validator`s; since the
+engine owns every rule about the content
+([rule ownership](architecture.md#rule-ownership-which-layer-owns-which-rule)),
+the engine's version is the canonical one, and where the two differ the
+consumer follows (the app checks no exercise-id uniqueness, the engine does):
 
 | Rule | Message contains |
 |---|---|
@@ -66,6 +70,7 @@ consumer's (adaptive-learner) Pydantic `model_validator`s one-for-one:
 | `cloze` (`type`/`select`) requires `sentence` + `blanks` with `markers == blanks.length`; `select` also needs `distractors` | `CLOZE marker count mismatch` |
 | `cloze` (`multiselect`) requires `sentence`, non-empty `accept` + `distractors`, and the two must be **disjoint** | `must be disjoint` |
 | Every `card_ids` entry must resolve to a card in the lesson | `references unknown card` |
+| Card ids, step ids and exercise ids are each unique within the lesson (three separate namespaces; a step and its exercise may share an id) | `card ids must be unique` / `step ids ...` / `exercise ids ...` |
 | A `stable_id` is unique within the lesson (exercises and cards share one namespace) | `is used more than once in this lesson` |
 
 ### Set-wide stable_id uniqueness lives outside validateLesson
@@ -140,10 +145,10 @@ const { valid, errors, warnings } = validateLessonRules(lesson); // same result 
   validator. `SLUG_ID_PATTERN` is the pattern string itself.
 - The entry imports neither ajv nor `node:*`; `src/rules.test.ts` keeps it that
   way. Measured with esbuild on 2026-09-25 (`dist/rules.js` bundled, minified,
-  browser): 24.0 kB, 9.2 kB gzip. The quality minimums of engine#185 added
-  1.1 kB to it (22.9 kB, 8.8 kB gzip before), the issue parameters of
-  engine#201 1.2 kB (21.7 kB, 8.4 kB gzip before that), both measured the
-  same way.
+  browser): 24.9 kB, 9.4 kB gzip. The duplicate-id rules of engine#202 added
+  0.9 kB (24.0 kB, 9.2 kB gzip before), the quality minimums of engine#185
+  1.1 kB (22.9 kB, 8.8 kB gzip before), the issue parameters of engine#201
+  1.2 kB (21.7 kB, 8.4 kB gzip before that), all measured the same way.
   `validateLesson` alone is about 145 kB (measured on 2026-09-24 from an entry
   importing only `validateLesson`), most of it ajv, and it reads the
   schema from the file system, which a browser does not have (engine#191).
