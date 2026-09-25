@@ -23,6 +23,7 @@ export {
 
 // --- Conformance: explicit schema validation against the bundled artifact ---
 export { validateLesson, validateManifest } from "./validate.js";
+export { QUALITY_MINIMUMS, validateLessonQuality } from "./quality.js";
 export { collectStableIds } from "./stable-ids.js";
 export {
   CEFR_LEVELS,
@@ -102,6 +103,7 @@ export type {
   ExerciseType,
   InlineExample,
   Lesson,
+  LessonPurpose,
   LessonResource,
   LessonStep,
   MediaType,

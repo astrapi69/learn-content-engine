@@ -49,6 +49,9 @@ and consumers re-pin. See [Schema authority](README.md#schema-authority).
 `src/types/lesson-schema.generated.ts` is **generated** from the schema
 (its header says `DO NOT EDIT`); do not hand-edit it - regenerate with
 `make sync-types`; the drift check runs in `release-check` + CI.
+`schema/quality-rules.json` has a twin in code, `QUALITY_MINIMUMS` in
+`src/quality.ts` (the `/rules` entry cannot read JSON from the file system):
+change a minimum in both, `src/quality.test.ts` fails when they differ.
 
 ## Commits
 

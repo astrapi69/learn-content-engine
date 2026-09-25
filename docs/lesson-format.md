@@ -94,6 +94,7 @@ Everything else is optional.
 | `source_language` | string \| null | BCP-47 code of the language the learner already speaks. |
 | `domain` | string \| null | Content domain (`language`, `psychology`, `programming`, ...). Inherited from the set when absent. |
 | `estimated_minutes` | integer | 1-240, default 10. |
+| `purpose` | string | What the lesson is for: `practice` (default), `bridge` or `quiz` (schema 1.17). Selects the [quality minimums](#quality-minimums); never changes validity. |
 | `resources` | array \| null | Optional supplementary media ({`type`, `title`, `url`, ...}). |
 | `contributed_by`, `contributed_at` | string \| null | Optional author credit. |
 | `variation_of`, `variation_note` | string \| null | Marks a lesson as a variation of another. |
@@ -851,7 +852,10 @@ reworded field descriptions and left `schema_version`'s default at `1.6` -
 yet it still bumped `x-schema-version`. v1.16 is the same case again and the
 purest example of it: engine#180 replaced the em dashes in the schema
 descriptions and changed nothing else, so `schema_version` stayed at `1.7`
-while `x-schema-version` moved to `1.16`. When comparing your pin
+while `x-schema-version` moved to `1.16`. v1.17 (engine#185) adds a
+lesson field, `purpose`; the manifest schema moves its `x-schema-version` in
+lockstep and changes nothing else, so `schema_version`'s default stays at
+`1.7`. When comparing your pin
 against a new engine release, `x-schema-version` tells you the schema
 DEFINITION moved; `schema_version` tells you whether your MANIFESTS need a
 field update.
@@ -1057,6 +1061,53 @@ Consumers should read `KNOWN_CONTENT_DOMAINS` / `CEFR_LEVELS` /
 `LEVEL_NONE` from the engine instead of maintaining their own copies -
 one vocabulary, one source.
 
+## Quality minimums
+
+Whether a lesson is **valid** and whether it is **substantial enough to
+publish** are two questions. `validateLesson` answers the first. The second is
+`validateLessonQuality(lesson)` (engine#185, since schema 1.17), which checks a
+shape-valid lesson against the numbers of `schema/quality-rules.json`, exported
+as `QUALITY_MINIMUMS`:
+
+| Minimum | Number | Applies to |
+|---|---|---|
+| Exercises per lesson | 5 | `practice` and `quiz` |
+| Exercise types per lesson | 2 | `practice` and `bridge` |
+| Theory steps per lesson | 1 | every purpose |
+| Accepted answers per `free_text` | 2 | every purpose |
+| Pairs per `matching` | 3 | every purpose |
+
+The lesson's `purpose` says what it is for, and the minimums follow from it:
+
+- **`practice`** (the default when `purpose` is absent): a lesson that teaches
+  and drills. Every minimum applies.
+- **`bridge`**: an opening, a part divider, an interlude or a closing. It
+  carries theory and leads over, without an assessment intent, so it has no
+  exercise minimum. A bridge is a lesson the author declares as one, not a
+  file name that looks like one.
+- **`quiz`**: a check of what was taught, often in one exercise type (a set of
+  multiple-choice questions), so it has no exercise-type minimum.
+
+A `matching` with `from_cards` counts the pairs parsing derives from it: one
+per entry of `card_ids` that names a card of the lesson. A parsed lesson,
+where `from_cards` is already resolved to `pairs`, gets the same answer as its
+source. An `ext:` exercise counts as an exercise, and its type as a type.
+
+Every shortfall is an error in the returned `{ valid, errors, warnings }`
+(`warnings` stays empty), with an `E-QUALITY-*` id from the
+[rule catalog](#quality-minimums-validatelessonquality). What a shortfall means
+is the consumer's: the content repositories' gate blocks, the reference app
+blocks sharing. `validateLesson` never reports these ids, so a consumer that
+generates short lessons of its own still accepts them.
+
+Replaced by this check (the three versions it unifies, as of 2026-09-25): the
+content template's multiple-choice exemption, alc-books' bridge lessons
+recognised by their id (`einleitung`, `teil-N`, `epilog`, ...), and the
+reference app's count of raw `pairs` for `from_cards`. The distractor
+requirement those versions placed on `free_text` and `picture_choice` has no
+counterpart here: a `picture_choice`'s distractors are its images not marked
+correct, and `free_text` is graded against `accept` alone.
+
 ## Rule catalog
 
 `validateLesson` returns `{ valid, errors, warnings }`. **Errors** block (`valid`
@@ -1136,6 +1187,20 @@ itself instead of parsing the English message.
 | `W-LEVEL-UNKNOWN` | Manifest-level ([content domains](#content-domains)): a set's `level` is neither a CEFR band (`A1`..`C2`, case-insensitive) nor, for a non-language set, the explicit `none` sentinel. A consumer's level facet would offer the free-text value (`a0`, `einsteiger`, `reflexion` are live examples) as a category (engine#127). |
 | `W-VAR-UNUSED` | A declared [variable](#variables-parametric-exercises) is referenced by no string field and used by no later expression: dead declaration, usually a typo in the reference. |
 
+### Quality minimums (`validateLessonQuality`)
+
+Reported by `validateLessonQuality` only, never by `validateLesson` (see
+[quality minimums](#quality-minimums)). Errors in that result; the consumer
+decides whether they block.
+
+| ID | Rule |
+|---|---|
+| `E-QUALITY-EXERCISES` | The lesson has fewer exercises than `minExercisesPerLesson`. Not checked for `purpose: "bridge"`. |
+| `E-QUALITY-TYPES` | The lesson has fewer distinct exercise types than `minExerciseTypes`. Not checked for `purpose: "quiz"`. |
+| `E-QUALITY-THEORY` | The lesson has fewer theory steps than `minTheorySteps`. |
+| `E-QUALITY-FREETEXT-ACCEPTS` | A `free_text` has fewer accepted answers than `minFreeTextAccepts`. |
+| `E-QUALITY-MATCHING-PAIRS` | A `matching` has fewer pairs than `minMatchingPairs`; with `from_cards`, the pairs parsing derives. |
+
 ### Issue parameters
 
 Since 0.30.0 (engine#201) every issue whose message names a value carries that
@@ -1168,6 +1233,11 @@ an extension's issues, whose paths are relative to its exercise
 | `E-EXT-UNDECLARED` | `type` |
 | `E-EXT-UNSUPPORTED` | `type`, `major` |
 | `E-MATCH-DUP-LEFT` | `term` (as first written), `positions` (1-based) |
+| `E-QUALITY-EXERCISES` | `count`, `min` |
+| `E-QUALITY-FREETEXT-ACCEPTS` | `count`, `min` |
+| `E-QUALITY-MATCHING-PAIRS` | `count`, `min` |
+| `E-QUALITY-THEORY` | `count`, `min` |
+| `E-QUALITY-TYPES` | `count`, `min`, `types` (the types found, sorted) |
 | `E-STABLE-ID-DUP` | `stableId`, `elementKinds`, `elementIds` (parallel lists, one entry per element carrying it) |
 | `E-TILES-ORDERING` | `ordering` (the entry), `maxIndex` |
 | `E-UNKNOWN-FIELD` | `field` |

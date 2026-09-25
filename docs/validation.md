@@ -131,14 +131,19 @@ const { valid, errors, warnings } = validateLessonRules(lesson); // same result 
   two check the shape with ajv and then call these functions, so the two can
   never disagree. For input that does not have the schema's shape the result is
   unspecified; check the shape first.
+- `validateLessonQuality(lesson)` and `QUALITY_MINIMUMS` are the
+  [quality minimums](#quality-minimums), the same functions as on the package
+  root.
 - `isSlugId(value)` is the schema's `$defs/SlugId` (lowercase Unicode letters
   and digits in hyphen-separated runs, at most `SLUG_ID_MAX_LENGTH`
   characters), for a consumer that needs the slug rule without a schema
   validator. `SLUG_ID_PATTERN` is the pattern string itself.
 - The entry imports neither ajv nor `node:*`; `src/rules.test.ts` keeps it that
   way. Measured with esbuild on 2026-09-25 (`dist/rules.js` bundled, minified,
-  browser): 22.9 kB, 8.8 kB gzip. The issue parameters of engine#201 added
-  1.2 kB to it (21.7 kB, 8.4 kB gzip, measured the same way before).
+  browser): 24.0 kB, 9.2 kB gzip. The quality minimums of engine#185 added
+  1.1 kB to it (22.9 kB, 8.8 kB gzip before), the issue parameters of
+  engine#201 1.2 kB (21.7 kB, 8.4 kB gzip before that), both measured the
+  same way.
   `validateLesson` alone is about 145 kB (measured on 2026-09-24 from an entry
   importing only `validateLesson`), most of it ajv, and it reads the
   schema from the file system, which a browser does not have (engine#191).
@@ -218,20 +223,41 @@ a published retirement, retired-yet-alive - lives in the stability gate
 (`V1`/`V5`/`V6`, see
 [stable identity](lesson-format.md#stable-identity-stable_id)).
 
-## Quality minimums artifact
+## Quality minimums
 
-Besides the two JSON-Schemas the package ships
-[`schema/quality-rules.json`](../schema/quality-rules.json): the shared
-quality minimums (`minExercisesPerLesson`, `minExerciseTypes`,
-`minFreeTextAccepts`, `minMatchingPairs`, `minTheorySteps`). Like the two
-schemas, its canonical home is this engine (since the v0.6.0 authority flip).
-The engine does **not** evaluate these rules itself (there is no
-`validateQuality` API); the artifact exists so consumer validators
-(adaptive-learner, the content repos) can mirror the numbers from the
-pinned engine release instead of owning a repo-local copy, the same
-engine → consumers channel as the schemas. Consume it via
-`import qualityRules from "learn-content-engine/schema/quality-rules.json"`
-or read it from the installed package.
+Validity is not the only question a consumer asks before it publishes or
+shares a lesson. `validateLessonQuality(lesson)` (engine#185) asks the second:
+is the lesson substantial enough (enough exercises, of enough types, a theory
+step, enough accepted answers and pairs)? The minimums follow from the lesson's
+`purpose` (`practice` by default, `bridge`, `quiz`); the details are in
+[quality minimums](lesson-format.md#quality-minimums).
+
+```ts
+import { validateLesson, validateLessonQuality } from "learn-content-engine";
+
+if (validateLesson(lesson).valid) {
+  const quality = validateLessonQuality(lesson); // { valid, errors: E-QUALITY-*, warnings: [] }
+}
+```
+
+It is a separate call on purpose. `validateLesson` never reports the
+minimums: a consumer that generates short lessons of its own (the reference
+app's adaptive lessons have fewer than five exercises) must still accept them.
+Each consumer gives a shortfall the weight of its gate: the content
+repositories' gate blocks, the reference app blocks sharing. The function is
+also on the `learn-content-engine/rules` entry.
+
+The numbers live in
+[`schema/quality-rules.json`](../schema/quality-rules.json)
+(`minExercisesPerLesson`, `minExerciseTypes`, `minTheorySteps`,
+`minFreeTextAccepts`, `minMatchingPairs`), exported as `QUALITY_MINIMUMS`.
+Like the two schemas, the file's canonical home is this engine (since the
+v0.6.0 authority flip); a consumer that needs the numbers reads them from the
+pinned release (`import qualityRules from
+"learn-content-engine/schema/quality-rules.json"`). A consumer that needs the
+rule calls `validateLessonQuality` instead of applying the numbers itself:
+three separate versions of that rule, with different exemptions and a different
+count for `from_cards`, are why the function exists.
 
 ## Real-content conformance
 

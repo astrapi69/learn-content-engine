@@ -1,7 +1,9 @@
 import { describe, it, expect } from "vitest";
 
+import { validateLessonQuality } from "./quality.js";
 import { lessonIdOrderingIssues } from "./set-ordering.js";
 import { ISSUE_EMITTING_SOURCES, readSource } from "./test-support/emitters.js";
+import type { Lesson } from "./types/lesson-schema.generated.js";
 import { validateLesson, validateManifest, type ValidationIssue } from "./validate.js";
 
 /**
@@ -92,6 +94,8 @@ const manifestIssues = (input: Record<string, unknown>): ValidationIssue[] => {
 };
 const parametric = (variables: unknown, prompt = "{{a}}"): Record<string, unknown> =>
   lesson([ex({ id: "e1", type: "free_text", prompt, accept: ["x"], variables })]);
+const quality = (lessonInput: Record<string, unknown>): ValidationIssue[] => validateLessonQuality(lessonInput as unknown as Lesson).errors;
+const theoryStep: StepInput = { id: "t1", type: "theory", body: "Read this." };
 
 interface ParamCase {
   id: string;
@@ -316,6 +320,41 @@ const CASES: ParamCase[] = [
     issues: () => lessonIdOrderingIssues(["lesson-2", "lesson-10"]),
     path: "",
     params: { displayedFirst: "lesson-10", numericFirst: "lesson-2" },
+  },
+  {
+    id: "E-QUALITY-EXERCISES",
+    label: "one exercise in a practice lesson",
+    issues: () => quality(lesson([theoryStep, ex({ id: "f1", type: "free_text", prompt: "?", accept: ["x", "y"] })])),
+    path: "/steps",
+    params: { count: 1, min: 5 },
+  },
+  {
+    id: "E-QUALITY-TYPES",
+    label: "one exercise type",
+    issues: () => quality(lesson([theoryStep, ex({ id: "f1", type: "free_text", prompt: "?", accept: ["x", "y"] })])),
+    path: "/steps",
+    params: { count: 1, min: 2, types: ["free_text"] },
+  },
+  {
+    id: "E-QUALITY-THEORY",
+    label: "no theory step",
+    issues: () => quality(lesson([ex({ id: "f1", type: "free_text", prompt: "?", accept: ["x", "y"] })])),
+    path: "/steps",
+    params: { count: 0, min: 1 },
+  },
+  {
+    id: "E-QUALITY-FREETEXT-ACCEPTS",
+    label: "a free_text with one accepted answer",
+    issues: () => quality(lesson([theoryStep, ex({ id: "f1", type: "free_text", prompt: "?", accept: ["x"] })])),
+    path: "/steps/1/exercise",
+    params: { count: 1, min: 2 },
+  },
+  {
+    id: "E-QUALITY-MATCHING-PAIRS",
+    label: "a matching with two pairs",
+    issues: () => quality(lesson([theoryStep, ex({ id: "m1", type: "matching", prompt: "?", pairs: [{ left: "a", right: "1" }, { left: "b", right: "2" }] })])),
+    path: "/steps/1/exercise",
+    params: { count: 2, min: 3 },
   },
 ];
 

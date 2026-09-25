@@ -108,6 +108,10 @@ export type EstimatedMinutes = number;
  */
 export type SlugId1 = string;
 /**
+ * What the lesson is for (schema 1.17, engine#185). ``practice`` (the default when absent): a lesson that teaches and drills; every quality minimum applies. ``bridge``: an opening, a part divider, an interlude or a closing that carries theory and leads over, without an assessment intent; no minimum number of exercises. ``quiz``: a check of what was taught, often in one exercise type; no minimum number of exercise types. Read by the quality check (``validateLessonQuality``), never by ``validateLesson``: it does not change whether a lesson is valid.
+ */
+export type LessonPurpose = "practice" | "bridge" | "quiz";
+/**
  * Extensions this lesson needs, each ``ext:<vendor>-<name>@<major>`` (e.g. ``ext:acme-ordering@1``). A consumer that has not registered a declared extension refuses the lesson loudly (E-EXT-UNSUPPORTED) rather than mis-rendering. Absent / empty on core lessons; additive, so pre-1.7 content validates unchanged.
  */
 export type RequiresExtensions = string[];
@@ -403,6 +407,7 @@ export interface Lesson {
   domain?: Domain;
   estimated_minutes?: EstimatedMinutes;
   id: SlugId1;
+  purpose?: LessonPurpose;
   requires_extensions?: RequiresExtensions;
   resources?: Resources;
   source_language?: SourceLanguage;

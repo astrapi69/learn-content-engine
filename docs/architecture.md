@@ -318,6 +318,15 @@ The third row weighs most: the same exercise counts or does not count
 depending on the checker, so a set can pass its repo gate and fail when
 shared in the app.
 
+**Engine side done (engine#185, schema 1.17):** `validateLessonQuality` is the
+one version. A lesson declares its `purpose` (`practice`, `bridge`, `quiz`)
+instead of an exemption per heuristic, and `from_cards` counts the pairs
+parsing derives. Measured before building over the 631 lessons of the ten
+content repos: the three versions judged 10 lessons differently; with
+`purpose` set on the seven bridge lessons and the one quiz, none of the 631
+falls short. The three consumer versions stay until each consumer calls the
+engine (the template's gate, alc-books, the app's share check).
+
 It also settles the question of the canonical version: **none of the three
 is canonical.** Template and alc-books differ in an exemption, the app in the
 counting, and the engine does not have the rule at all. The canonical version
@@ -349,7 +358,10 @@ The canonical version in engine#190 is decided between all of these.
 Three more rules in the same validator are content rules too. `free_text` and
 `picture_choice` need a non-empty `distractors` list; alc-books and the app's
 share check have the same two rules, and `quality-rules.json` does not name
-them, so moving that file does not move them. The `accept_orderings`
+them, so moving that file does not move them. Decided with engine#185: both
+go without a replacement. A `picture_choice`'s distractors are its images not
+marked correct, and `free_text` is graded against `accept`; the engine carries
+no distractor requirement for either. The `accept_orderings`
 permutation check repeats the engine's `E-TILES-ORDERING` at the same severity.
 
 #### Hint length: two versions, closed (engine#186, 0.29.0)
@@ -436,8 +448,9 @@ differs: it compares left terms case-sensitively, the engine does not, so
 (adaptive-learner#3222). The app kept the engine's validators out of its
 bundle to avoid the structural ajv layer. Since 0.29.0 the engine offers the
 semantic rules alone, `learn-content-engine/rules` (engine#191): no ajv, no
-`node:*`, about 22.9 kB minified since the issue parameters of engine#201
-(21.7 kB before; `dist/rules.js` bundled with esbuild, measured 2026-09-25).
+`node:*`, about 24.0 kB minified since the quality minimums of engine#185
+(22.9 kB before them, 21.7 kB before the issue parameters of engine#201;
+`dist/rules.js` bundled with esbuild, measured 2026-09-25).
 That figure counts the entry's JavaScript; a
 consumer that still imports parse functions from the package root gets 146 kB
 of schema files copied into a Vite build that nothing reads (engine#203). The
@@ -616,11 +629,12 @@ which the conditions acted before the damage instead of after it.
 
 ### Open items
 
-- **engine#185**: the quality minimums move into the engine, tied to the
-  question of what a lesson is for. A bridge lesson is not a special type but a
-  lesson without an assessment intent; a field the author declares, instead of
-  one heuristic per exemption, and the same field answers the
-  multiple-choice-only exemption.
+- **engine#185** (engine side done, schema 1.17): the quality minimums are in
+  the engine as `validateLessonQuality`, tied to the question of what a lesson
+  is for. A bridge lesson is not a special type but a lesson without an
+  assessment intent; the author declares it in `purpose`, instead of one
+  heuristic per exemption, and the same field answers the multiple-choice-only
+  exemption (`quiz`). Open: the consumers switch and delete their versions.
 - **engine#186** (closed, 0.29.0): one hint-length rule, kept as a warning; the
   template's copy is gone in all ten content repos. Its severity dropped with
   the move (above).
@@ -633,8 +647,8 @@ which the conditions acted before the damage instead of after it.
   canonical version.
 - **adaptive-learner#3222**: the app stops re-implementing engine rules, in
   the frontend: the share check's `E-MATCH-DUP-LEFT`, `SLUG_RE`, and the
-  per-type checks in `validateGeneratedLesson`; the quality minimums wait for
-  engine#185. The PR sequence is in the plan comment there.
+  per-type checks in `validateGeneratedLesson`; the share check's quality
+  minimums can call `validateLessonQuality` (engine#185). The PR sequence is in the plan comment there.
 - **adaptive-learner#3245**: the backend's semantic layer, which the `/rules`
   entry cannot reach.
 - **engine#201**: parameters on validation issues, so a consumer can keep its
