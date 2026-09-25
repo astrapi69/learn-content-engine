@@ -24,6 +24,9 @@ export {
 // --- Conformance: explicit schema validation against the bundled artifact ---
 export { validateLesson, validateManifest } from "./validate.js";
 export { QUALITY_MINIMUMS, validateLessonQuality } from "./quality.js";
+export { resolveExerciseVariables } from "./resolve-variables.js";
+export type { ResolveExerciseVariablesOptions, ResolvedExerciseVariables } from "./resolve-variables.js";
+export { evaluateExpression } from "./variables.js";
 export { collectStableIds } from "./stable-ids.js";
 export {
   CEFR_LEVELS,

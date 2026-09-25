@@ -5,6 +5,31 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [Unreleased]
+
+### The engine evaluates parametric exercises (engine#220)
+
+`resolveExerciseVariables(exercise, { random, values })` turns a parametric
+exercise (schema 1.14) into a concrete instance: it samples every sampled
+variable with the given random source, evaluates every computed one in
+declaration order, rounds each to its display precision and substitutes every
+reference to a declared variable in the exercise's string fields. It returns
+the exercise, the values (to persist and replay) and the tolerance of every
+accepted answer that is one reference to a variable with `tolerance`.
+`evaluateExpression(expression, values)` is exported on its own. See
+[variables](docs/lesson-format.md#variables-parametric-exercises).
+
+Why: the engine validated the contract and left evaluation to the consumer,
+so the reference app carried a second parser for the same expression
+language (adaptive-learner#3109). The engine now evaluates on the parser that
+validates: one grammar, one implementation. The contract is the app's, so it
+can switch without changing its call sites; its own test cases are ported
+unchanged and pass. Two differences follow from the single grammar: an
+expression the validator rejects (`.5`, a unary `+`) does not evaluate either,
+and a reference with spaces (`{{ a }}`), which the validator reads as `a`, is
+substituted (the app left it literal). The grade lookup for `evaluation`
+follows with its first consumer.
+
 ## [0.33.0] - 2026-09-25
 
 Schema 1.18, a description-only change (what `bridge` lifts; two line breaks

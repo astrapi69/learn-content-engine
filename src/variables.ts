@@ -7,8 +7,11 @@
  * The engine checks the contract and nothing more: names, the range shape,
  * that every expression parses and only names variables declared before it
  * (which also rules out cycles), that every ``{{reference}}`` resolves, and
- * that no variable is dead. Sampling, substitution, evaluation and grading
- * with ``tolerance`` are the consumer's, like every other runtime concern.
+ * that no variable is dead. Since engine#220 it also evaluates an
+ * expression (``evaluateExpression``), on the same parser that validates it,
+ * and ``resolve-variables.ts`` samples and substitutes: one grammar, one
+ * implementation, instead of a copy per consumer. Grading with ``tolerance``
+ * stays the consumer's.
  *
  * Expression language, deliberately small: decimal numbers, variable names,
  * ``+ - * /``, parentheses, unary minus. No functions, no powers, no
@@ -32,15 +35,26 @@ export type VariableReference = { path: string; name: string } | { path: string;
 
 export type ParsedExpression = { names: string[] } | { error: string };
 
-const VARIABLE_NAME = /^[a-z][a-z0-9_]*$/;
-const REFERENCE = /\{\{([^{}]*)\}\}/g;
+/** A variable name, and the text a ``{{...}}`` reference must hold (after
+ *  trimming) to reference one. */
+export const VARIABLE_NAME = /^[a-z][a-z0-9_]*$/;
+/** A ``{{...}}`` reference; group 1 is the text between the braces. */
+export const REFERENCE = /\{\{([^{}]*)\}\}/g;
 
 type Token =
-  | { kind: "number" }
+  | { kind: "number"; value: number }
   | { kind: "name"; value: string }
   | { kind: "operator"; value: "+" | "-" | "*" | "/" }
   | { kind: "open" }
   | { kind: "close" };
+
+/** The syntax tree of an expression: what the validator reads names from and
+ *  what ``evaluateExpression`` computes. */
+type ExpressionNode =
+  | { kind: "number"; value: number }
+  | { kind: "name"; name: string }
+  | { kind: "negate"; operand: ExpressionNode }
+  | { kind: "binary"; operator: "+" | "-" | "*" | "/"; left: ExpressionNode; right: ExpressionNode };
 
 function tokenize(expression: string): Token[] | string {
   const tokens: Token[] = [];
@@ -54,7 +68,7 @@ function tokenize(expression: string): Token[] | string {
     }
     const number = rest.match(/^\d+(\.\d+)?/);
     if (number) {
-      tokens.push({ kind: "number" });
+      tokens.push({ kind: "number", value: Number(number[0]) });
       index += number[0].length;
       continue;
     }
@@ -74,72 +88,109 @@ function tokenize(expression: string): Token[] | string {
   return tokens;
 }
 
+/** Raised inside the parser to unwind to ``parseExpressionTree``. */
+class ParseFailure extends Error {}
+
+/** Parse an expression into its tree, or report why it does not parse. */
+function parseExpressionTree(expression: string): { tree: ExpressionNode } | { error: string } {
+  const tokens = tokenize(expression);
+  if (typeof tokens === "string") return { error: tokens };
+  if (tokens.length === 0) return { error: "expression is empty" };
+
+  let position = 0;
+  const peek = (): Token | undefined => tokens[position];
+
+  const parseFactor = (): ExpressionNode => {
+    const token = peek();
+    if (!token) throw new ParseFailure("unexpected end of expression");
+    position += 1;
+    if (token.kind === "operator" && token.value === "-") return { kind: "negate", operand: parseFactor() };
+    if (token.kind === "number") return { kind: "number", value: token.value };
+    if (token.kind === "name") return { kind: "name", name: token.value };
+    if (token.kind === "open") {
+      const inner = parseSum();
+      if (peek()?.kind !== "close") throw new ParseFailure("missing ')'");
+      position += 1;
+      return inner;
+    }
+    throw new ParseFailure("expected a number, a name or '('");
+  };
+
+  const parseBinary = (operators: ReadonlyArray<"+" | "-" | "*" | "/">, parseOperand: () => ExpressionNode): ExpressionNode => {
+    let left = parseOperand();
+    for (let token = peek(); token?.kind === "operator" && operators.includes(token.value); token = peek()) {
+      position += 1;
+      left = { kind: "binary", operator: token.value, left, right: parseOperand() };
+    }
+    return left;
+  };
+  const parseProduct = (): ExpressionNode => parseBinary(["*", "/"], parseFactor);
+  const parseSum = (): ExpressionNode => parseBinary(["+", "-"], parseProduct);
+
+  try {
+    const tree = parseSum();
+    if (position < tokens.length) return { error: "unexpected token after the end of the expression" };
+    return { tree };
+  } catch (failure) {
+    if (failure instanceof ParseFailure) return { error: failure.message };
+    throw failure;
+  }
+}
+
+/** The variable names a tree uses, in order of first use. */
+function namesIn(node: ExpressionNode, names: string[] = []): string[] {
+  if (node.kind === "name" && !names.includes(node.name)) names.push(node.name);
+  if (node.kind === "negate") namesIn(node.operand, names);
+  if (node.kind === "binary") {
+    namesIn(node.left, names);
+    namesIn(node.right, names);
+  }
+  return names;
+}
+
 /**
  * Check a computed variable's expression and report the variable names it
  * uses, in order of first use. Never evaluates anything.
  */
 export function parseVariableExpression(expression: string): ParsedExpression {
-  const tokens = tokenize(expression);
-  if (typeof tokens === "string") return { error: tokens };
-  if (tokens.length === 0) return { error: "expression is empty" };
+  const parsed = parseExpressionTree(expression);
+  return "error" in parsed ? parsed : { names: namesIn(parsed.tree) };
+}
 
-  const names: string[] = [];
-  let position = 0;
-  const peek = (): Token | undefined => tokens[position];
+function evaluateTree(node: ExpressionNode, values: Readonly<Record<string, number>>, expression: string): number {
+  switch (node.kind) {
+    case "number":
+      return node.value;
+    case "name": {
+      const value = values[node.name];
+      if (value === undefined) throw new Error(`expression '${expression}' uses '${node.name}', which has no value`);
+      return value;
+    }
+    case "negate":
+      return -evaluateTree(node.operand, values, expression);
+    case "binary": {
+      const left = evaluateTree(node.left, values, expression);
+      const right = evaluateTree(node.right, values, expression);
+      if (node.operator === "+") return left + right;
+      if (node.operator === "-") return left - right;
+      if (node.operator === "*") return left * right;
+      return left / right;
+    }
+  }
+}
 
-  const parseFactor = (): string | null => {
-    const token = peek();
-    if (!token) return "unexpected end of expression";
-    if (token.kind === "operator" && token.value === "-") {
-      position += 1;
-      return parseFactor();
-    }
-    if (token.kind === "number") {
-      position += 1;
-      return null;
-    }
-    if (token.kind === "name") {
-      position += 1;
-      if (!names.includes(token.value)) names.push(token.value);
-      return null;
-    }
-    if (token.kind === "open") {
-      position += 1;
-      const inner = parseSum();
-      if (inner) return inner;
-      if (peek()?.kind !== "close") return "missing ')'";
-      position += 1;
-      return null;
-    }
-    return "expected a number, a name or '('";
-  };
-
-  const parseProduct = (): string | null => {
-    const first = parseFactor();
-    if (first) return first;
-    for (let token = peek(); token?.kind === "operator" && (token.value === "*" || token.value === "/"); token = peek()) {
-      position += 1;
-      const next = parseFactor();
-      if (next) return next;
-    }
-    return null;
-  };
-
-  const parseSum = (): string | null => {
-    const first = parseProduct();
-    if (first) return first;
-    for (let token = peek(); token?.kind === "operator" && (token.value === "+" || token.value === "-"); token = peek()) {
-      position += 1;
-      const next = parseProduct();
-      if (next) return next;
-    }
-    return null;
-  };
-
-  const failure = parseSum();
-  if (failure) return { error: failure };
-  if (position < tokens.length) return { error: "unexpected token after the end of the expression" };
-  return { names };
+/**
+ * Evaluate a computed variable's expression with ``values`` for its names
+ * (engine#220): the grammar the validator checks (``E-VAR-EXPR``), parsed by
+ * the same parser. Returns the IEEE result, so a division by zero gives
+ * ``Infinity`` or ``NaN`` rather than an exception. Throws when the
+ * expression does not parse (the message names the parse error, as
+ * ``E-VAR-EXPR`` does) or uses a name without a value.
+ */
+export function evaluateExpression(expression: string, values: Readonly<Record<string, number>>): number {
+  const parsed = parseExpressionTree(expression);
+  if ("error" in parsed) throw new Error(`expression '${expression}' does not parse (${parsed.error})`);
+  return evaluateTree(parsed.tree, values, expression);
 }
 
 /**
