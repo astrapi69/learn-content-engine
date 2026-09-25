@@ -5,6 +5,27 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [Unreleased]
+
+### Card, step and exercise ids are unique within a lesson (engine#202)
+
+Three new errors check what the schema's descriptions have always said:
+`E-CARD-ID-DUP`, `E-STEP-ID-DUP` and `E-EXERCISE-ID-DUP`, one error per
+duplicated id, with the id and its 1-based positions in `params`. Card ids,
+step ids and exercise ids are three separate namespaces: a step and its own
+exercise may share an id, as most content does. `validateLesson` and
+`validateLessonRules` (the `/rules` entry) both report them.
+
+Why: no engine rule checked it, while the reference app rejects such a lesson
+at error level. A lesson with two cards of one id passed every content
+repository's gate, and a `from_cards` matching then silently lost the earlier
+card (cards are looked up by id, the later one wins). The template's advisory
+audit checked it outside CI only.
+
+A new error can turn valid content red. Measured with this build over the 631
+lessons on `origin/main` of the ten content repositories: 0 hits; a seeded
+duplicate in a real lesson is found in all three namespaces.
+
 ## [0.31.0] - 2026-09-25
 
 Schema 1.17: one additive lesson field, `purpose`. Every manifest and lesson

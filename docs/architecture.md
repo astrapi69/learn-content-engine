@@ -448,9 +448,10 @@ differs: it compares left terms case-sensitively, the engine does not, so
 (adaptive-learner#3222). The app kept the engine's validators out of its
 bundle to avoid the structural ajv layer. Since 0.29.0 the engine offers the
 semantic rules alone, `learn-content-engine/rules` (engine#191): no ajv, no
-`node:*`, about 24.0 kB minified since the quality minimums of engine#185
-(22.9 kB before them, 21.7 kB before the issue parameters of engine#201;
-`dist/rules.js` bundled with esbuild, measured 2026-09-25).
+`node:*`, about 24.9 kB minified since the duplicate-id rules of engine#202
+(24.0 kB before them, 22.9 kB before the quality minimums of engine#185,
+21.7 kB before the issue parameters of engine#201; `dist/rules.js` bundled
+with esbuild, measured 2026-09-25).
 That figure counts the entry's JavaScript; a
 consumer that still imports parse functions from the package root gets 146 kB
 of schema files copied into a Vite build that nothing reads (engine#203). The
@@ -474,10 +475,12 @@ The content loader in the app's backend (`plugins/adaptive-learner-plugin-conten
 validates every manifest the API mode lists or downloads and every lesson it
 serves or saves. Its structural layer is generated from this engine's schema;
 its semantic layer is hand-written in `schema.py` and `models.py`
-([Roadmap](#roadmap), stage 4). It repeats 25 of the 35 lesson-level errors in
+([Roadmap](#roadmap), stage 4). It repeats 27 of the 38 lesson-level errors in
 `src/rules.ts` and `src/variables.ts`: the per-type rules of the six core
-exercise types, the four step rules and `E-CARD-REF`. On one seeded negative
-per rule both reject (25 of 25). The differences sit next to them
+exercise types, the four step rules, `E-CARD-REF`, and since engine#202
+`E-CARD-ID-DUP` and `E-STEP-ID-DUP`, which the backend had before the engine.
+On one seeded negative per rule both reject (25 of 25 for the first 25; the two
+id rules on engine#202's probe lesson). The differences sit next to them
 (adaptive-learner#3245, measured against engine 0.26.0 and 0.29.0):
 
 | Rule | Engine id | Backend |
@@ -487,13 +490,13 @@ per rule both reject (25 of 25). The differences sit next to them
 | An `ext:` type not declared, or not registered | `E-EXT-UNDECLARED`, `E-EXT-UNSUPPORTED` | not checked: any `ext:` exercise passes |
 | Parametric `variables` | `E-VAR-*` | not checked, deliberately: the backend only accepts the field |
 | `metadata.retired_ids` not a list of strings | `E-RETIRED-IDS-TYPE` | not checked |
-| A card id or a step id twice in one lesson | none (engine#202) | error |
+| An exercise id twice in one lesson | `E-EXERCISE-ID-DUP` (engine#202) | not checked: the probe lesson with two `ex-a` passes |
 | `example_url` is an http(s) URL | none | error, case-sensitive: `HTTPS://` fails |
 | Shape of a language code, on the set and on the lesson | none | error unless `^[a-z]{2,3}(-[A-Za-z0-9]{2,8})?$` |
 | A set's `id` and `tags` | none; plain strings in the manifest schema | error unless an ASCII slug: `währung-a1` and the tag `präsenz` fail |
 | A set's `version` semver-shaped; set ids unique in a manifest | none | error |
 
-The first five rows are engine errors the backend does not apply; it saves and
+The first six rows are engine errors the backend does not apply; it saves and
 serves lessons that carry them. The other rows are rules the engine does not
 have. Each can be answered from a lesson or a manifest alone, so by the
 assignment test it belongs in the engine, and the backend's version is one of
@@ -651,8 +654,16 @@ which the conditions acted before the damage instead of after it.
   minimums can call `validateLessonQuality` (engine#185). The PR sequence is in the plan comment there.
 - **adaptive-learner#3245**: the backend's semantic layer, which the `/rules`
   entry cannot reach.
-- **engine#201**: parameters on validation issues, so a consumer can keep its
-  own wording; a precondition for the app's switch.
+- **engine#201** (done, 0.30.0): parameters on validation issues, so a
+  consumer can keep its own wording; a precondition for the app's switch.
+- **engine#202** (engine side done): card, step and exercise ids are each
+  unique within a lesson (`E-CARD-ID-DUP`, `E-STEP-ID-DUP`,
+  `E-EXERCISE-ID-DUP`), the promise the schema's descriptions always made. The
+  repos go from an advisory audit outside CI to the blocking engine gate
+  (measured over the 631 lessons: 0 hits). Open downstream: the template's
+  `audit_content.py` drops its three duplicate-id checks, the app's
+  `validateGeneratedLesson` can take the rule from `/rules`, and the backend
+  lacks the exercise-id check (table above).
 - **alc-books' domain rule** (moved with 0.29.0): now the engine's
   `W-DOMAIN-UNKNOWN`; its severity dropped with the move (above).
 - **adaptive-learner#3242**: the app's repo export writes a user set's origin
