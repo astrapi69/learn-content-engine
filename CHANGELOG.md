@@ -5,7 +5,11 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
-## [Unreleased]
+## [0.34.0] - 2026-09-25
+
+No schema change: `x-schema-version` stays 1.18. New API: the engine evaluates
+parametric exercises (`resolveExerciseVariables`, `evaluateExpression`). No
+new rule, so nothing a consumer validates changes.
 
 ### The engine evaluates parametric exercises (engine#220)
 
