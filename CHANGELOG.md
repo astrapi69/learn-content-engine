@@ -5,7 +5,11 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
-## [Unreleased]
+## [0.30.0] - 2026-09-25
+
+No schema change: `x-schema-version` stays 1.16, and every manifest and lesson
+valid under 0.29.0 is valid under 0.30.0. What moves is the shape of a
+validation issue (an optional `params`) and three issue paths.
 
 ### Issue parameters: the values a message names, as data (engine#201)
 
@@ -57,8 +61,26 @@ grouped `/frontend` update PRs that carried engine bumps since 2026-07-11
 a release and fail the app's pin and schema parity tests every time. And the
 content template and the hub had carried `engine-currency.yml`, which compares
 the pin with the tracked npm dist-tag, since 11:08 UTC on 2026-09-23, about 90
-minutes before 0.28.0 was published. `docs/architecture.md` ("Pinning and currency") carries
-the measured account.
+minutes before 0.28.0 was published. `docs/architecture.md` ("Pinning and
+currency") carries the measured account.
+
+### Docs
+
+- `docs/architecture.md`, "Rule ownership": a unification can let the worse
+  version win (the hint-length case, measured: the engine's version reported 44
+  warnings, all false; the template's copy none). Moving a rule now has three
+  conditions: every version measured per repo over the real content, precision
+  and completeness recorded separately (and where a false hit went), and the
+  severity checked at the new place. The app holds three versions of the
+  engine's rules, its backend's Pydantic models among them (engine#197, #198,
+  #199, #206).
+- "Pinning and currency": the record of the currency check, the condition
+  under which a scheduled run can prove the create path at all, and
+  Dependabot's engine PRs as a signal that arrives late and red (#198, #204).
+- Every subpath export is documented: the `/rules` row names all seven, and
+  `docs/qti.md` gains an API table with all ten `/qti` exports; the README
+  exports gate covers the subpaths, and a changelog gate fails on a heading
+  repeated within one release section (#200).
 
 ## [0.29.0] - 2026-09-24
 
