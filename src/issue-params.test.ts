@@ -349,6 +349,38 @@ const CASES: ParamCase[] = [
     params: { exerciseId: "ex-a", positions: [1, 2] },
   },
   {
+    id: "E-LANG-TAG",
+    label: "a malformed target language",
+    issues: () => manifestIssues(manifest({ target_language: "en_US" })),
+    path: "/sets/0/target_language",
+    params: { field: "target_language", tag: "en_US" },
+  },
+  {
+    id: "W-LANG-TAG-CANONICAL",
+    label: "a three-letter code where a two-letter one exists",
+    issues: () => manifestIssues(manifest({ source_language: "deu" })),
+    path: "/sets/0/source_language",
+    params: { field: "source_language", tag: "deu", canonical: "de" },
+  },
+  {
+    id: "W-LANG-PAIR-SAME",
+    label: "an English set for English speakers (source defaults to en)",
+    issues: () => manifestIssues(manifest({ target_language: "en" })),
+    path: "/sets/0",
+    params: { language: "en" },
+  },
+  {
+    id: "W-CARD-BACK-SCRIPT",
+    label: "a Latin back for a Greek source language",
+    issues: () =>
+      all({
+        ...lesson([ex({ id: "f1", type: "free_text", prompt: "?", accept: ["x"], card_ids: ["c1"] })], [{ id: "c1", front: "a", back: "water" }]),
+        source_language: "el",
+      }),
+    path: "/cards",
+    params: { sourceLanguage: "el", script: "Grek", count: 1, cardIds: ["c1"] },
+  },
+  {
     id: "E-QUALITY-EXERCISES",
     label: "one exercise in a practice lesson",
     issues: () => quality(lesson([theoryStep, ex({ id: "f1", type: "free_text", prompt: "?", accept: ["x", "y"] })])),

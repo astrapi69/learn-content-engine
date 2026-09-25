@@ -355,6 +355,19 @@ rejects, and rejects `zh-Hant-TW` and `EN`, which the template and the frontend
 accept after cutting them to `zh` and `en` and the engine accepts as they are.
 The canonical version in engine#190 is decided between all of these.
 
+**Engine side done (engine#190, decided 2026-09-25):** the engine checks
+language tags with `Intl.getCanonicalLocales` (a malformed tag is
+`E-LANG-TAG`, a non-canonical one `W-LANG-TAG-CANONICAL`; `gsw`, `yue`, `fil`
+are valid), warns on a language set whose source and target are one language
+(`W-LANG-PAIR-SAME`) or that has no `title_native` (`W-SET-TITLE-NATIVE`), and
+checks card backs against the CLDR likely script of the source language
+(`W-CARD-BACK-SCRIPT`), for every non-Latin script instead of the template's
+six. Measured over the 53 sets and 631 lessons of the ten content
+repositories: 0 findings for every rule. Two severities dropped with the move
+(the template's errors for the pair and `title_native` are warnings now); a
+repo that needs them blocking gets that from
+adaptive-learner-content-template#83.
+
 Three more rules in the same validator are content rules too. `free_text` and
 `picture_choice` need a non-empty `distractors` list; alc-books and the app's
 share check have the same two rules, and `quality-rules.json` does not name
@@ -448,8 +461,8 @@ differs: it compares left terms case-sensitively, the engine does not, so
 (adaptive-learner#3222). The app kept the engine's validators out of its
 bundle to avoid the structural ajv layer. Since 0.29.0 the engine offers the
 semantic rules alone, `learn-content-engine/rules` (engine#191): no ajv, no
-`node:*`, about 24.9 kB minified since the duplicate-id rules of engine#202
-(24.0 kB before them, 22.9 kB before the quality minimums of engine#185,
+`node:*`, about 27.3 kB minified since the language rules of engine#190
+(24.9 kB before them, 24.0 kB before the duplicate-id rules of engine#202, 22.9 kB before the quality minimums of engine#185,
 21.7 kB before the issue parameters of engine#201; `dist/rules.js` bundled
 with esbuild, measured 2026-09-25).
 Until engine#203, a consumer that imported parse functions from the package
@@ -651,9 +664,11 @@ which the conditions acted before the damage instead of after it.
   `.github/quality-state.json` that makes selected warning ids blocking for one
   repo, without duplicating the rule or editing the shared workflow. The
   missing half of this guideline: the way a moved rule gets its severity back.
-- **engine#190**: the language-pair and set-metadata checks move from the
-  template into the engine; the three-letter primary subtags decide the
-  canonical version.
+- **engine#190** (engine side done): the language-pair and set-metadata
+  checks are in the engine (above). Open downstream: the template drops
+  `validate_set_meta` and `back_looks_like_source` and passes each set's
+  source language to `validateLesson`; the app's share check and backend
+  follow the engine's tag rule instead of their own shapes.
 - **adaptive-learner#3222**: the app stops re-implementing engine rules, in
   the frontend: the share check's `E-MATCH-DUP-LEFT`, `SLUG_RE`, and the
   per-type checks in `validateGeneratedLesson`; the share check's quality

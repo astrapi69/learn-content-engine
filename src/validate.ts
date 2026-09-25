@@ -72,11 +72,13 @@ function toStructuralIssues(errors: ErrorObject[]): ValidationIssue[] {
  * ``options.extensions`` registers ``ext:`` exercise-type extensions. Without
  * it, an ``ext:`` exercise that a lesson declares is refused (E-EXT-UNSUPPORTED);
  * CORE content (no ``ext:`` types) validates identically regardless of the
- * registry.
+ * registry. ``options.sourceLanguage`` is the source language of the set the
+ * lesson belongs to, for the card-back script lint (``W-CARD-BACK-SCRIPT``);
+ * a lesson that declares its own ``source_language`` keeps it.
  */
 export function validateLesson(
   input: unknown,
-  options: { extensions?: ExtensionRegistry } = {},
+  options: { extensions?: ExtensionRegistry; sourceLanguage?: string } = {},
 ): ValidationResult {
   const structural = structuralLesson();
   if (!structural(input)) {

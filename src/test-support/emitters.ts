@@ -23,7 +23,7 @@ export const readSource = (relativePath: string): string =>
  *  engine#106 closed: the scan only ever covered validate.ts). Since
  *  engine#191 the semantic rules live in rules.ts; validate.ts keeps the
  *  structural layer. The list is checked against the module graph below. */
-export const ISSUE_EMITTING_SOURCES = ["./validate.ts", "./rules.ts", "./set-ordering.ts", "./variables.ts", "./quality.ts"];
+export const ISSUE_EMITTING_SOURCES = ["./validate.ts", "./rules.ts", "./set-ordering.ts", "./variables.ts", "./quality.ts", "./language-rules.ts"];
 
 const IMPORT_FORMS = [
   /^\s*(?:import|export)\s[^;]*?from\s+"([^"]+)"/gms,
