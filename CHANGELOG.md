@@ -5,7 +5,13 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
-## [Unreleased]
+## [0.32.0] - 2026-09-25
+
+No schema change: `x-schema-version` stays 1.17. Three new errors
+(`E-CARD-ID-DUP`, `E-STEP-ID-DUP`, `E-EXERCISE-ID-DUP`) can turn content red
+that carries a duplicate id; measured over the ten content repositories there
+is none. The structural layer no longer reads files, so no schema file lands
+in a consumer's build and `validateLesson` runs in a browser.
 
 ### Card, step and exercise ids are unique within a lesson (engine#202)
 
