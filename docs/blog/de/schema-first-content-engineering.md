@@ -9,11 +9,11 @@ tags: [architecture, schema-design, typescript, content-engineering]
 
 *Wie `learn-content-engine` ein stabiles Kern-Schema behält und trotzdem Raum für pädagogische Erfindung lässt: durch eine harte Linie zwischen dem Vertrag, den es besitzt, und den Regeln, die seine Consumer besitzen.*
 
-`learn-content-engine` · Schema aktuell v1.17 · framework-agnostisches TypeScript
+`learn-content-engine` · Schema aktuell v1.18 · framework-agnostisches TypeScript
 
 ## Das Content-Schema-Dilemma
 
-`learn-content-engine` ist eine framework-agnostische TypeScript-Bibliothek, die Lerninhalte parst und validiert: Sprachkurse zuallererst, wobei ein `domain`-Feld (seit Engine 0.20.0 ein kontrolliertes Vokabular aus bekannten Werten plus other) dieselbe Form auch andere Wissensgebiete tragen lässt (Technik-Kurse, Führerschein-Vorbereitung, Psychologie). Sie verwandelt Rohquellen (Lektions-JSON plus eine `manifest.yaml`) in eine kanonische interne Form, und sie ist die einzige Quelle der Wahrheit für das Lektions-Schema, aktuell Version 1.17.
+`learn-content-engine` ist eine framework-agnostische TypeScript-Bibliothek, die Lerninhalte parst und validiert: Sprachkurse zuallererst, wobei ein `domain`-Feld (seit Engine 0.20.0 ein kontrolliertes Vokabular aus bekannten Werten plus other) dieselbe Form auch andere Wissensgebiete tragen lässt (Technik-Kurse, Führerschein-Vorbereitung, Psychologie). Sie verwandelt Rohquellen (Lektions-JSON plus eine `manifest.yaml`) in eine kanonische interne Form, und sie ist die einzige Quelle der Wahrheit für das Lektions-Schema, aktuell Version 1.18.
 
 Der Kern ist bewusst klein. Kein Rendering, keine Persistenz, kein Netzwerk; die Laufzeit-Abhängigkeiten sind ein YAML-Parser und ein JSON-Schema-Validator, und der XML-Parser des QTI-Adapters sitzt hinter einem eigenen Subpath, sodass er den Kern-Import nie berührt. Seit 0.29.0 haben auch die Semantikregeln einen eigenen Subpath, ohne den JSON-Schema-Validator, sodass eine Browser-App sie ausführen kann, ohne ihn mitzutragen. Was er bietet, ist reine Validierung und Transformation. Dieser Minimalismus ist der Punkt, und er erzwingt eine harte Frage: *Wie entwickelt man ein Content-Schema weiter, ohne jeden Consumer zu brechen, der davon abhängt?*
 
@@ -185,7 +185,7 @@ Vier Dinge, die das in der Praxis eingebracht hat:
 Einiges ist bewusst unfertig und als Issue verfolgt, statt als stille Schuld mitgeschleppt:
 
 - **Die Erweiterungs-Validatoren veröffentlichen.** Heute ist das Content-Gate permissiv: Es prüft, dass eine deklarierte Erweiterung auf der Allowlist steht, validiert aber die Payload nicht; diese Korrektheit bleibt Aufgabe des Consumers. Die Payload-Validatoren des Consumers zu veröffentlichen, damit das Gate sie wiederverwenden kann, würde das straffen. Es ist eine Verbesserung, kein Blocker; bewusst zurückgestellt.
-- **Reine Test-Sets.** Content-Repos erzwingen Qualitäts-Mindestwerte (mindestens fünf Übungen, zwei Übungstypen, ein Theorie-Schritt pro Lektion), die ein reines benotetes "Test"-Set nicht erfüllen kann. Ob diese Mindestwerte für reine Test-Lektionen gelockert werden, war eine offene, bewusste Qualitäts-Boden-Entscheidung. *Nachtrag (Engine 0.31.0):* entschieden in engine#185. Die Mindestwerte liegen jetzt in der Engine (`validateLessonQuality`), und eine Lektion erklärt, wofür sie da ist: `purpose: "quiz"` hebt die Mindestzahl der Übungstypen auf, `purpose: "bridge"` die Mindestzahl der Übungen.
+- **Reine Test-Sets.** Content-Repos erzwingen Qualitäts-Mindestwerte (mindestens fünf Übungen, zwei Übungstypen, ein Theorie-Schritt pro Lektion), die ein reines benotetes "Test"-Set nicht erfüllen kann. Ob diese Mindestwerte für reine Test-Lektionen gelockert werden, war eine offene, bewusste Qualitäts-Boden-Entscheidung. *Nachtrag (Engine 0.31.0):* entschieden in engine#185. Die Mindestwerte liegen jetzt in der Engine (`validateLessonQuality`), und eine Lektion erklärt, wofür sie da ist: `purpose: "quiz"` hebt die Mindestzahl der Übungstypen auf, `purpose: "bridge"` die Mindestzahl der Übungen und der Übungstypen (seit Engine 0.33.0).
 
 > **Eine Anmerkung zur Ehrlichkeit.** Das sind absichtlich verschobene Entscheidungen, jede mit aufgeschriebenem Grund, keine später entdeckten Versäumnisse. Der Unterschied zählt: Verfolgtes "später" ist ein Plan; unverfolgtes "später" ist Schuld in Verkleidung.
 

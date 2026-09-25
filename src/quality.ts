@@ -54,7 +54,8 @@ function matchingPairCount(exercise: Exercise, cardIds: ReadonlySet<string>): nu
 }
 
 /** The lesson-wide minimums: number of exercises, of exercise types, of
- *  theory steps. ``bridge`` lifts the first, ``quiz`` the second. */
+ *  theory steps. ``bridge`` lifts the first two (a lesson without an
+ *  assessment intent needs neither count nor variety), ``quiz`` the second. */
 function lessonCountIssues(lesson: Lesson, exercises: LocatedExercise[]): ValidationIssue[] {
   const purpose: LessonPurpose = lesson.purpose ?? "practice";
   const issues: ValidationIssue[] = [];
@@ -69,10 +70,10 @@ function lessonCountIssues(lesson: Lesson, exercises: LocatedExercise[]): Valida
     );
   }
   const types = [...new Set(exercises.map(({ exercise }) => exercise.type))].sort();
-  if (purpose !== "quiz" && types.length < QUALITY_MINIMUMS.minExerciseTypes) {
+  if (purpose === "practice" && types.length < QUALITY_MINIMUMS.minExerciseTypes) {
     const min = QUALITY_MINIMUMS.minExerciseTypes;
     issues.push(
-      err("E-QUALITY-TYPES", "/steps", `lesson has ${types.length} exercise types; it needs at least ${min} unless its purpose is "quiz"`, ANCHOR, {
+      err("E-QUALITY-TYPES", "/steps", `lesson has ${types.length} exercise types; it needs at least ${min} unless its purpose is "quiz" or "bridge"`, ANCHOR, {
         count: types.length,
         min,
         types,
@@ -116,8 +117,8 @@ function exerciseIssues(located: LocatedExercise, cardIds: ReadonlySet<string>):
 /**
  * Check a lesson against the quality minimums (``QUALITY_MINIMUMS``, the
  * numbers of ``schema/quality-rules.json``), keyed to its ``purpose``: every
- * minimum for ``practice`` (the default), no exercise minimum for ``bridge``,
- * no exercise-type minimum for ``quiz``. Returns ``{ valid, errors, warnings }``
+ * minimum for ``practice`` (the default), neither the exercise nor the
+ * exercise-type minimum for ``bridge``, no exercise-type minimum for ``quiz``. Returns ``{ valid, errors, warnings }``
  * where ``errors`` are the shortfalls and ``warnings`` is always empty; the
  * consumer decides whether a shortfall blocks. A ``matching`` with
  * ``from_cards`` counts the pairs parsing derives, so a parsed lesson gets the

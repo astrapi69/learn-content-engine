@@ -9,7 +9,7 @@ tags: [benchmark, architecture, interoperability, documentation]
 
 *An outside AI benchmarked our content engine against QTI, H5P, Moodle, Canvas and Duolingo and found gaps we had already closed. The fix was not code. Then came the honest question, the honest answer, and one bug that only the content repositories could catch.*
 
-`learn-content-engine` · schema currently v1.17 · framework-agnostic TypeScript
+`learn-content-engine` · schema currently v1.18 · framework-agnostic TypeScript
 
 ## A benchmark from outside
 

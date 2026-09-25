@@ -1127,7 +1127,7 @@ export const LESSON_SCHEMA: object = {
     "steps"
   ],
   "type": "object",
-  "x-schema-version": "1.17"
+  "x-schema-version": "1.18"
 };
 
 /** schema/content-manifest.schema.json, without its annotations */
@@ -1522,5 +1522,5 @@ export const CONTENT_MANIFEST_SCHEMA: object = {
     "name"
   ],
   "type": "object",
-  "x-schema-version": "1.17"
+  "x-schema-version": "1.18"
 };

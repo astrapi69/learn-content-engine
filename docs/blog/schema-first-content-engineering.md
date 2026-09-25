@@ -9,11 +9,11 @@ tags: [architecture, schema-design, typescript, content-engineering]
 
 *How `learn-content-engine` keeps a stable core schema and still leaves room for pedagogical invention: by drawing a hard line between the contract it owns and the rules its consumers own.*
 
-`learn-content-engine` · schema currently v1.17 · framework-agnostic TypeScript
+`learn-content-engine` · schema currently v1.18 · framework-agnostic TypeScript
 
 ## The content-schema dilemma
 
-`learn-content-engine` is a framework-agnostic TypeScript library that parses and validates learning content: language courses foremost, though a `domain` field (a known-values-plus-other vocabulary since engine 0.20.0) lets the same shape carry other knowledge domains (tech courses, driving-test prep, psychology). It turns raw sources (lesson JSON plus a `manifest.yaml`) into a canonical internal shape, and it is the single source of truth for the lesson schema, currently version 1.17.
+`learn-content-engine` is a framework-agnostic TypeScript library that parses and validates learning content: language courses foremost, though a `domain` field (a known-values-plus-other vocabulary since engine 0.20.0) lets the same shape carry other knowledge domains (tech courses, driving-test prep, psychology). It turns raw sources (lesson JSON plus a `manifest.yaml`) into a canonical internal shape, and it is the single source of truth for the lesson schema, currently version 1.18.
 
 The core is deliberately small. No rendering, no persistence, no networking; its runtime dependencies are a YAML parser and a JSON-Schema validator, and the QTI adapter's XML parser sits behind its own subpath so it never enters the core import. Since 0.29.0 the semantic rules have a subpath of their own too, without the JSON-Schema validator, so a browser app can run them without carrying it. What it offers is pure validation and transformation. That minimalism is the point, and it forces one hard question: *how do you evolve a content schema without breaking every consumer that depends on it?*
 
@@ -185,7 +185,7 @@ Four things this earned in practice:
 A few things are deliberately unfinished, and tracked as issues rather than carried as quiet debt:
 
 - **Publishing the extension validators.** Today the content gate is permissive: it checks that a declared extension is on the allowlist but does not validate the payload; that correctness stays the consumer's job. Publishing the consumer's payload validators so the gate can reuse them would tighten this. It's an improvement, not a blocker; deliberately deferred for now.
-- **Pure test-only sets.** Content repos enforce quality minima (at least five exercises, two exercise types, one theory step per lesson) which a pure graded-quiz "test" set can't meet. Whether to relax those minima for test-only lessons was an open, conscious quality-floor decision. *Update (engine 0.31.0):* decided in engine#185. The minima now live in the engine (`validateLessonQuality`), and a lesson declares what it is for: `purpose: "quiz"` drops the exercise-type minimum, `purpose: "bridge"` the exercise minimum.
+- **Pure test-only sets.** Content repos enforce quality minima (at least five exercises, two exercise types, one theory step per lesson) which a pure graded-quiz "test" set can't meet. Whether to relax those minima for test-only lessons was an open, conscious quality-floor decision. *Update (engine 0.31.0):* decided in engine#185. The minima now live in the engine (`validateLessonQuality`), and a lesson declares what it is for: `purpose: "quiz"` drops the exercise-type minimum, `purpose: "bridge"` the exercise and exercise-type minimums (since engine 0.33.0).
 
 > **A note on honesty.** These are decisions postponed on purpose, each with a reason written down, not oversights discovered later. The difference matters: tracked "later" is a plan; untracked "later" is debt wearing a disguise.
 

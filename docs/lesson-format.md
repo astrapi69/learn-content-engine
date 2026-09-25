@@ -94,7 +94,7 @@ Everything else is optional.
 | `source_language` | string \| null | BCP-47 code of the language the learner already speaks. |
 | `domain` | string \| null | Content domain (`language`, `psychology`, `programming`, ...). Inherited from the set when absent. |
 | `estimated_minutes` | integer | 1-240, default 10. |
-| `purpose` | string | What the lesson is for: `practice` (default), `bridge` or `quiz` (schema 1.17). Selects the [quality minimums](#quality-minimums); never changes validity. |
+| `purpose` | string | What the lesson is for: `practice` (default), `bridge` or `quiz` (schema 1.17; what `bridge` lifts widened in 1.18). Selects the [quality minimums](#quality-minimums); never changes validity. |
 | `resources` | array \| null | Optional supplementary media ({`type`, `title`, `url`, ...}). |
 | `contributed_by`, `contributed_at` | string \| null | Optional author credit. |
 | `variation_of`, `variation_note` | string \| null | Marks a lesson as a variation of another. |
@@ -874,7 +874,9 @@ descriptions and changed nothing else, so `schema_version` stayed at `1.7`
 while `x-schema-version` moved to `1.16`. v1.17 (engine#185) adds a
 lesson field, `purpose`; the manifest schema moves its `x-schema-version` in
 lockstep and changes nothing else, so `schema_version`'s default stays at
-`1.7`. When comparing your pin
+`1.7`. v1.18 is a description-only edit again: the description of
+`purpose` (what `bridge` lifts) and two line breaks restored after v1.16
+(engine#182). When comparing your pin
 against a new engine release, `x-schema-version` tells you the schema
 DEFINITION moved; `schema_version` tells you whether your MANIFESTS need a
 field update.
@@ -1091,7 +1093,7 @@ as `QUALITY_MINIMUMS`:
 | Minimum | Number | Applies to |
 |---|---|---|
 | Exercises per lesson | 5 | `practice` and `quiz` |
-| Exercise types per lesson | 2 | `practice` and `bridge` |
+| Exercise types per lesson | 2 | `practice` |
 | Theory steps per lesson | 1 | every purpose |
 | Accepted answers per `free_text` | 2 | every purpose |
 | Pairs per `matching` | 3 | every purpose |
@@ -1101,9 +1103,11 @@ The lesson's `purpose` says what it is for, and the minimums follow from it:
 - **`practice`** (the default when `purpose` is absent): a lesson that teaches
   and drills. Every minimum applies.
 - **`bridge`**: an opening, a part divider, an interlude or a closing. It
-  carries theory and leads over, without an assessment intent, so it has no
-  exercise minimum. A bridge is a lesson the author declares as one, not a
-  file name that looks like one.
+  carries theory and leads over, without an assessment intent, so it has
+  neither an exercise nor an exercise-type minimum (since schema 1.18: variety
+  among one or two exercises, or none, is not a quality signal). The theory
+  minimum and the per-exercise minimums still apply. A bridge is a lesson the
+  author declares as one, not a file name that looks like one.
 - **`quiz`**: a check of what was taught, often in one exercise type (a set of
   multiple-choice questions), so it has no exercise-type minimum.
 
@@ -1218,7 +1222,7 @@ decides whether they block.
 | ID | Rule |
 |---|---|
 | `E-QUALITY-EXERCISES` | The lesson has fewer exercises than `minExercisesPerLesson`. Not checked for `purpose: "bridge"`. |
-| `E-QUALITY-TYPES` | The lesson has fewer distinct exercise types than `minExerciseTypes`. Not checked for `purpose: "quiz"`. |
+| `E-QUALITY-TYPES` | The lesson has fewer distinct exercise types than `minExerciseTypes`. Not checked for `purpose: "quiz"` or `purpose: "bridge"`. |
 | `E-QUALITY-THEORY` | The lesson has fewer theory steps than `minTheorySteps`. |
 | `E-QUALITY-FREETEXT-ACCEPTS` | A `free_text` has fewer accepted answers than `minFreeTextAccepts`. |
 | `E-QUALITY-MATCHING-PAIRS` | A `matching` has fewer pairs than `minMatchingPairs`; with `from_cards`, the pairs parsing derives. |

@@ -165,9 +165,17 @@ describe("each minimum, with its params", () => {
 });
 
 describe("edge cases", () => {
-  it("a bridge lesson keeps every other minimum", () => {
+  it("a bridge lesson keeps the theory minimum and the per-exercise minimums", () => {
     const bridge = lessonOf([freeText("f1"), freeText("f2", ["only"])], { purpose: "bridge" });
-    expect(ids(qualityIssues(bridge)).sort()).toEqual(["E-QUALITY-FREETEXT-ACCEPTS", "E-QUALITY-THEORY", "E-QUALITY-TYPES"]);
+    expect(ids(qualityIssues(bridge)).sort()).toEqual(["E-QUALITY-FREETEXT-ACCEPTS", "E-QUALITY-THEORY"]);
+  });
+
+  it("a bridge lesson of theory alone passes: no exercise and no exercise-type minimum (owner, 2026-09-25)", () => {
+    expect(validateLessonQuality(lessonOf([theory()], { purpose: "bridge" }))).toEqual({ valid: true, errors: [], warnings: [] });
+  });
+
+  it("a bridge lesson with one exercise type passes", () => {
+    expect(qualityIssues(lessonOf([theory(), freeText("f1"), freeText("f2")], { purpose: "bridge" }))).toEqual([]);
   });
 
   it("a quiz keeps the exercise minimum", () => {
