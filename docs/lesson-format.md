@@ -1139,21 +1139,26 @@ itself instead of parsing the English message.
 ### Issue parameters
 
 Since 0.30.0 (engine#201) every issue whose message names a value carries that
-value in `params`, unformatted: lists stay arrays, numbers stay numbers, strings
-are exactly what the author wrote (a term is its first occurrence, not trimmed
-or lower-cased). Positions are 1-based, as the message shows them. `params` is
+value in `params`, unformatted: lists stay arrays, numbers stay numbers, and a
+string taken from the content is as the author wrote it (a term is its first
+occurrence, not lower-cased), except the text of a `{{...}}` reference, which is
+trimmed of surrounding whitespace as the message shows it. Positions are
+1-based, as the message shows them. `params` is
 absent (no key, not `{}`) on an issue whose rule has no value to report; the
 message itself is unchanged, so a consumer that only prints it sees no
 difference. A consumer that keeps its own wording, or translates it, builds its
 message from `id` and `params`.
 
-No two issues of one result are indistinguishable. A problem at one array
-element points at that element (`E-CARD-REF` at `/card_ids/1`,
-`E-TILES-ORDERING` at `/accept_orderings/1`, `W-VAR-UNUSED` at
-`/variables/1`); a problem that is a relation between several elements (two
+No two issues the engine's own rules report are indistinguishable. Where
+several problems could share a path, each points at its element (`E-CARD-REF`
+at `/card_ids/1`, `E-TILES-ORDERING` at `/accept_orderings/1`, `W-VAR-UNUSED`
+at `/variables/1`); a problem that is a relation between several elements (two
 matching pairs with one left term, one `stable_id` on two elements) is told
-apart by its params. A name repeated within one field or one expression is one
-problem and one issue.
+apart by its params. A reference repeated within one field is one problem and
+one issue. Two kinds of issue are outside this promise: `E-SCHEMA`, where ajv
+can report several issues at one path that only their messages tell apart, and
+an extension's issues, whose paths are relative to its exercise
+(`/ext_payload`).
 
 | ID | `params` |
 |---|---|
@@ -1170,7 +1175,7 @@ problem and one issue.
 | `E-VAR-EXPR` | `name`, `parseError` |
 | `E-VAR-KIND` | `name`, `reason` (`"both"` or `"neither"`) |
 | `E-VAR-RANGE` | `name`, `min`, `max` |
-| `E-VAR-REF` | `raw` (the text between the braces) |
+| `E-VAR-REF` | `raw` (the text between the braces, trimmed) |
 | `E-VAR-UNDEFINED` | `name`, `site` (`"expression"` or `"reference"`), and `variable` (the declaring variable) for `"expression"` |
 | `W-CARD-UNUSED` | `count`, `cardIds` |
 | `W-CLOZE-NO-CARRIER` | `nativeType` (`"multiple_choice"` or `"free_text"`) |
@@ -1202,7 +1207,7 @@ seconds, without a CI round-trip:
 ```bash
 npx learn-content-engine lint sets/en/fr-a1/lessons/*.json
 # ERROR sets/.../03.json
-#   [E-CARD-REF] /steps/2/exercise/card_ids exercise references unknown card 'keopi'  (see docs/lesson-format.md#cards)
+#   [E-CARD-REF] /steps/2/exercise/card_ids/0 exercise references unknown card 'keopi'  (see docs/lesson-format.md#cards)
 # WARN  sets/.../05.json
 #   [W-TILES-DUP] /steps/1/exercise WORD_TILES has duplicate tiles ...  (see docs/lesson-format.md#word_tiles)
 # OK    sets/.../01.json

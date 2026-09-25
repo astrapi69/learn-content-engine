@@ -55,7 +55,7 @@ const raw = `{ "id": "01", "title": "Greetings", "steps": [
 
 const lesson = parseLesson(raw, context);        // canonical ContentLesson (set context injected)
 const result = validateLesson(JSON.parse(raw));  // explicit, opt-in validation
-if (!result.valid) console.error(result.errors); // [{ path, message }, …]
+if (!result.valid) console.error(result.errors); // [{ path, message, id, severity, docAnchor, params? }, …]
 ```
 
 ## Documentation
@@ -137,7 +137,7 @@ The gap analysis behind this list is
 | `StableIdReport`, `StableIdDuplicate` | types | the `collectStableIds` return shape |
 | `StabilityResult`, `StabilityViolation`, `StableIdElement`, `StableIdInventory` | types | the `buildStableIdInventory`/`compareStableIdInventories` return + input shapes |
 | `StableIdCoverage`, `CoverageVerdict`, `CoverageSet`, `CoverageFailure` | types | the `computeStableIdCoverage` return shape |
-| `ValidationResult`, `ValidationIssue`, `ValidationSeverity`, `ValidationParams`, `ValidationParamValue` | types | the `validate*` return shape (`{ valid, errors[] }`), its issue-severity enum, and the optional `params` an issue carries when its message names a value |
+| `ValidationResult`, `ValidationIssue`, `ValidationSeverity`, `ValidationParams`, `ValidationParamValue` | types | the `validate*` return shape (`{ valid, errors[], warnings[] }`), its issue-severity enum, and the optional `params` an issue carries when its message names a value |
 | `ExerciseExtension`, `ExtensionRegistry` | types | the `ext:` extension registry contract (schema 1.7, see [Extensions](docs/extensions.md)) |
 | `LessonSetContext`, `LessonSourceAdapter`, `ParsedManifest`, `ParsedSet`, `ParsedSetAsset`, `ParsedSetBook` | types | adapter + manifest surface |
 | `Card`, `CardTokenRole`, `ClozeBlank`, `Direction`, `Exercise`, `ExerciseType`, `InlineExample`, `Lesson`, `LessonResource`, `LessonStep`, `MediaType`, `Pair`, `PictureImage`, `StepType`, `TokenRole` | types | the underlying generated schema element types (one per `schema/lesson.schema.json` `$defs` entry `ContentLesson*` wraps) |

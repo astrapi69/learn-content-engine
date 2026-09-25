@@ -139,7 +139,8 @@ const { valid, errors, warnings } = validateLessonRules(lesson); // same result 
   way. Measured with esbuild on 2026-09-25 (`dist/rules.js` bundled, minified,
   browser): 22.9 kB, 8.8 kB gzip. The issue parameters of engine#201 added
   1.2 kB to it (21.7 kB, 8.4 kB gzip, measured the same way before).
-  `validateLesson` alone is about 145 kB, most of it ajv, and it reads the
+  `validateLesson` alone is about 145 kB (measured on 2026-09-24 from an entry
+  importing only `validateLesson`), most of it ajv, and it reads the
   schema from the file system, which a browser does not have (engine#191).
 
 Why it exists: a consumer that re-implements a rule instead of calling it ends
@@ -148,12 +149,15 @@ up with a copy that drifts (see
 
 ## The error model
 
-Each issue is `{ path, message }`:
+Each issue is `{ path, message, id, severity, docAnchor, params? }` (the shape
+at the top of this page):
 
 - `path` is a JSON-pointer-ish location, e.g. `/steps/2/exercise` or
-  `/steps/2/exercise/card_ids`, or `/` for a root-level problem.
+  `/steps/2/exercise/card_ids/0`, or `/` for a root-level problem.
 - `message` is a human-readable reason. For a rejected unknown field the
   offending key is named, e.g. `must NOT have additional properties (surprise)`.
+- `params`, when present, holds the values the message names
+  ([issue parameters](lesson-format.md#issue-parameters)).
 
 ## Typical failures
 
@@ -176,7 +180,7 @@ An exercise referencing a card that does not exist (invalid input):
 // INVALID: no card with id "keopi" in the lesson's cards
 { "type": "word_tiles", "id": "w1", "prompt": "...",
   "card_ids": ["keopi"], "tiles": ["a", "b"] }
-// -> /steps/0/exercise/card_ids:
+// -> /steps/0/exercise/card_ids/0:
 //    exercise references unknown card 'keopi'
 ```
 

@@ -12,11 +12,13 @@ All notable changes to `learn-content-engine`. The format is inspired by
 A validation issue gains an optional `params`: the values its message
 interpolates, unformatted (`E-MATCH-DUP-LEFT` carries `{ term, positions }`,
 `E-CARD-REF` carries `{ cardId }`). 27 of the 59 rule ids put a runtime value
-into their message; every one of them now also passes it as a param, and a new
-test fails when a rule interpolates a value without passing it
-(`src/issue-params.test.ts`). `W-PROMPT-DUP` and `E-VAR-KIND`, which have two
-message variants at one path, carry the variant (`field`, `reason`). `E-SCHEMA`
-stays without params on purpose (its message and parameters are ajv's). The
+into their message; all but `E-SCHEMA` now also pass it as params (its message
+and parameters are ajv's, deliberately not engine API). `W-PROMPT-DUP`, whose
+two messages are constant, carries its variant (`field`), so 27 ids carry
+params in all; `E-VAR-KIND` carries its variant (`reason`) next to the name. A
+new test fails when a message can carry a value without params, and when the
+params table in the rule catalog disagrees with the code
+(`src/issue-params.test.ts`). The
 keys per id are in the rule catalog, [issue parameters](docs/lesson-format.md#issue-parameters).
 Messages are unchanged.
 
@@ -25,24 +27,25 @@ own message catalog in eleven languages, could only get the repeated term or
 the missing card id out of the English message text (adaptive-learner#3222,
 #3247).
 
-No two issues of one result are indistinguishable any more, which changes
-three paths and one count:
+No two issues the engine's own rules report are indistinguishable any more
+(`E-SCHEMA` and extension issues aside), which changes three paths and one
+count:
 
 - `E-CARD-REF` points at the entry, `/card_ids/{i}` (was `/card_ids` for every
   unknown id of an exercise).
 - `E-TILES-ORDERING` points at the entry, `/accept_orderings/{i}` (was the
   exercise).
 - `W-VAR-UNUSED` points at the variable, `/variables/{i}` (was `/variables`).
-- A variable name repeated within one field (`{{b}} {{b}}`) is reported once,
-  not once per occurrence (`E-VAR-UNDEFINED`, `E-VAR-REF`).
+- A reference repeated within one field (`{{b}} {{b}}`, `{{a + 1}} {{a + 1}}`)
+  is reported once, not once per occurrence (`E-VAR-UNDEFINED`, `E-VAR-REF`).
 
 A problem that is a relation between several elements keeps its path and is
 told apart by its params (two `E-MATCH-DUP-LEFT` groups in one exercise, two
-duplicated `stable_id`s). Measured before the change: no consumer reads these
-paths. The content template maps warnings to an exercise by the prefix
-`/steps/N/exercise`, which the new paths keep, and the app reads no issue paths
-yet. The ten content repositories carry none of these errors, so they need no
-re-pin for this release.
+duplicated `stable_id`s). Measured before the change: no consumer depends on
+the changed part of these paths. The content template maps warnings to an
+exercise by the prefix `/steps/N/exercise`, which the new paths keep, and the
+app reads no issue paths yet. The ten content repositories carry none of these
+issues, so they need no re-pin for this release.
 
 ### Correction to 0.28.0: something did compare a pin with the current release
 
