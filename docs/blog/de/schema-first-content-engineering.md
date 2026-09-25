@@ -185,7 +185,7 @@ Vier Dinge, die das in der Praxis eingebracht hat:
 Einiges ist bewusst unfertig und als Issue verfolgt, statt als stille Schuld mitgeschleppt:
 
 - **Die Erweiterungs-Validatoren veröffentlichen.** Heute ist das Content-Gate permissiv: Es prüft, dass eine deklarierte Erweiterung auf der Allowlist steht, validiert aber die Payload nicht; diese Korrektheit bleibt Aufgabe des Consumers. Die Payload-Validatoren des Consumers zu veröffentlichen, damit das Gate sie wiederverwenden kann, würde das straffen. Es ist eine Verbesserung, kein Blocker; bewusst zurückgestellt.
-- **Reine Test-Sets.** Content-Repos erzwingen Qualitäts-Mindestwerte (mindestens fünf Übungen, zwei Übungstypen, ein Theorie-Schritt pro Lektion), die ein reines benotetes "Test"-Set nicht erfüllen kann. Ob diese Mindestwerte für reine Test-Lektionen gelockert werden, ist eine offene, bewusste Qualitäts-Boden-Entscheidung.
+- **Reine Test-Sets.** Content-Repos erzwingen Qualitäts-Mindestwerte (mindestens fünf Übungen, zwei Übungstypen, ein Theorie-Schritt pro Lektion), die ein reines benotetes "Test"-Set nicht erfüllen kann. Ob diese Mindestwerte für reine Test-Lektionen gelockert werden, war eine offene, bewusste Qualitäts-Boden-Entscheidung. *Nachtrag (Engine 0.31.0):* entschieden in engine#185. Die Mindestwerte liegen jetzt in der Engine (`validateLessonQuality`), und eine Lektion erklärt, wofür sie da ist: `purpose: "quiz"` hebt die Mindestzahl der Übungstypen auf, `purpose: "bridge"` die Mindestzahl der Übungen.
 
 > **Eine Anmerkung zur Ehrlichkeit.** Das sind absichtlich verschobene Entscheidungen, jede mit aufgeschriebenem Grund, keine später entdeckten Versäumnisse. Der Unterschied zählt: Verfolgtes "später" ist ein Plan; unverfolgtes "später" ist Schuld in Verkleidung.
 

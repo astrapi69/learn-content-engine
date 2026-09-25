@@ -5,7 +5,11 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
-## [Unreleased]
+## [0.31.0] - 2026-09-25
+
+Schema 1.17: one additive lesson field, `purpose`. Every manifest and lesson
+valid under 0.30.0 is valid under 0.31.0; `validateLesson` reports nothing new.
+The new check is a separate call a consumer opts into.
 
 ### Quality minimums in the engine, keyed to what a lesson is for (engine#185)
 
