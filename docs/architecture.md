@@ -686,12 +686,13 @@ which the conditions acted before the damage instead of after it.
   `audit_content.py` drops its three duplicate-id checks, the app's
   `validateGeneratedLesson` can take the rule from `/rules`, and the backend
   lacks the exercise-id check (table above).
-- **engine#220** (part 1 done): the engine evaluates what it defines.
+- **engine#220** (closed, 0.34.0): the engine evaluates what it defines.
   `resolveExerciseVariables` samples, evaluates and substitutes a parametric
   exercise on the parser the validator uses; the reference app's own
-  evaluator (a second parser for the same grammar) can go. Part 2, a grade
-  lookup for the `evaluation` block, comes with the first consumer that
-  applies the block, so no API ships without a user.
+  evaluator (a second parser for the same grammar) can go.
+- **engine#227**: a grade lookup for the `evaluation` block, split out of
+  engine#220. It comes with the first consumer that applies the block, so no
+  API ships without a user.
 - **alc-books' domain rule** (moved with 0.29.0): now the engine's
   `W-DOMAIN-UNKNOWN`; its severity dropped with the move (above).
 - **adaptive-learner#3242**: the app's repo export writes a user set's origin
