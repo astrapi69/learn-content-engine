@@ -436,7 +436,8 @@ differs: it compares left terms case-sensitively, the engine does not, so
 (adaptive-learner#3222). The app kept the engine's validators out of its
 bundle to avoid the structural ajv layer. Since 0.29.0 the engine offers the
 semantic rules alone, `learn-content-engine/rules` (engine#191): no ajv, no
-`node:*`, about 21.6 kB minified. That figure counts the entry's JavaScript; a
+`node:*`, about 22.9 kB minified since the issue parameters of engine#201
+(21.7 kB before). That figure counts the entry's JavaScript; a
 consumer that still imports parse functions from the package root gets 146 kB
 of schema files copied into a Vite build that nothing reads (engine#203). The
 entry removes the reason for the frontend's copies; the app has not switched

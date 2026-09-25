@@ -7,6 +7,43 @@ All notable changes to `learn-content-engine`. The format is inspired by
 
 ## [Unreleased]
 
+### Issue parameters: the values a message names, as data (engine#201)
+
+A validation issue gains an optional `params`: the values its message
+interpolates, unformatted (`E-MATCH-DUP-LEFT` carries `{ term, positions }`,
+`E-CARD-REF` carries `{ cardId }`). 27 of the 59 rule ids put a runtime value
+into their message; every one of them now also passes it as a param, and a new
+test fails when a rule interpolates a value without passing it
+(`src/issue-params.test.ts`). `W-PROMPT-DUP` and `E-VAR-KIND`, which have two
+message variants at one path, carry the variant (`field`, `reason`). `E-SCHEMA`
+stays without params on purpose (its message and parameters are ajv's). The
+keys per id are in the rule catalog, [issue parameters](docs/lesson-format.md#issue-parameters).
+Messages are unchanged.
+
+Why: a consumer that words problems itself, like the reference app with its
+own message catalog in eleven languages, could only get the repeated term or
+the missing card id out of the English message text (adaptive-learner#3222,
+#3247).
+
+No two issues of one result are indistinguishable any more, which changes
+three paths and one count:
+
+- `E-CARD-REF` points at the entry, `/card_ids/{i}` (was `/card_ids` for every
+  unknown id of an exercise).
+- `E-TILES-ORDERING` points at the entry, `/accept_orderings/{i}` (was the
+  exercise).
+- `W-VAR-UNUSED` points at the variable, `/variables/{i}` (was `/variables`).
+- A variable name repeated within one field (`{{b}} {{b}}`) is reported once,
+  not once per occurrence (`E-VAR-UNDEFINED`, `E-VAR-REF`).
+
+A problem that is a relation between several elements keeps its path and is
+told apart by its params (two `E-MATCH-DUP-LEFT` groups in one exercise, two
+duplicated `stable_id`s). Measured before the change: no consumer reads these
+paths. The content template maps warnings to an exercise by the prefix
+`/steps/N/exercise`, which the new paths keep, and the app reads no issue paths
+yet. The ten content repositories carry none of these errors, so they need no
+re-pin for this release.
+
 ### Correction to 0.28.0: something did compare a pin with the current release
 
 The 0.28.0 entry "Docs: the pin and currency discipline" says that comparing a

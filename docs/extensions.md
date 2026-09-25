@@ -75,7 +75,7 @@ const acmeOrdering: ExerciseExtension = {
     const items = (exercise.ext_payload as { items?: unknown }).items;
     return Array.isArray(items) && items.length >= 2
       ? []
-      : [{ path: "/ext_payload", message: "needs >= 2 items", id: "E-EXT-ACME-ITEMS", severity: "error", docAnchor: "..." }];
+      : [{ path: "/ext_payload/items", message: "needs >= 2 items", id: "E-EXT-ACME-ITEMS", severity: "error", docAnchor: "...", params: { min: 2 } }];
   },
 };
 

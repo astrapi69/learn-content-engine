@@ -1063,7 +1063,9 @@ one vocabulary, one source.
 is false); **warnings** never block: they flag likely authoring mistakes. Every
 issue carries a stable `id`, a `severity`, and a `docAnchor`. IDs are stable API:
 a downstream (e.g. a content-repo) validator can mirror a rule by its id without
-drifting.
+drifting. An issue whose message names a value also carries it in `params`
+(see [issue parameters](#issue-parameters)), so a consumer can word the problem
+itself instead of parsing the English message.
 
 ### Errors (block)
 
@@ -1133,6 +1135,64 @@ drifting.
 | `W-DOMAIN-UNKNOWN` | Manifest and lesson level ([content domains](#content-domains)): a set's `domain`, or a lesson's own `domain`, is outside the known vocabulary (`KNOWN_CONTENT_DOMAINS`). It stays valid - the contract is known values plus other - but consumers cannot group it with existing subjects, so the registry's subject facet fragments. Prefer a known domain, or accept the fragmentation deliberately (engine#127). A lesson without its own `domain` (absent or `null`) inherits the set's and draws nothing; the lesson half exists because the real case sat there, on every lesson of an exported set (engine#183). |
 | `W-LEVEL-UNKNOWN` | Manifest-level ([content domains](#content-domains)): a set's `level` is neither a CEFR band (`A1`..`C2`, case-insensitive) nor, for a non-language set, the explicit `none` sentinel. A consumer's level facet would offer the free-text value (`a0`, `einsteiger`, `reflexion` are live examples) as a category (engine#127). |
 | `W-VAR-UNUSED` | A declared [variable](#variables-parametric-exercises) is referenced by no string field and used by no later expression: dead declaration, usually a typo in the reference. |
+
+### Issue parameters
+
+Since 0.30.0 (engine#201) every issue whose message names a value carries that
+value in `params`, unformatted: lists stay arrays, numbers stay numbers, strings
+are exactly what the author wrote (a term is its first occurrence, not trimmed
+or lower-cased). Positions are 1-based, as the message shows them. `params` is
+absent (no key, not `{}`) on an issue whose rule has no value to report; the
+message itself is unchanged, so a consumer that only prints it sees no
+difference. A consumer that keeps its own wording, or translates it, builds its
+message from `id` and `params`.
+
+No two issues of one result are indistinguishable. A problem at one array
+element points at that element (`E-CARD-REF` at `/card_ids/1`,
+`E-TILES-ORDERING` at `/accept_orderings/1`, `W-VAR-UNUSED` at
+`/variables/1`); a problem that is a relation between several elements (two
+matching pairs with one left term, one `stable_id` on two elements) is told
+apart by its params. A name repeated within one field or one expression is one
+problem and one issue.
+
+| ID | `params` |
+|---|---|
+| `E-CARD-REF` | `cardId` |
+| `E-CLOZE-MARKERS` | `markers`, `blanks` (counts) |
+| `E-CLOZE-MS-DISJOINT` | `shared` (the options in both lists) |
+| `E-EXT-UNDECLARED` | `type` |
+| `E-EXT-UNSUPPORTED` | `type`, `major` |
+| `E-MATCH-DUP-LEFT` | `term` (as first written), `positions` (1-based) |
+| `E-STABLE-ID-DUP` | `stableId`, `elementKinds`, `elementIds` (parallel lists, one entry per element carrying it) |
+| `E-TILES-ORDERING` | `ordering` (the entry), `maxIndex` |
+| `E-UNKNOWN-FIELD` | `field` |
+| `E-VAR-DUP` | `name` |
+| `E-VAR-EXPR` | `name`, `parseError` |
+| `E-VAR-KIND` | `name`, `reason` (`"both"` or `"neither"`) |
+| `E-VAR-RANGE` | `name`, `min`, `max` |
+| `E-VAR-REF` | `raw` (the text between the braces) |
+| `E-VAR-UNDEFINED` | `name`, `site` (`"expression"` or `"reference"`), and `variable` (the declaring variable) for `"expression"` |
+| `W-CARD-UNUSED` | `count`, `cardIds` |
+| `W-CLOZE-NO-CARRIER` | `nativeType` (`"multiple_choice"` or `"free_text"`) |
+| `W-DOMAIN-UNKNOWN` | `domain` (the vocabulary is the exported `KNOWN_CONTENT_DOMAINS`) |
+| `W-EVAL-GRADES-NO-FLOOR` | `floor` |
+| `W-INVISIBLE-CHAR` | `codepoints`, `names` (parallel, in numeric order), `occurrences`, `paths` (every path; the message lists five) |
+| `W-LEVEL-UNKNOWN` | `level` |
+| `W-PROMPT-DUP` | `field` (`"sentence"` or `"title"`) |
+| `W-RETIRED-IDS-DUP` | `retiredIds` |
+| `W-SET-ORDER-MIXED-PREFIX` | `unprefixedIds` |
+| `W-SET-ORDER-NUMERIC` | `displayedFirst`, `numericFirst` |
+| `W-SET-ORDER-PREFIX-WIDTH` | `widths` |
+| `W-VAR-UNUSED` | `name` |
+
+`E-SCHEMA` carries none on purpose: its message is ajv's, and passing ajv's own
+parameters through would make them part of this engine's API. Values a rule
+computes but does not print (which option repeats in `E-MC-DUP-OPTION`, how
+many images are marked correct in `E-PIC-ONE-CORRECT`) are not params either;
+they would add information the engine does not report today. An extension's
+validator may set `params` on its own issues; they pass through unchanged. A
+test fails when a rule interpolates a value into its message without passing
+it as a param (`src/issue-params.test.ts`).
 
 ## Linting
 
