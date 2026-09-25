@@ -23,9 +23,17 @@ him. This rule keeps the dialogs few, predictable and matching what he saw.
    step of the process, so each permission dialog shows one announced block.
    Run the block inline (the dialog then shows the commands), not through a
    script file whose content the dialog hides.
-4. **Never run a different or a larger command than announced.** A command
-   the process turns out to need is announced first, and waits for a go like
-   the others.
+4. **Never run a different or a larger command than announced**, not even a
+   harmless addition (a redirect, an `echo` of the exit code). A command the
+   process turns out to need is announced first, and waits for a go like the
+   others. A silent change to an announced block is a breach of the process,
+   and is reported as one.
+4a. **Stop at the first failure.** A block that does something destructive
+   after a gate (merging, deleting a branch, removing a worktree) chains its
+   commands with `&&` or runs under `set -e`, so a red check or an
+   unexpected error stops everything after it. Any unexpected error stops
+   the process; the next step is a report, not a workaround (owner,
+   2026-09-25, after a block deleted a branch although its checks were red).
 5. **Steps that need an edit in between** (a RED test, then the fix) split a
    process into several announced blocks: the block before the edit, the
    block after it. Edits themselves go through the editor, not the shell.
@@ -34,6 +42,14 @@ him. This rule keeps the dialogs few, predictable and matching what he saw.
 7. **Heavy commands** (a build, a browser test run, a full suite): name the
    duration and the CPU load when announcing them, and run them with
    `nice -n 19` and one worker.
+
+## Worktrees: outside /tmp
+
+Worktrees for other repositories live in a persistent directory,
+`/home/astrapi69/dev/git/worktrees/<name>`, not in the session scratchpad
+under `/tmp` (owner, 2026-09-25). A crash or a reboot wipes `/tmp` and with
+it every uncommitted change in a worktree there; it also leaves git with a
+worktree entry pointing at nothing.
 
 ## Questions: none that the plan already answers
 
