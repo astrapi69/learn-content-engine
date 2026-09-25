@@ -147,6 +147,21 @@ runs only on structurally valid input could never fire again).
 `stable_id` keeps its own historical pattern for compatibility (see
 [Stable identity](#stable-identity-stable_id)).
 
+**Length: at most 120 characters, counted as Unicode code points** (JSON
+Schema's `maxLength`), so a letter outside the Basic Multilingual Plane counts
+once. `isSlugId` counts the same way since engine#205; before, it counted
+UTF-16 code units and rejected such ids from 61 letters on.
+
+**A known limit, not a rule: ids become file names.** A lesson is stored as
+`lessons/<id>.json`, and file systems limit a name in bytes (255 on ext4 and
+APFS), not in characters. 120 characters of a script that takes three bytes
+per letter in UTF-8 (Georgian, Cherokee) are 360 bytes, so such an id would
+pass the schema and fail as a file name from about 83 letters on. No content
+comes near it: the longest lesson id across the content repositories is 69
+bytes, all Latin (measured 2026-09-25). If ids in such scripts appear, a
+warning at 250 UTF-8 bytes (255 minus `.json`) is the addition to make
+(engine#205).
+
 ## Lesson ordering
 
 The display order of a set's lessons is the **lexicographic sort of their

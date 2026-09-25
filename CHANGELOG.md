@@ -5,6 +5,19 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [Unreleased]
+
+### `isSlugId` counts characters, as the schema does (engine#205)
+
+`isSlugId` (the `/rules` entry) checked the 120 limit with `String.length`,
+which counts UTF-16 code units, while the schema's `SlugId` counts characters
+(code points, as JSON Schema's `maxLength` does). An id of 61 to 120 letters
+outside the Basic Multilingual Plane passed the schema and failed `isSlugId`.
+Decided in engine#205: 120 means characters; `isSlugId` now counts code
+points. No content is affected (the longest lesson id is 69 bytes, Latin).
+The byte limit of a file name (ids become `lessons/<id>.json`) is documented
+as a known limit under [slug ids](docs/lesson-format.md#slug-ids).
+
 ## [0.32.0] - 2026-09-25
 
 No schema change: `x-schema-version` stays 1.17. Three new errors
