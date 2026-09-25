@@ -1,8 +1,10 @@
-import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { join, posix } from "node:path";
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { describe, it, expect } from "vitest";
+
+import { ISSUE_EMITTING_SOURCES, emittersReachedFrom, reachableModules } from "./test-support/emitters.js";
 
 /**
  * Every stable rule id emitted by the validator must be documented in the
@@ -13,12 +15,6 @@ import { describe, it, expect } from "vitest";
 const read = (relativePath: string): string =>
   readFileSync(fileURLToPath(new URL(relativePath, import.meta.url)), "utf8");
 
-// Every module that emits ValidationIssues; a new emitter belongs on this
-// list, or its rule ids escape the catalog check (the gap engine#106 closed:
-// the scan only ever covered validate.ts). Since engine#191 the semantic
-// rules live in rules.ts; validate.ts keeps the structural layer.
-const ISSUE_EMITTING_SOURCES = ["./validate.ts", "./rules.ts", "./set-ordering.ts", "./variables.ts"];
-
 const ruleIdsInSource = (): string[] => {
   const ids = new Set<string>();
   for (const sourceFile of ISSUE_EMITTING_SOURCES) {
@@ -28,39 +24,9 @@ const ruleIdsInSource = (): string[] => {
   return [...ids].sort();
 };
 
-// The list above is hand-kept, and it fell behind once more: variables.ts
-// emits the E-VAR-* ids through rules.ts and was not on it. The ids happened
-// to be in the catalog, but a new one would not have been forced there. So
-// the list is checked against the validators' module graph: every module
-// validate.ts reaches that carries a rule id literal must be on it.
-const IMPORT_FORMS = [
-  /^\s*(?:import|export)\s[^;]*?from\s+"([^"]+)"/gms,
-  /^\s*import\s+"([^"]+)"/gm,
-  /\bimport\(\s*"([^"]+)"\s*\)/g,
-];
-const reachableModules = (entry: string): string[] => {
-  const seen = new Set<string>();
-  const pending = [entry];
-  while (pending.length > 0) {
-    const file = pending.pop()!;
-    if (seen.has(file)) continue;
-    seen.add(file);
-    const source = read(file);
-    for (const form of IMPORT_FORMS) {
-      for (const match of source.matchAll(form)) {
-        const specifier = match[1]!;
-        if (!specifier.startsWith(".")) continue;
-        // Resolve against the importing module, not against this test file.
-        const resolved = `./${posix.normalize(posix.join(posix.dirname(file), specifier))}`.replace(/\.js$/, ".ts");
-        if (!existsSync(fileURLToPath(new URL(resolved, import.meta.url)))) {
-          throw new Error(`${file} imports ${specifier}, which resolves to no source file (${resolved})`);
-        }
-        pending.push(resolved);
-      }
-    }
-  }
-  return [...seen].sort();
-};
+// The list of emitters is hand-kept, and it fell behind once more: variables.ts
+// emits the E-VAR-* ids through rules.ts and was not on it. So it is checked
+// against the validators' module graph (test-support/emitters.ts).
 
 describe("rule catalog completeness", () => {
   const catalog = read("../docs/lesson-format.md");
@@ -71,10 +37,8 @@ describe("rule catalog completeness", () => {
   });
 
   it("scans every module the validators reach that emits rule ids", () => {
-    const reached = reachableModules("./validate.ts");
-    expect(reached.length).toBeGreaterThan(5);
-    const emitters = reached.filter((file) => /"[EW]-[A-Z0-9-]+"/.test(read(file)));
-    expect(emitters.filter((file) => !ISSUE_EMITTING_SOURCES.includes(file))).toEqual([]);
+    expect(reachableModules("./validate.ts").length).toBeGreaterThan(5);
+    expect(emittersReachedFrom("./validate.ts").filter((file) => !ISSUE_EMITTING_SOURCES.includes(file))).toEqual([]);
   });
 
   for (const id of ruleIdsInSource()) {

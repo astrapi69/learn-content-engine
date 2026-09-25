@@ -177,6 +177,21 @@ function walk(value: unknown, path: string, ancestors: Set<object>): InvisibleCh
   }
 }
 
+/**
+ * The distinct codepoints of the findings with their names, in numeric order.
+ * The one order both the W-INVISIBLE-CHAR message and its params use.
+ */
+export function invisibleCharKinds(findings: readonly InvisibleCharFinding[]): Array<[codepoint: string, name: string]> {
+  const byCodepoint = new Map<string, string>();
+  for (const finding of findings) byCodepoint.set(finding.codepoint, finding.name);
+  // Sort by numeric value, not by the label: once a codepoint needs five hex
+  // digits, "U+10000" sorts before "U+FEFF" lexicographically and after it
+  // numerically, and the numeric order is the one a reader expects.
+  return [...byCodepoint].sort(
+    ([left], [right]) => Number.parseInt(left.slice(2), 16) - Number.parseInt(right.slice(2), 16),
+  );
+}
+
 /** How many distinct paths to name before trailing off. Enough to start
  *  fixing, short enough that a heavily-affected pasted chapter stays readable. */
 const MAX_PATHS_LISTED = 5;
@@ -189,13 +204,7 @@ const MAX_PATHS_LISTED = 5;
  */
 export function describeInvisibleChars(findings: readonly InvisibleCharFinding[]): string | null {
   if (findings.length === 0) return null;
-  const byCodepoint = new Map<string, string>();
-  for (const finding of findings) byCodepoint.set(finding.codepoint, finding.name);
-  // Sort by numeric value, not by the label: once a codepoint needs five hex
-  // digits, "U+10000" sorts before "U+FEFF" lexicographically and after it
-  // numerically, and the numeric order is the one a reader expects.
-  const kinds = [...byCodepoint]
-    .sort(([left], [right]) => Number.parseInt(left.slice(2), 16) - Number.parseInt(right.slice(2), 16))
+  const kinds = invisibleCharKinds(findings)
     .map(([codepoint, name]) => `${codepoint} ${name}`)
     .join(", ");
   const paths = [...new Set(findings.map((finding) => finding.path))];

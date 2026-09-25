@@ -62,15 +62,15 @@ function checkPrefixWidth(lessonIds: string[], issues: ValidationIssue[]): void 
     if (prefix) widths.add(prefix[1]!.length);
   }
   if (widths.size < 2) return;
-  const sortedWidths = [...widths].sort((a, b) => a - b).join(" and ");
+  const sortedWidths = [...widths].sort((a, b) => a - b);
   issues.push(
     warn(
       "W-SET-ORDER-PREFIX-WIDTH",
       "",
-      `NN- ordering prefixes have different digit widths (${sortedWidths}); ` +
+      `NN- ordering prefixes have different digit widths (${sortedWidths.join(" and ")}); ` +
         "lexicographic sorting puts '10-' before '2-', so zero-pad every prefix to one fixed width",
       "lesson-ordering",
-      { widths: [...widths].sort((a, b) => a - b) },
+      { widths: sortedWidths },
     ),
   );
 }

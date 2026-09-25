@@ -19,7 +19,12 @@
  */
 import { KNOWN_CONTENT_DOMAINS, isKnownContentDomain, isKnownLevel } from "./content-domains.js";
 import type { ExtensionRegistry } from "./extensions.js";
-import { describeInvisibleChars, findInvisibleChars, type InvisibleCharFinding } from "./invisible-chars.js";
+import {
+  describeInvisibleChars,
+  findInvisibleChars,
+  invisibleCharKinds,
+  type InvisibleCharFinding,
+} from "./invisible-chars.js";
 import {
   err,
   makeIssue,
@@ -211,7 +216,7 @@ function checkWordTiles(exercise: Exercise, path: string, issues: ValidationIssu
           `${path}/accept_orderings/${orderingIndex}`,
           `accept_orderings entry ${JSON.stringify(ordering)} must be a permutation of [0..${tiles.length - 1}]`,
           "word_tiles",
-          { ordering, maxIndex: tiles.length - 1 },
+          { ordering: [...ordering], maxIndex: tiles.length - 1 },
         ),
       );
     }
@@ -516,11 +521,7 @@ function checkUnusedCards(lesson: Lesson, issues: ValidationIssue[]): void {
  *  built from: every distinct codepoint with its name (numeric order), the
  *  occurrence count and every distinct path (the message lists five). */
 function invisibleCharParams(findings: readonly InvisibleCharFinding[]): Record<string, ValidationParamValue> {
-  const byCodepoint = new Map<string, string>();
-  for (const finding of findings) byCodepoint.set(finding.codepoint, finding.name);
-  const sorted = [...byCodepoint].sort(
-    ([left], [right]) => Number.parseInt(left.slice(2), 16) - Number.parseInt(right.slice(2), 16),
-  );
+  const sorted = invisibleCharKinds(findings);
   return {
     codepoints: sorted.map(([codepoint]) => codepoint),
     names: sorted.map(([, name]) => name),
@@ -769,14 +770,14 @@ function checkRetiredIdsDuplicates(
  *  value is absent, empty or known (case-insensitive). Shared by the set
  *  entry (manifest) and the lesson (engine#183), so both say the same. */
 function unknownDomainIssues(domain: string | undefined, path: string): ValidationIssue[] {
-  if (isKnownContentDomain(domain)) return [];
+  if (domain === undefined || isKnownContentDomain(domain)) return [];
   return [
     warn(
       "W-DOMAIN-UNKNOWN",
       path,
       `domain '${domain}' is outside the known vocabulary (${KNOWN_CONTENT_DOMAINS.join(", ")}); it stays valid ('other' contract), but consumers cannot group it with existing subjects - prefer a known domain or accept the fragmentation deliberately`,
       "content-domains",
-      { domain: domain ?? "" },
+      { domain },
     ),
   ];
 }

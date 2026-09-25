@@ -26,13 +26,9 @@ export interface VariableIssue {
   params?: Readonly<Record<string, string | number>>;
 }
 
-export interface VariableReference {
-  path: string;
-  /** The referenced name, or null when the braces do not hold a plain name. */
-  name: string | null;
-  /** Present only on a malformed reference: what sat between the braces. */
-  raw?: string;
-}
+/** A `{{...}}` reference in a string field: a plain variable name, or, when
+ *  the braces hold something else, `name: null` and the text between them. */
+export type VariableReference = { path: string; name: string } | { path: string; name: null; raw: string };
 
 export type ParsedExpression = { names: string[] } | { error: string };
 
@@ -263,7 +259,7 @@ export function variableIssues(exercise: object, path: string): VariableIssue[] 
     const at = `${path}${reference.path}`;
     if (reference.name === null) {
       error("E-VAR-REF", at, `'{{${reference.raw}}}' is not a variable name; put the expression into a computed variable and reference that`, {
-        raw: reference.raw ?? "",
+        raw: reference.raw,
       });
     } else if (known.has(reference.name)) {
       used.add(reference.name);

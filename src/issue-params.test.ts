@@ -1,14 +1,18 @@
 import { describe, it, expect } from "vitest";
 
-import { validateLesson, type ValidationIssue } from "./validate.js";
+import { lessonIdOrderingIssues } from "./set-ordering.js";
+import { ISSUE_EMITTING_SOURCES, readSource } from "./test-support/emitters.js";
+import { validateLesson, validateManifest, type ValidationIssue } from "./validate.js";
 
 /**
  * engine#201: the values a rule interpolates into its message also travel as
  * structured ``params``, so a consumer that keeps its own wording (the
  * reference app, adaptive-learner#3222) can rebuild its message without
- * parsing English text. And no two issues of one result are indistinguishable:
- * a problem at one array element gets that element's path, a problem that is
- * a relation between several elements is told apart by its params.
+ * parsing English text. And no two issues the engine's own rules report are
+ * indistinguishable: where several problems could share a path, each points at
+ * its element, and a relation between several elements is told apart by its
+ * params. E-SCHEMA (ajv's messages) and extension issues (paths relative to
+ * their exercise) are outside that promise.
  */
 
 interface StepInput {
@@ -25,8 +29,8 @@ const lesson = (steps: StepInput[], cards: Record<string, unknown>[] = []): Reco
 });
 const ex = (exercise: Record<string, unknown>): StepInput => ({ id: "s1", type: "exercise", exercise });
 const all = (lessonInput: Record<string, unknown>): ValidationIssue[] => {
-  const result = validateLesson(lessonInput);
-  return [...result.errors, ...result.warnings];
+  const { errors, warnings } = validateLesson(lessonInput);
+  return [...errors, ...warnings];
 };
 const withId = (issues: ValidationIssue[], id: string): ValidationIssue[] => issues.filter((issue) => issue.id === id);
 
@@ -75,11 +79,6 @@ describe("reproductions (engine#201, adaptive-learner#3247)", () => {
 
 // --- Every id that interpolates a value exposes it ------------------------
 
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-
-import { validateManifest } from "./validate.js";
-import { lessonIdOrderingIssues } from "./set-ordering.js";
 
 const manifest = (setExtras: Record<string, unknown> = {}, metadata?: Record<string, unknown>): Record<string, unknown> => ({
   schema_version: "1.2",
@@ -88,8 +87,8 @@ const manifest = (setExtras: Record<string, unknown> = {}, metadata?: Record<str
   sets: [{ id: "fr-a1", title: "X", target_language: "fr", level: "A1", version: "1.0.0", lesson_count: 1, ...setExtras }],
 });
 const manifestIssues = (input: Record<string, unknown>): ValidationIssue[] => {
-  const result = validateManifest(input);
-  return [...result.errors, ...result.warnings];
+  const { errors, warnings } = validateManifest(input);
+  return [...errors, ...warnings];
 };
 const parametric = (variables: unknown, prompt = "{{a}}"): Record<string, unknown> =>
   lesson([ex({ id: "e1", type: "free_text", prompt, accept: ["x"], variables })]);
@@ -169,10 +168,15 @@ const CASES: ParamCase[] = [
   },
   {
     id: "W-INVISIBLE-CHAR",
-    label: "a zero width space in the prompt",
-    issues: () => all(lesson([ex({ id: "f1", type: "free_text", prompt: "Say​hello.", accept: ["x"] })])),
+    label: "two codepoints, the higher one first in the text: params follow the message's numeric order",
+    issues: () => all(lesson([ex({ id: "f1", type: "free_text", prompt: "Say\uFEFFhello\u200B.", accept: ["x"] })])),
     path: "",
-    params: { codepoints: ["U+200B"], names: ["ZERO WIDTH SPACE"], occurrences: 1, paths: ["/steps/0/exercise/prompt"] },
+    params: {
+      codepoints: ["U+200B", "U+FEFF"],
+      names: ["ZERO WIDTH SPACE", "BYTE ORDER MARK"],
+      occurrences: 2,
+      paths: ["/steps/0/exercise/prompt"],
+    },
   },
   {
     id: "E-STABLE-ID-DUP",
@@ -302,7 +306,7 @@ const CASES: ParamCase[] = [
   {
     id: "W-SET-ORDER-PREFIX-WIDTH",
     label: "prefixes of two widths",
-    issues: () => lessonIdOrderingIssues(["01-a", "002-b"]),
+    issues: () => lessonIdOrderingIssues(["001-a", "02-b"]),
     path: "",
     params: { widths: [2, 3] },
   },
@@ -330,56 +334,123 @@ describe("params per rule id (engine#201)", () => {
     expect("params" in pairsIssue).toBe(false);
   });
 
-  it("the message is unchanged by the params (one example per kind of value)", () => {
-    const [dupLeft] = withId(
-      all(lesson([ex({ id: "m1", type: "matching", prompt: "?", pairs: [{ left: "a", right: "1" }, { left: "A", right: "2" }] })])),
+  it.each([
+    [
+      "a term and positions (E-MATCH-DUP-LEFT)",
+      () => all(lesson([ex({ id: "m1", type: "matching", prompt: "?", pairs: [{ left: "a", right: "1" }, { left: "A", right: "2" }] })])),
       "E-MATCH-DUP-LEFT",
-    );
-    expect(dupLeft!.message).toBe(
       "MATCHING left value 'a' is repeated at positions 1, 2; each left term must be unique (case-insensitive) so the pairing is solvable",
-    );
+    ],
+    [
+      "numbers (E-CLOZE-MARKERS)",
+      () => all(lesson([ex({ id: "c1", type: "cloze", cloze_mode: "type", prompt: "?", sentence: "a ___ b", blanks: [{ accept: ["x"] }, { accept: ["y"] }] })])),
+      "E-CLOZE-MARKERS",
+      "CLOZE marker count mismatch: sentence has 1 '___' markers but blanks has 2 entries",
+    ],
+    [
+      "a list (W-CARD-UNUSED)",
+      () => all(lesson([ex({ id: "f1", type: "free_text", prompt: "?", accept: ["x"] })], [{ id: "c1", front: "a", back: "b" }, { id: "c2", front: "c", back: "d" }])),
+      "W-CARD-UNUSED",
+      "2 cards are defined but never referenced by an exercise: c1, c2",
+    ],
+    [
+      "a variables rule (E-VAR-RANGE)",
+      () => all(parametric([{ name: "a", min: 5, max: 2 }])),
+      "E-VAR-RANGE",
+      "variable 'a': min (5) must be below max (2)",
+    ],
+  ])("the message is unchanged by the params: %s", (_label, issues, id, message) => {
+    expect(withId(issues(), id)[0]!.message).toBe(message);
   });
 });
 
 // --- The coverage gate ------------------------------------------------------
 
-/** Every emission site whose message interpolates a value must pass params.
+/** Every emission site whose message can carry a value must pass params.
  *  Scanned from the source, so a new rule cannot ship a value in its text
- *  without exposing it. E-SCHEMA is exempt on purpose: its message is ajv's
- *  own, and passing ajv's params through would make them engine API. */
-const EMITTING_SOURCES = ["./rules.ts", "./validate.ts", "./set-ordering.ts", "./variables.ts"];
+ *  without exposing it. The default is strict: a message counts as constant
+ *  only when it is one plain string literal, a template without `${`, or an
+ *  UPPER_SNAKE constant; anything else (a template with values, a
+ *  concatenation, a call, a variable) needs params. E-SCHEMA is exempt on
+ *  purpose: its message is ajv's, and passing ajv's params through would make
+ *  them engine API. */
 const EXEMPT = new Set(["E-SCHEMA"]);
-/** Argument positions per constructor: the message, and params (if passed). */
+
+/** Argument positions per constructor: the message, and params when passed. */
 const MESSAGE_ARG = { err: 2, warn: 2, makeIssue: 3, error: 2 } as const;
 const PARAMS_ARG = { err: 4, warn: 4, makeIssue: 5, error: 3 } as const;
 
-function splitArgs(call: string): string[] {
-  const inner = call.slice(call.indexOf("(") + 1, -1);
-  const out: string[] = [];
-  let depth = 0;
+type Frame = { kind: "code"; depth: number } | { kind: "string"; quote: string } | { kind: "template" };
+
+/**
+ * Walk `text` from `from` and split it at top-level commas until the bracket
+ * that closes the starting level. Aware of strings, template literals and
+ * `${...}` expressions nested inside them, so a `)` or `,` inside a message
+ * never ends an argument. Returns the pieces and the index after the closer.
+ */
+function splitTopLevel(text: string, from: number): { parts: string[]; end: number } {
+  const stack: Frame[] = [{ kind: "code", depth: 0 }];
+  const parts: string[] = [];
   let current = "";
-  let quote: string | null = null;
-  for (let i = 0; i < inner.length; i++) {
-    const char = inner[i]!;
-    if (quote) {
+  for (let i = from; i < text.length; i++) {
+    const char = text[i]!;
+    const top = stack[stack.length - 1]!;
+    if (top.kind === "string" || top.kind === "template") {
       current += char;
-      if (char === "\\") current += inner[++i] ?? "";
-      else if (char === quote) quote = null;
+      if (char === "\\") {
+        current += text[++i] ?? "";
+        continue;
+      }
+      if (top.kind === "string" && char === top.quote) stack.pop();
+      else if (top.kind === "template" && char === "`") stack.pop();
+      else if (top.kind === "template" && char === "$" && text[i + 1] === "{") {
+        current += "{";
+        i++;
+        stack.push({ kind: "code", depth: 0 });
+      }
       continue;
     }
-    if (char === '"' || char === "'" || char === "`") quote = char;
-    if ("([{".includes(char)) depth++;
-    if (")]}".includes(char)) depth--;
-    if (char === "," && depth === 0) {
-      out.push(current.trim());
+    if (char === '"' || char === "'") {
+      stack.push({ kind: "string", quote: char });
+      current += char;
+      continue;
+    }
+    if (char === "`") {
+      stack.push({ kind: "template" });
+      current += char;
+      continue;
+    }
+    if ("([{".includes(char)) {
+      top.depth++;
+      current += char;
+      continue;
+    }
+    if (")]}".includes(char)) {
+      if (top.depth === 0 && stack.length === 1) {
+        if (current.trim()) parts.push(current.trim());
+        return { parts, end: i + 1 };
+      }
+      if (top.depth === 0 && char === "}") {
+        stack.pop();
+        current += char;
+        continue;
+      }
+      top.depth--;
+      current += char;
+      continue;
+    }
+    if (char === "," && top.depth === 0 && stack.length === 1) {
+      parts.push(current.trim());
       current = "";
       continue;
     }
     current += char;
   }
-  if (current.trim()) out.push(current.trim());
-  return out;
+  throw new Error("unterminated argument list");
 }
+
+const CONSTANT_MESSAGE = [/^"(?:[^"\\]|\\.)*"$/, /^'(?:[^'\\]|\\.)*'$/, /^`(?:[^`\\$]|\\.|\$(?!\{))*`$/, /^[A-Z][A-Z0-9_]*$/];
+const isConstantMessage = (message: string): boolean => CONSTANT_MESSAGE.some((form) => form.test(message));
 
 interface EmissionSite {
   id: string;
@@ -389,43 +460,45 @@ interface EmissionSite {
 }
 
 /** The emission sites in one source text: calls of the issue constructors
- *  with a literal rule id, and the object-literal form variables.ts uses. */
+ *  with a literal rule id, and object literals pushed with an `id:` key. */
 function sitesIn(source: string, file: string): EmissionSite[] {
   const sites: EmissionSite[] = [];
+  const lineOf = (index: number): number => source.slice(0, index).split("\n").length;
   const call = /\b(err|warn|makeIssue|error)\s*\(/g;
   let match: RegExpExecArray | null;
   while ((match = call.exec(source))) {
-    let end = match.index + match[0].length;
-    for (let depth = 1; depth > 0 && end < source.length; end++) {
-      if (source[end] === "(") depth++;
-      else if (source[end] === ")") depth--;
-    }
-    const args = splitArgs(source.slice(match.index, end));
-    const idArg = args.find((arg) => /^"[EW]-[A-Z0-9-]+"$/.test(arg));
+    const { parts } = splitTopLevel(source, match.index + match[0].length);
+    const idArg = parts.find((part) => /^"[EW]-[A-Z0-9-]+"$/.test(part));
     if (!idArg) continue;
     const kind = match[1] as keyof typeof MESSAGE_ARG;
-    const message = args[MESSAGE_ARG[kind]] ?? "";
     sites.push({
       id: idArg.slice(1, -1),
-      where: `${file}:${source.slice(0, match.index).split("\n").length}`,
-      interpolates: /\$\{/.test(message) || /^[a-z]\w*$/.test(message),
-      passesParams: args.length > PARAMS_ARG[kind],
+      where: `${file}:${lineOf(match.index)}`,
+      interpolates: !isConstantMessage(parts[MESSAGE_ARG[kind]] ?? ""),
+      passesParams: parts.length > PARAMS_ARG[kind],
     });
   }
-  const literal = /issues\.push\(\{[^}]*?id:\s*"([EW]-[A-Z0-9-]+)"([\s\S]*?)\}\);/g;
-  while ((match = literal.exec(source))) {
+  const pushed = /\bpush\(\s*\{/g;
+  while ((match = pushed.exec(source))) {
+    const { parts } = splitTopLevel(source, match.index + match[0].length);
+    const property = (name: string): string | undefined => {
+      const entry = parts.find((part) => part === name || part.startsWith(`${name}:`));
+      return entry === undefined ? undefined : entry === name ? name : entry.slice(name.length + 1).trim();
+    };
+    const id = property("id");
+    if (id === undefined || !/^"[EW]-[A-Z0-9-]+"$/.test(id)) continue;
     sites.push({
-      id: match[1]!,
-      where: `${file}:${source.slice(0, match.index).split("\n").length}`,
-      interpolates: /message:\s*`[^`]*\$\{/.test(match[2]!),
-      passesParams: /params:/.test(match[2]!),
+      id: id.slice(1, -1),
+      where: `${file}:${lineOf(match.index)}`,
+      interpolates: !isConstantMessage(property("message") ?? ""),
+      passesParams: property("params") !== undefined,
     });
   }
   return sites;
 }
 
 const emissionSites = (): EmissionSite[] =>
-  EMITTING_SOURCES.flatMap((file) => sitesIn(readFileSync(fileURLToPath(new URL(file, import.meta.url)), "utf8"), file));
+  ISSUE_EMITTING_SOURCES.flatMap((file) => sitesIn(readSource(file), file));
 
 const missingParams = (sites: EmissionSite[]): string[] =>
   sites.filter((site) => site.interpolates && !site.passesParams && !EXEMPT.has(site.id)).map((site) => `${site.id} at ${site.where}`);
@@ -433,12 +506,13 @@ const missingParams = (sites: EmissionSite[]): string[] =>
 describe("coverage gate: a value in the message means params (engine#201)", () => {
   const sites = emissionSites();
 
-  it("finds the emission sites (the scan is not blind)", () => {
-    expect(sites.length).toBeGreaterThan(50);
-    expect(sites.filter((site) => site.interpolates).length).toBeGreaterThan(20);
+  it("finds exactly one site per rule id literal in the emitting sources (nothing is missed)", () => {
+    const literals = ISSUE_EMITTING_SOURCES.flatMap((file) => [...readSource(file).matchAll(/"[EW]-[A-Z0-9-]+"/g)]).length;
+    expect(literals).toBeGreaterThan(50);
+    expect(sites).toHaveLength(literals);
   });
 
-  it("every interpolating site passes params, except the declared exemption", () => {
+  it("every site that can carry a value passes params, except the declared exemption", () => {
     expect(missingParams(sites)).toEqual([]);
   });
 
@@ -448,15 +522,95 @@ describe("coverage gate: a value in the message means params (engine#201)", () =
     expect([...withParams].filter((id) => !covered.has(id)).sort()).toEqual([]);
   });
 
-  it("flags a seeded site that interpolates without params, and passes its fixed form", () => {
-    const seeded = [
-      'issues.push(err("E-SEED-A", path, `value ${x}`, "anchor"));',
-      'issues.push(warn("W-SEED-B", path, name, "anchor"));',
-      'issues.push({ severity: "warning", id: "W-SEED-C", path, message: `v ${x}` });',
-    ].join("\n");
-    expect(missingParams(sitesIn(seeded, "seed.ts"))).toEqual(["E-SEED-A at seed.ts:1", "W-SEED-B at seed.ts:2", "W-SEED-C at seed.ts:3"]);
-    const fixed = 'issues.push(err("E-SEED-A", path, `value ${x}`, "anchor", { x }));';
-    expect(missingParams(sitesIn(fixed, "seed.ts"))).toEqual([]);
+  it.each([
+    ["a template with a value", 'issues.push(err("E-SEED", path, `value ${x}`, "a"));'],
+    ["a concatenation", 'issues.push(warn("W-SEED", path, "unknown key " + key, "a"));'],
+    ["a call", 'issues.push(err("E-SEED", path, describeFoo(items), "a"));'],
+    ["a variable", 'issues.push(warn("W-SEED", path, description, "a"));'],
+    ["a ) inside the template", 'issues.push(err("E-SEED", path, `step 1) ${x}`, "a"));'],
+    ["an object literal with shorthand message", 'issues.push({ severity: "warning", id: "W-SEED", path, message });'],
+    ["an object literal with ${path} before id", 'issues.push({ severity: "warning", path: `${path}/x`, id: "W-SEED", message: `v ${x}` });'],
+  ])("flags a seeded site without params: %s", (_label, seeded) => {
+    const found = sitesIn(seeded, "seed.ts");
+    expect(found).toHaveLength(1);
+    expect(missingParams(found)).toHaveLength(1);
+  });
+
+  it.each([
+    ["a plain string", 'issues.push(err("E-SEED", path, "constant text", "a"));'],
+    ["a constant", 'issues.push(warn("W-SEED", path, SEED_MESSAGE, "a"));'],
+    ["a value with params", 'issues.push(err("E-SEED", path, `value ${x}`, "a", { x }));'],
+    ["an object literal with params", 'issues.push({ severity: "warning", id: "W-SEED", path, message: `v ${x}`, params: { x } });'],
+  ])("passes a seeded site that needs nothing more: %s", (_label, seeded) => {
+    const found = sitesIn(seeded, "seed.ts");
+    expect(found).toHaveLength(1);
+    expect(missingParams(found)).toEqual([]);
+  });
+});
+
+// --- The params table in the docs matches the code -------------------------
+
+/** The `### Issue parameters` table of docs/lesson-format.md as id -> keys.
+ *  Keys are the backticked lowercase identifiers of the second cell; quoted
+ *  values and constants in it are not keys. */
+function paramsTable(markdown: string): Map<string, string[]> {
+  const start = markdown.indexOf("### Issue parameters");
+  const section = markdown.slice(start, markdown.indexOf("\n## ", start));
+  const table = new Map<string, string[]>();
+  for (const line of section.split("\n")) {
+    const row = /^\| `([EW]-[A-Z0-9-]+)` \| (.+) \|$/.exec(line);
+    if (!row) continue;
+    const keys = [...row[2]!.matchAll(/`([a-z][A-Za-z]*)`/g)].map((key) => key[1]!);
+    table.set(row[1]!, [...new Set(keys)].sort());
+  }
+  return table;
+}
+
+/** The keys the code passes per id, from the triggering cases (all variants). */
+function keysFromCases(): Map<string, string[]> {
+  const keys = new Map<string, Set<string>>([
+    ["E-MATCH-DUP-LEFT", new Set(["term", "positions"])],
+    ["E-CARD-REF", new Set(["cardId"])],
+  ]);
+  for (const testCase of CASES) {
+    const set = keys.get(testCase.id) ?? new Set<string>();
+    for (const key of Object.keys(testCase.params)) set.add(key);
+    keys.set(testCase.id, set);
+  }
+  return new Map([...keys].map(([id, set]) => [id, [...set].sort()]));
+}
+
+const tableDrift = (documented: Map<string, string[]>, coded: Map<string, string[]>): string[] => [
+  ...[...coded.keys()].filter((id) => !documented.has(id)).map((id) => `${id}: missing from the table`),
+  ...[...documented.keys()].filter((id) => !coded.has(id)).map((id) => `${id}: in the table, no params in the code`),
+  ...[...coded]
+    .filter(([id, keys]) => documented.has(id) && documented.get(id)!.join() !== keys.join())
+    .map(([id, keys]) => `${id}: table says ${documented.get(id)!.join(", ")}, code passes ${keys.join(", ")}`),
+];
+
+describe("the Issue parameters table in lesson-format.md matches the code (engine#201)", () => {
+  const documented = paramsTable(readSource("../docs/lesson-format.md"));
+
+  it("reads the table (the scan is not blind)", () => {
+    expect(documented.size).toBeGreaterThan(20);
+  });
+
+  it("lists exactly the ids that pass params, with exactly their keys", () => {
+    const passing = new Set(emissionSites().filter((site) => site.passesParams).map((site) => site.id));
+    expect([...documented.keys()].sort()).toEqual([...passing].sort());
+    expect(tableDrift(documented, keysFromCases())).toEqual([]);
+  });
+
+  it("detects a seeded missing row and a seeded wrong key", () => {
+    const seeded = "### Issue parameters\n\n| ID | `params` |\n|---|---|\n| `E-CARD-REF` | `cardIdx` |\n\n## Next\n";
+    const coded = new Map([
+      ["E-CARD-REF", ["cardId"]],
+      ["E-TILES-ORDERING", ["maxIndex", "ordering"]],
+    ]);
+    expect(tableDrift(paramsTable(seeded), coded)).toEqual([
+      "E-TILES-ORDERING: missing from the table",
+      "E-CARD-REF: table says cardIdx, code passes cardId",
+    ]);
   });
 });
 
