@@ -79,7 +79,10 @@ versions - do not let that recur):
    `git tag -a vX.Y.Z -m "vX.Y.Z - <summary>" && git push origin vX.Y.Z`.
    Verify the target rather than assume it (`git log -S '"version": "X.Y.Z"'`).
 7. **`make publish`** - re-runs `release-check`, then `npm publish`
-   (`npm whoami` first). Confirm with `npm view learn-content-engine version`.
+   (`npm whoami` first). Then wait until `npm view learn-content-engine version`
+   prints the new version before step 8: a successful publish takes about a
+   minute to become visible (0.30.0: about 60 s), and the parity check below
+   reads the registry, not the publish output.
 8. **GitHub release** for the tag, body = the changelog excerpt
    (`gh release create vX.Y.Z --latest --notes-file ...`).
 
