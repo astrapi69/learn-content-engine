@@ -46,15 +46,22 @@ him. This rule keeps the dialogs few, predictable and matching what he saw.
 - Creating an issue still needs the owner's yes (with title, core and
   priority proposed), bundled like every other decision.
 
-## Subagents and workflows
+## Subagents and workflows: none locally
 
-- A subagent's permission dialog reaches the owner, not the session that
-  started it; the session cannot answer it. So no subagents and no
-  workflows, **read-only ones included**, unless every command they use is
-  already allowed in the project's permission settings.
-- The owner agreed (2026-09-25) to an allowlist of the read-only commands
-  subagents need; until it is in place, analyses run in the main session,
-  under the command rules above.
+- **No local subagents and no local workflows, ever**, read-only ones
+  included (owner, 2026-09-25: "lokal keine subagenten mehr die haben mein pc
+  zwei mal abstürzen lassen"). A crash also wipes `/tmp`, and with it the
+  scratchpad, its worktrees and every uncommitted text in them.
+- A subagent's permission dialog also reaches the owner, not the session
+  that started it, and the session cannot answer it.
+- All work, analyses included, runs in the main session under the command
+  rules above.
+- An allowlist does not change this. Measured on 2026-09-25 over 50
+  transcripts: the read-only commands in use are already allowed by Claude
+  Code; the dialogs come from the shape of a call (heredocs, redirects to a
+  file, `$(...)`, loops) and from commands that execute code or change
+  state, which no allowlist may cover. Files are written with the editor and
+  read with the file-reading tool, not through the shell.
 
 ## Other sessions
 
