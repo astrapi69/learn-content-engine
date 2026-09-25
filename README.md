@@ -120,6 +120,8 @@ The gap analysis behind this list is
 | `validateLesson` | fn | validate a lesson against the bundled schema + semantic rules → `ValidationResult` |
 | `validateManifest` | fn | validate a manifest against the bundled schema (legacy alias normalized) |
 | `validateLessonQuality` | fn | check a shape-valid lesson against the quality minimums, keyed to its `purpose` (`practice`, `bridge`, `quiz`) → `ValidationResult` of `E-QUALITY-*` shortfalls; a publication threshold, not validity ([Quality minimums](docs/lesson-format.md#quality-minimums)) |
+| `resolveExerciseVariables` | fn | resolve a parametric exercise into a concrete instance: sample, evaluate in declaration order, round, substitute every `{{name}}`; returns the exercise, the values (to persist and replay) and the tolerances of pure-reference accepted answers ([Variables](docs/lesson-format.md#variables-parametric-exercises)) |
+| `evaluateExpression` | fn | evaluate a computed variable's expression with values for its names, on the parser the validator uses |
 | `QUALITY_MINIMUMS` | const | the numbers of `schema/quality-rules.json` that `validateLessonQuality` applies |
 | `collectStableIds` | fn | set-wide `stable_id` view over several lessons: total count + duplicates with locations (the cross-lesson half the schema cannot see) |
 | `buildStableIdInventory`, `compareStableIdInventories`, `formatStabilityResult` | fn | the pure core of the shipped `check-stable-ids` gate: published-state vs head, violations V1-V6 (V5/V6 read each tree's declared `retired_ids`, engine#131) |
@@ -139,6 +141,7 @@ The gap analysis behind this list is
 | `StableIdReport`, `StableIdDuplicate` | types | the `collectStableIds` return shape |
 | `StabilityResult`, `StabilityViolation`, `StableIdElement`, `StableIdInventory` | types | the `buildStableIdInventory`/`compareStableIdInventories` return + input shapes |
 | `StableIdCoverage`, `CoverageVerdict`, `CoverageSet`, `CoverageFailure` | types | the `computeStableIdCoverage` return shape |
+| `ResolvedExerciseVariables`, `ResolveExerciseVariablesOptions` | types | the `resolveExerciseVariables` return shape and its options (`random`, `values`) |
 | `ValidationResult`, `ValidationIssue`, `ValidationSeverity`, `ValidationParams`, `ValidationParamValue` | types | the `validate*` return shape (`{ valid, errors[], warnings[] }`), its issue-severity enum, and the optional `params` an issue carries when its message names a value |
 | `ExerciseExtension`, `ExtensionRegistry` | types | the `ext:` extension registry contract (schema 1.7, see [Extensions](docs/extensions.md)) |
 | `LessonSetContext`, `LessonSourceAdapter`, `ParsedManifest`, `ParsedSet`, `ParsedSetAsset`, `ParsedSetBook` | types | adapter + manifest surface |

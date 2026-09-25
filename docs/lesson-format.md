@@ -403,7 +403,7 @@ flowchart LR
   S --> EX
 ```
 
-The engine validates the contract and never samples or evaluates:
+The engine validates the contract:
 
 | ID | Rule |
 |---|---|
@@ -415,19 +415,47 @@ The engine validates the contract and never samples or evaluates:
 | `E-VAR-REF` | A `{{...}}` holds something other than a plain name; put the expression into a computed variable and reference that. |
 | `W-VAR-UNUSED` | A declared variable is referenced by no field and used by no later expression. |
 
-The consumer side of the contract: substitute in EVERY string field of the
-exercise (`prompt`, `accept`, option texts, pairs, `sentence`, `hint`,
-`explanation`, `ext_payload`); a numeric accepted answer whose variable
-carries `tolerance` grades within that tolerance, otherwise exactly; the
-sampled values are the consumer's to record per attempt if a review should
-show them. `stable_id` names the authored exercise, not an instance.
+And, since engine#220, it resolves an exercise into a concrete instance, so
+every consumer computes the same values on the same parser the validator
+uses:
+
+```ts
+import { resolveExerciseVariables } from "learn-content-engine";
+
+const { exercise, values, toleranceByAcceptText } = resolveExerciseVariables(rawExercise, {
+  random: Math.random, // the default; pass a seeded source for reproducible runs
+  values: persistedValues, // optional: replay a previous attempt
+});
+```
+
+- It samples each sampled variable (`random` in `[0, 1)`), evaluates each
+  computed one in declaration order (`evaluateExpression(expression, values)`
+  is exported on its own), and rounds each value to its display precision:
+  the decimals of `step`, six for a computed value, so `1.5000000001` reads
+  `1.5`.
+- It substitutes every reference to a declared variable in EVERY string
+  field of the exercise (`prompt`, `accept`, option texts, pairs,
+  `sentence`, `hint`, `explanation`, `ext_payload`). A reference is read as
+  the validator reads it, so `{{ sum }}` with spaces is one; `{{...}}` that
+  is not a declared name stays as written, and so does the `variables` block.
+- `values` is what a consumer persists per attempt if a review should show
+  the same instance; passing it back replays it (a variable missing from it
+  is drawn afresh).
+- `toleranceByAcceptText` maps each accepted answer that is exactly one
+  reference to a variable with `tolerance` (substituted text -> tolerance):
+  that answer grades within the tolerance, every other one exactly. Grading
+  stays the consumer's.
+- A division by zero gives the IEEE value (`Infinity`, `NaN`), not an
+  exception.
+
+`stable_id` names the authored exercise, not an instance.
 
 Only an exercise that declares `variables` is parametric. There, every
 `{{...}}` in its string fields must be a reference. An exercise WITHOUT
 `variables` is never scanned, so lessons about templating languages keep
 their braces as ordinary text: an Ansible lesson teaching Jinja2 has
 `{{ server }}` in its prompt and accepted answers and is not parametric.
-A consumer substitutes only on exercises that carry `variables`.
+`resolveExerciseVariables` returns such an exercise as the same object.
 
 Not restricted to any exercise type. Deferred, all additive: lesson-level
 shared variables, non-uniform distributions, and a richer expression

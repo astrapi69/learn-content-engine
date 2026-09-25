@@ -488,7 +488,7 @@ These are the consumer tasks the analysis implies, each tracked in that reposito
 5. **First parametric lessons** once #3109 lands: `alc-programming` and `alc-technology` are the natural homes.
 
 ### 6.3 Deliberately open on the engine side
-6. **Parametric Tasks, consumer side:** the schema contract shipped in 1.14 (engine#151: a `variables` block with ranges, computed expressions and tolerance, `{{name}}` references in core string fields, the engine validates and never evaluates). The flow the app implements in #3109:
+6. **Parametric Tasks, consumer side:** the schema contract shipped in 1.14 (engine#151: a `variables` block with ranges, computed expressions and tolerance, `{{name}}` references in core string fields). The engine validated and left evaluation to the consumer until 0.34.0; since engine#220 it also samples, evaluates and substitutes (`resolveExerciseVariables`), because the app's own evaluator was a second parser for the same grammar. The flow as the app implemented it in #3109:
 
 ```mermaid
 sequenceDiagram
