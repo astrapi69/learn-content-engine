@@ -34,6 +34,7 @@ import {
   type ValidationParamValue,
   type ValidationResult,
 } from "./issues.js";
+import { lessonLanguageIssues, setLanguageIssues } from "./language-rules.js";
 import { lessonIdOrderingIssues } from "./set-ordering.js";
 import { collectStableIds } from "./stable-ids.js";
 import type { Exercise, Lesson, LessonStep } from "./types/lesson-schema.generated.js";
@@ -552,7 +553,7 @@ function checkInvisibleChars(lesson: Lesson, issues: ValidationIssue[]): void {
 
 /** Semantic + lint pass. Assumes the input is already structurally valid (so the
  *  schema-typed shape is trustworthy). Returns a mixed error/warning list. */
-function semanticIssues(lesson: Lesson, registry: ExtensionRegistry): ValidationIssue[] {
+function semanticIssues(lesson: Lesson, registry: ExtensionRegistry, sourceLanguage: string | undefined): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
   const knownCardIds = new Set<string>((lesson.cards ?? []).map((card) => card.id));
   const ext: ExtContext = { required: requiredExtensions(lesson), registry };
@@ -563,6 +564,7 @@ function semanticIssues(lesson: Lesson, registry: ExtensionRegistry): Validation
   checkInvisibleChars(lesson, issues);
   checkStableIdDuplicates(lesson, issues);
   checkElementIdDuplicates(lesson, issues);
+  issues.push(...lessonLanguageIssues(lesson, sourceLanguage));
   // engine#183: a lesson's own domain (absent or null inherits the set's).
   issues.push(...unknownDomainIssues(typeof lesson.domain === "string" ? lesson.domain : undefined, "/domain"));
   return issues;
@@ -655,14 +657,15 @@ function checkStableIdDuplicates(lesson: Lesson, issues: ValidationIssue[]): voi
  * has the schema's shape (checked by ``validateLesson`` or by the consumer's
  * own shape check). Returns ``{ valid, errors, warnings }`` exactly as
  * ``validateLesson`` does for a structurally valid lesson; does not throw on
- * such input. ``options.extensions`` registers ``ext:`` exercise types, as
- * for ``validateLesson``.
+ * such input. ``options.extensions`` registers ``ext:`` exercise types and
+ * ``options.sourceLanguage`` names the set's source language, as for
+ * ``validateLesson``.
  */
 export function validateLessonRules(
   lesson: Lesson,
-  options: { extensions?: ExtensionRegistry } = {},
+  options: { extensions?: ExtensionRegistry; sourceLanguage?: string } = {},
 ): ValidationResult {
-  return splitIssues(semanticIssues(lesson, options.extensions ?? []));
+  return splitIssues(semanticIssues(lesson, options.extensions ?? [], options.sourceLanguage));
 }
 
 /** Drop the legacy ``language`` alias into ``target_language`` on each set
@@ -722,13 +725,13 @@ export function validateManifestRules(input: unknown): ValidationResult {
       };
     }
   }
-  const evaluationIssues = checkSetEvaluations(normalized);
-  const evaluationErrors = evaluationIssues.filter((issue) => issue.severity === "error");
+  const setIssues = [...checkSetEvaluations(normalized), ...checkSetLanguages(normalized)];
+  const setErrors = setIssues.filter((issue) => issue.severity === "error");
   return {
-    valid: evaluationErrors.length === 0,
-    errors: evaluationErrors,
+    valid: setErrors.length === 0,
+    errors: setErrors,
     warnings: [
-      ...evaluationIssues.filter((issue) => issue.severity === "warning"),
+      ...setIssues.filter((issue) => issue.severity === "warning"),
       ...checkManifestLessonOrdering(manifestMetadata),
       ...checkManifestDomainVocabulary(normalized),
       ...checkRetiredIdsDuplicates(manifestMetadata),
@@ -736,6 +739,12 @@ export function validateManifestRules(input: unknown): ValidationResult {
   };
 }
 
+
+/** engine#190: the language rules of every set entry (language-rules.ts). */
+function checkSetLanguages(manifest: unknown): ValidationIssue[] {
+  const sets = (manifest as { sets?: unknown }).sets;
+  return Array.isArray(sets) ? sets.flatMap((rawSet, index) => setLanguageIssues(rawSet, index)) : [];
+}
 
 /**
  * engine#171: the parts of a set's ``evaluation`` block the JSON Schema

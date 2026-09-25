@@ -18,6 +18,33 @@ points. No content is affected (the longest lesson id is 69 bytes, Latin).
 The byte limit of a file name (ids become `lessons/<id>.json`) is documented
 as a known limit under [slug ids](docs/lesson-format.md#slug-ids).
 
+### Language tags and set metadata are engine rules (engine#190)
+
+The language-pair and set-metadata checks move from the content template's
+validator into the engine, in the version decided on 2026-09-25:
+
+- `E-LANG-TAG`: a `target_language` or `source_language`, on a set or a
+  lesson, is not a well-formed BCP 47 tag (`en_US`). Checked with
+  `Intl.getCanonicalLocales`, no table and no new dependency.
+- `W-LANG-TAG-CANONICAL`: well-formed but not canonical (`deu`, `EN`, `iw`);
+  the message names the canonical form. Three-letter primary subtags without a
+  two-letter code (`gsw`, `yue`, `fil`) are valid, which the template's
+  two-letter rule rejected.
+- `W-LANG-PAIR-SAME`: a `language` set whose source and target are one
+  language (the template: an error).
+- `W-SET-TITLE-NATIVE`: a `language` set without `title_native` (the
+  template: an error).
+- `W-CARD-BACK-SCRIPT`: card backs with letters but none in the script of a
+  non-Latin source language, one warning per lesson. The script comes from
+  CLDR likely subtags, so every language is covered, not the template's six.
+  `validateLesson` and `validateLessonRules` take the set's source language as
+  `options.sourceLanguage`; a lesson's own `source_language` wins.
+
+See [language tags](docs/lesson-format.md#language-tags). Measured with this
+build over the 53 sets and 631 lessons of the ten content repositories: 0
+findings for every rule; seeded faults in a real lesson and a real manifest
+are found.
+
 ### A bridge lesson has no exercise-type minimum either (engine#185, schema 1.18)
 
 `purpose: "bridge"` lifted only the exercise minimum, so a bridge lesson of

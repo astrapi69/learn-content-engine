@@ -1082,6 +1082,47 @@ Consumers should read `KNOWN_CONTENT_DOMAINS` / `CEFR_LEVELS` /
 `LEVEL_NONE` from the engine instead of maintaining their own copies -
 one vocabulary, one source.
 
+## Language tags
+
+`target_language` and `source_language`, on a set and on a lesson, are BCP 47
+language tags (engine#190, the version decided on 2026-09-25). The engine
+checks them with `Intl.getCanonicalLocales`, which every modern runtime ships
+with CLDR data, instead of a hand-kept table:
+
+- **Well-formed, or an error (`E-LANG-TAG`).** `en_US`, an empty string or a
+  single letter is not a tag; every `Intl` API a consumer calls with it
+  (speech output, collation, number formatting) throws.
+- **Canonical, or a warning (`W-LANG-TAG-CANONICAL`).** The shortest code and
+  the registered case: `de`, not `deu` or `DE`; `he`, not the deprecated `iw`;
+  `zh-Hant-TW`, not `zh-hant-tw`. The warning names the canonical form.
+  Three-letter primary subtags for languages without a two-letter code
+  (`gsw` Swiss German, `yue` Cantonese, `fil` Filipino) are canonical and
+  valid; the content template's two-letter rule rejected them.
+- The check is about the shape, not the registry: `xx` is well-formed.
+
+For a `language` set (`domain` absent or `language`) two more warnings apply:
+
+- **`W-LANG-PAIR-SAME`**: source and target are one language (primary
+  subtags compared, so `de-AT` for `de` speakers counts; an absent source is
+  `en`). A monolingual course can be intended, hence a warning.
+- **`W-SET-TITLE-NATIVE`**: the set has no `title_native`, its title in the
+  target language. Consumers fall back to `title`; the reference app's share
+  check requires it.
+
+A non-language set is written in the language it is about, so neither
+applies there.
+
+**Card backs (`W-CARD-BACK-SCRIPT`).** A card's `back` is written in the
+source language. When that language is written in a non-Latin script (its
+CLDR likely script: `el` Greek, `ru` Cyrillic, `hi` Devanagari, `ja` Han,
+Hiragana and Katakana, `ko` Hangul and Han, ...), a back that has letters but
+none of that script is most likely in the wrong language. One letter of the
+script suffices (a loanword in brackets is fine), and a back without letters
+(a number) is not judged. The source language is the lesson's own
+`source_language`, else the one the caller passes
+(`validateLesson(lesson, { sourceLanguage })`, the set's). A digraphic
+language takes the script its tag names: `sr` is Cyrillic, `sr-Latn` Latin.
+
 ## Quality minimums
 
 Whether a lesson is **valid** and whether it is **substantial enough to
@@ -1150,6 +1191,7 @@ itself instead of parsing the English message.
 | `E-CARD-ID-DUP` | Two [cards](#cards) of the lesson share an `id`. `from_cards` and every card lookup key cards by id, so the later card would silently replace the earlier one (engine#202). One error per duplicated id, naming its positions. |
 | `E-STEP-ID-DUP` | Two [steps](#steps) of the lesson share an `id`. |
 | `E-EXERCISE-ID-DUP` | Two [exercises](#exercises) of the lesson share an `id` (the QTI export writes it as the item identifier). The position named is the step's. A step and its own exercise may share an id; card, step and exercise ids are separate namespaces. |
+| `E-LANG-TAG` | A `target_language` or `source_language` (on a set or a lesson) is not a well-formed BCP 47 tag ([language tags](#language-tags)). |
 | `E-STABLE-ID-DUP` | A `stable_id` is used more than once within one lesson (exercises and cards share one namespace). Set-wide uniqueness is the repo gate's job via `collectStableIds`. |
 | `E-EVAL-GRADES-MISSING` | Manifest-level ([evaluation](#evaluation)): a set's `evaluation` declares `scheme: "grades"` without a `grades` table, so nothing maps a score to a grade. |
 | `E-EVAL-PASS-MISSING` | Manifest-level ([evaluation](#evaluation)): a set's `evaluation` declares `scheme: "pass_fail"` without `pass_percent`, so nothing says what passing means. |
@@ -1212,6 +1254,10 @@ itself instead of parsing the English message.
 | `W-DOMAIN-UNKNOWN` | Manifest and lesson level ([content domains](#content-domains)): a set's `domain`, or a lesson's own `domain`, is outside the known vocabulary (`KNOWN_CONTENT_DOMAINS`). It stays valid - the contract is known values plus other - but consumers cannot group it with existing subjects, so the registry's subject facet fragments. Prefer a known domain, or accept the fragmentation deliberately (engine#127). A lesson without its own `domain` (absent or `null`) inherits the set's and draws nothing; the lesson half exists because the real case sat there, on every lesson of an exported set (engine#183). |
 | `W-LEVEL-UNKNOWN` | Manifest-level ([content domains](#content-domains)): a set's `level` is neither a CEFR band (`A1`..`C2`, case-insensitive) nor, for a non-language set, the explicit `none` sentinel. A consumer's level facet would offer the free-text value (`a0`, `einsteiger`, `reflexion` are live examples) as a category (engine#127). |
 | `W-VAR-UNUSED` | A declared [variable](#variables-parametric-exercises) is referenced by no string field and used by no later expression: dead declaration, usually a typo in the reference. |
+| `W-LANG-TAG-CANONICAL` | A language tag is well-formed but not canonical (`deu` for `de`, `EN` for `en`); the message names the canonical form ([language tags](#language-tags)). |
+| `W-LANG-PAIR-SAME` | Manifest-level: a `language` set's source and target are one language. |
+| `W-SET-TITLE-NATIVE` | Manifest-level: a `language` set has no `title_native`. |
+| `W-CARD-BACK-SCRIPT` | Card backs have letters but none in the script of the source language, when that script is not Latin; one warning per lesson, naming the cards ([language tags](#language-tags)). |
 
 ### Quality minimums (`validateLessonQuality`)
 
@@ -1260,6 +1306,7 @@ an extension's issues, whose paths are relative to its exercise
 | `E-EXERCISE-ID-DUP` | `exerciseId`, `positions` (1-based step positions) |
 | `E-EXT-UNDECLARED` | `type` |
 | `E-EXT-UNSUPPORTED` | `type`, `major` |
+| `E-LANG-TAG` | `field`, `tag` |
 | `E-MATCH-DUP-LEFT` | `term` (as first written), `positions` (1-based) |
 | `E-QUALITY-EXERCISES` | `count`, `min` |
 | `E-QUALITY-FREETEXT-ACCEPTS` | `count`, `min` |
@@ -1276,11 +1323,14 @@ an extension's issues, whose paths are relative to its exercise
 | `E-VAR-RANGE` | `name`, `min`, `max` |
 | `E-VAR-REF` | `raw` (the text between the braces, trimmed) |
 | `E-VAR-UNDEFINED` | `name`, `site` (`"expression"` or `"reference"`), and `variable` (the declaring variable) for `"expression"` |
+| `W-CARD-BACK-SCRIPT` | `sourceLanguage`, `script` (ISO 15924, e.g. `"Grek"`), `count`, `cardIds` |
 | `W-CARD-UNUSED` | `count`, `cardIds` |
 | `W-CLOZE-NO-CARRIER` | `nativeType` (`"multiple_choice"` or `"free_text"`) |
 | `W-DOMAIN-UNKNOWN` | `domain` (the vocabulary is the exported `KNOWN_CONTENT_DOMAINS`) |
 | `W-EVAL-GRADES-NO-FLOOR` | `floor` |
 | `W-INVISIBLE-CHAR` | `codepoints`, `names` (parallel, in numeric order), `occurrences`, `paths` (every path; the message lists five) |
+| `W-LANG-PAIR-SAME` | `language` (the primary language) |
+| `W-LANG-TAG-CANONICAL` | `field`, `tag`, `canonical` |
 | `W-LEVEL-UNKNOWN` | `level` |
 | `W-PROMPT-DUP` | `field` (`"sentence"` or `"title"`) |
 | `W-RETIRED-IDS-DUP` | `retiredIds` |

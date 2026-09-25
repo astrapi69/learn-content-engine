@@ -70,6 +70,7 @@ consumer follows (the app checks no exercise-id uniqueness, the engine does):
 | `cloze` (`type`/`select`) requires `sentence` + `blanks` with `markers == blanks.length`; `select` also needs `distractors` | `CLOZE marker count mismatch` |
 | `cloze` (`multiselect`) requires `sentence`, non-empty `accept` + `distractors`, and the two must be **disjoint** | `must be disjoint` |
 | Every `card_ids` entry must resolve to a card in the lesson | `references unknown card` |
+| A lesson's own `target_language` / `source_language` is a well-formed BCP 47 tag (`validateManifest` checks a set's the same way) | `is not a well-formed BCP 47 language tag` |
 | Card ids, step ids and exercise ids are each unique within the lesson (three separate namespaces; a step and its exercise may share an id) | `card ids must be unique` / `step ids ...` / `exercise ids ...` |
 | A `stable_id` is unique within the lesson (exercises and cards share one namespace) | `is used more than once in this lesson` |
 
@@ -103,8 +104,12 @@ distractor image sharing the correct label (`W-PIC-DUP-LABEL`), an exercise or
 blank hint that reveals the answer length (`W-HINT-LENGTH`), a cloze whose sentence is nothing
 but its blanks and is therefore a `multiple_choice` or a `free_text`
 (`W-CLOZE-NO-CARRIER`), a lesson `domain` outside the known vocabulary
-(`W-DOMAIN-UNKNOWN`, the same lint `validateManifest` applies to a set), or a
-prompt that repeats the
+(`W-DOMAIN-UNKNOWN`, the same lint `validateManifest` applies to a set), a
+language tag that is not in canonical form (`W-LANG-TAG-CANONICAL`), card
+backs without a letter of a non-Latin source language's script
+(`W-CARD-BACK-SCRIPT`; pass the set's source language as
+`validateLesson(lesson, { sourceLanguage })` when the lesson has none of its
+own), or a prompt that repeats the
 exercise's `sentence` or the step `title` verbatim, so the question is read
 twice on screen (`W-PROMPT-DUP`). Full list + descriptions:
 [rule catalog](lesson-format.md#rule-catalog).
@@ -145,7 +150,9 @@ const { valid, errors, warnings } = validateLessonRules(lesson); // same result 
   validator. `SLUG_ID_PATTERN` is the pattern string itself.
 - The entry imports neither ajv nor `node:*`; `src/rules.test.ts` keeps it that
   way. Measured with esbuild on 2026-09-25 (`dist/rules.js` bundled, minified,
-  browser): 24.9 kB, 9.4 kB gzip. The duplicate-id rules of engine#202 added
+  browser): 27.3 kB, 10.2 kB gzip. The language rules of engine#190 (with the
+  small changes of engine#205 and the bridge exemption) added 2.4 kB (24.9 kB,
+  9.4 kB gzip before), the duplicate-id rules of engine#202
   0.9 kB (24.0 kB, 9.2 kB gzip before), the quality minimums of engine#185
   1.1 kB (22.9 kB, 8.8 kB gzip before), the issue parameters of engine#201
   1.2 kB (21.7 kB, 8.4 kB gzip before that), all measured the same way.
