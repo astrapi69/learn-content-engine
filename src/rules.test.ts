@@ -99,6 +99,29 @@ describe("isSlugId: the schema's $defs/SlugId without a schema validator (engine
   it("accepts the longest slug the schema allows", () => {
     expect(isSlugId("a".repeat(SLUG_ID_MAX_LENGTH))).toBe(true);
   });
+
+  // engine#205: the limit counts characters (code points), as JSON Schema's
+  // maxLength does; `.length` counted UTF-16 code units, so a slug of letters
+  // outside the BMP (two units each) failed isSlugId from 61 letters on while
+  // the schema accepted it up to 120.
+  const astral = "\u{1D41A}"; // MATHEMATICAL BOLD SMALL A, \p{Ll}, two UTF-16 units
+
+  it("counts characters, not UTF-16 units: 61 letters outside the BMP pass, as in the schema", () => {
+    const id = astral.repeat(61);
+    expect(id.length).toBe(122);
+    expect(validateLesson({ id, title: "L", steps: [{ id: "t1", type: "theory", body: "x" }] }).valid).toBe(true);
+    expect(isSlugId(id)).toBe(true);
+  });
+
+  it("agrees with the schema at the limit for letters outside the BMP: 120 pass, 121 fail", () => {
+    const lessonWithId = (id: string): Record<string, unknown> => ({ id, title: "L", steps: [{ id: "t1", type: "theory", body: "x" }] });
+    for (const count of [120, 121]) {
+      const id = astral.repeat(count);
+      expect(isSlugId(id)).toBe(validateLesson(lessonWithId(id)).valid);
+    }
+    expect(isSlugId(astral.repeat(120))).toBe(true);
+    expect(isSlugId(astral.repeat(121))).toBe(false);
+  });
 });
 
 describe("the rules entry stays free of ajv and the file system (engine#191)", () => {

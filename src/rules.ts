@@ -47,15 +47,19 @@ export { QUALITY_MINIMUMS, validateLessonQuality } from "./quality.js";
  *  here as a string so a consumer can check a slug without a schema
  *  validator. ``src/rules.test.ts`` pins it to the bundled schema. */
 export const SLUG_ID_PATTERN = "^[\\p{Ll}\\p{Nd}]+(-[\\p{Ll}\\p{Nd}]+)*$";
-/** The schema's ``$defs/SlugId`` ``maxLength``. */
+/** The schema's ``$defs/SlugId`` ``maxLength``, in characters (Unicode code
+ *  points, as JSON Schema counts them), not UTF-16 code units (engine#205). */
 export const SLUG_ID_MAX_LENGTH = 120;
 const SLUG_ID = new RegExp(SLUG_ID_PATTERN, "u");
 
 /** Whether ``value`` is a slug id as the schema's ``$defs/SlugId`` defines it:
  *  lowercase Unicode letters and digits in hyphen-separated runs, 1 to
- *  ``SLUG_ID_MAX_LENGTH`` characters. Anything that is not a string is not. */
+ *  ``SLUG_ID_MAX_LENGTH`` characters. Characters are code points, as the
+ *  schema counts them: a letter outside the Basic Multilingual Plane is one
+ *  character, although ``String.length`` counts it as two (engine#205).
+ *  Anything that is not a string is not. */
 export function isSlugId(value: unknown): boolean {
-  return typeof value === "string" && value.length <= SLUG_ID_MAX_LENGTH && SLUG_ID.test(value);
+  return typeof value === "string" && [...value].length <= SLUG_ID_MAX_LENGTH && SLUG_ID.test(value);
 }
 
 /** Count non-overlapping ``___`` markers (matches Python ``str.count('___')``). */

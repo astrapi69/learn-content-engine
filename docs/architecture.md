@@ -628,8 +628,13 @@ which the conditions acted before the damage instead of after it.
   schema shape layer already applies `SlugId` at all five places before the
   regex ran, so the regex could never fire; 35 cases (every rejection per
   place, "über-uns" and 120 characters accepted) pass against the old and the
-  new code. Which unit the 120 limit means stays open in engine#205; until it
-  is decided, aligning the two only makes two numbers agree.
+  new code. Which unit the 120 limit means was left open in engine#205, since
+  aligning the two without that decision only makes two numbers agree.
+- *Decided (engine#205)*: characters, as the schema counts them. The schema
+  is the contract, and JSON Schema cannot count UTF-16 units or bytes anyway;
+  `isSlugId` was the copy that drifted and now counts code points. The byte
+  limit of a file name is recorded as a known limit in
+  [slug ids](lesson-format.md#slug-ids), not as a rule: no id comes near it.
 
 ### Open items
 
