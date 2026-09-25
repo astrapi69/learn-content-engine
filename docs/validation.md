@@ -8,7 +8,7 @@ import { validateLesson, validateManifest } from "learn-content-engine";
 
 const result = validateLesson(JSON.parse(rawLessonJson));
 // result: { valid, errors[], warnings[] }
-// each issue: { path, message, id, severity: "error" | "warning", docAnchor }
+// each issue: { path, message, id, severity: "error" | "warning", docAnchor, params? }
 if (!result.valid) console.error(result.errors);
 if (result.warnings.length) console.warn(result.warnings);
 ```
@@ -16,7 +16,10 @@ if (result.warnings.length) console.warn(result.warnings);
 Neither function throws; both return a `ValidationResult`. `valid` is
 **errors-only**: warnings never block. Every issue carries a stable `id` and a
 `docAnchor`; the complete list of ids is the
-[rule catalog](lesson-format.md#rule-catalog). For an offline author workflow
+[rule catalog](lesson-format.md#rule-catalog). An issue whose message names a
+value (a term, a card id, a count) also carries it in `params`, so a consumer
+can word the problem in its own language
+([issue parameters](lesson-format.md#issue-parameters)). For an offline author workflow
 that surfaces both errors and warnings, use the
 [`learn-content-engine lint` CLI](lesson-format.md#linting).
 
@@ -133,9 +136,11 @@ const { valid, errors, warnings } = validateLessonRules(lesson); // same result 
   characters), for a consumer that needs the slug rule without a schema
   validator. `SLUG_ID_PATTERN` is the pattern string itself.
 - The entry imports neither ajv nor `node:*`; `src/rules.test.ts` keeps it that
-  way. Measured with esbuild on 2026-09-24 (minified, browser): about 21.6 kB,
-  8.3 kB gzip.
-  `validateLesson` alone is about 145 kB, most of it ajv, and it reads the
+  way. Measured with esbuild on 2026-09-25 (`dist/rules.js` bundled, minified,
+  browser): 22.9 kB, 8.8 kB gzip. The issue parameters of engine#201 added
+  1.2 kB to it (21.7 kB, 8.4 kB gzip, measured the same way before).
+  `validateLesson` alone is about 145 kB (measured on 2026-09-24 from an entry
+  importing only `validateLesson`), most of it ajv, and it reads the
   schema from the file system, which a browser does not have (engine#191).
 
 Why it exists: a consumer that re-implements a rule instead of calling it ends
@@ -144,12 +149,15 @@ up with a copy that drifts (see
 
 ## The error model
 
-Each issue is `{ path, message }`:
+Each issue is `{ path, message, id, severity, docAnchor, params? }` (the shape
+at the top of this page):
 
 - `path` is a JSON-pointer-ish location, e.g. `/steps/2/exercise` or
-  `/steps/2/exercise/card_ids`, or `/` for a root-level problem.
+  `/steps/2/exercise/card_ids/0`, or `/` for a root-level problem.
 - `message` is a human-readable reason. For a rejected unknown field the
   offending key is named, e.g. `must NOT have additional properties (surprise)`.
+- `params`, when present, holds the values the message names
+  ([issue parameters](lesson-format.md#issue-parameters)).
 
 ## Typical failures
 
@@ -172,7 +180,7 @@ An exercise referencing a card that does not exist (invalid input):
 // INVALID: no card with id "keopi" in the lesson's cards
 { "type": "word_tiles", "id": "w1", "prompt": "...",
   "card_ids": ["keopi"], "tiles": ["a", "b"] }
-// -> /steps/0/exercise/card_ids:
+// -> /steps/0/exercise/card_ids/0:
 //    exercise references unknown card 'keopi'
 ```
 

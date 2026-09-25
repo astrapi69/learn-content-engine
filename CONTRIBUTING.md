@@ -118,7 +118,11 @@ a **new `ExerciseType` now starts here**:
    schema change - update it in the same commit so the change is deliberate.
 2. Mirror the new type's cross-field rule in `src/rules.ts` (RED first: add a
    rejecting negative test, then implement) with `E-*`/`W-*` rule ids + catalog
-   rows.
+   rows. A message that names a value (a term, an id, a count) also passes it as
+   `params`: add a row to the "Issue parameters" table in
+   [`docs/lesson-format.md`](docs/lesson-format.md#issue-parameters) and a
+   triggering case to `src/issue-params.test.ts`. That test fails when a
+   message carries a value without params, or the table and the code disagree.
 3. Add a valid fixture under `src/__fixtures__/conformance/` and a tested
    example in [`docs/lesson-format.md`](docs/lesson-format.md) - the coverage
    assertion in `src/docs-examples.test.ts` expects one example per type/mode.
