@@ -48,11 +48,13 @@ coverage: ## Run Vitest with a v8 coverage report
 
 # ─── Schema types (canonical: engine authors the schema) ─────────────
 
-sync-types: ## Regenerate src/types/lesson-schema.generated.ts from schema/lesson.schema.json
+sync-types: ## Regenerate src/types/lesson-schema.generated.ts and src/schemas.generated.ts from schema/
 	node scripts/generate-lesson-types.mjs
+	node scripts/generate-schema-module.mjs
 
-sync-types-check: ## Exit non-zero if the generated lesson types drift from the schema
+sync-types-check: ## Exit non-zero if the generated lesson types or schema module drift from the schema
 	node scripts/generate-lesson-types.mjs --check
+	node scripts/generate-schema-module.mjs --check
 	node scripts/generate-schema-diagrams.mjs --check
 	node scripts/check-diagram-syntax.mjs
 

@@ -23,40 +23,31 @@
  * without drifting. The rule catalog lives in ``docs/lesson-format.md``.
  */
 
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-
 import { Ajv2020 } from "ajv/dist/2020.js";
 import type { ErrorObject, ValidateFunction } from "ajv";
 
 import type { ExtensionRegistry } from "./extensions.js";
 import { err, type ValidationIssue, type ValidationResult } from "./issues.js";
 import { normalizeManifestAliases, validateLessonRules, validateManifestRules } from "./rules.js";
+import { CONTENT_MANIFEST_SCHEMA, LESSON_SCHEMA } from "./schemas.generated.js";
 import type { Lesson } from "./types/lesson-schema.generated.js";
 
 export type { ValidationIssue, ValidationParams, ValidationParamValue, ValidationResult, ValidationSeverity } from "./issues.js";
 export { warn } from "./issues.js";
 export { unusedCardIds } from "./rules.js";
 
-const loadSchema = (fileName: string): object =>
-  JSON.parse(
-    readFileSync(fileURLToPath(new URL(`../schema/${fileName}`, import.meta.url)), "utf8"),
-  ) as object;
-
 // strict:false so ajv tolerates the schema's ``x-schema-version`` annotation
 // keyword; allErrors so a single call surfaces every problem at once.
 const ajv = new Ajv2020({ allErrors: true, strict: false });
 
-// Compiled lazily on the FIRST validate call, never at import time: loadSchema
-// reads from node:fs, which does not exist in a browser. A browser consumer
-// that only parses must be able to import the entry (a dev bundler executes it
-// eagerly, unlike a tree-shaken production build) - engine#59.
+// The schemas are modules (schemas.generated.ts), not files read at run time,
+// so a bundler copies nothing and the validators run in a browser (engine#203).
+// They still compile lazily, on the FIRST validate call: an import that only
+// parses pays nothing for ajv's compilation (engine#59).
 let structuralLessonCache: ValidateFunction | null = null;
 let structuralManifestCache: ValidateFunction | null = null;
-const structuralLesson = (): ValidateFunction =>
-  (structuralLessonCache ??= ajv.compile(loadSchema("lesson.schema.json")));
-const structuralManifest = (): ValidateFunction =>
-  (structuralManifestCache ??= ajv.compile(loadSchema("content-manifest.schema.json")));
+const structuralLesson = (): ValidateFunction => (structuralLessonCache ??= ajv.compile(LESSON_SCHEMA));
+const structuralManifest = (): ValidateFunction => (structuralManifestCache ??= ajv.compile(CONTENT_MANIFEST_SCHEMA));
 
 /** Map ajv's error objects to error issues, naming the offending key for
  *  ``additionalProperties`` rejections so the message is actionable. */
