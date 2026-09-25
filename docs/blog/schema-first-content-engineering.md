@@ -185,7 +185,7 @@ Four things this earned in practice:
 A few things are deliberately unfinished, and tracked as issues rather than carried as quiet debt:
 
 - **Publishing the extension validators.** Today the content gate is permissive: it checks that a declared extension is on the allowlist but does not validate the payload; that correctness stays the consumer's job. Publishing the consumer's payload validators so the gate can reuse them would tighten this. It's an improvement, not a blocker; deliberately deferred for now.
-- **Pure test-only sets.** Content repos enforce quality minima (at least five exercises, two exercise types, one theory step per lesson) which a pure graded-quiz "test" set can't meet. Whether to relax those minima for test-only lessons is an open, conscious quality-floor decision.
+- **Pure test-only sets.** Content repos enforce quality minima (at least five exercises, two exercise types, one theory step per lesson) which a pure graded-quiz "test" set can't meet. Whether to relax those minima for test-only lessons was an open, conscious quality-floor decision. *Update (engine 0.31.0):* decided in engine#185. The minima now live in the engine (`validateLessonQuality`), and a lesson declares what it is for: `purpose: "quiz"` drops the exercise-type minimum, `purpose: "bridge"` the exercise minimum.
 
 > **A note on honesty.** These are decisions postponed on purpose, each with a reason written down, not oversights discovered later. The difference matters: tracked "later" is a plan; untracked "later" is debt wearing a disguise.
 
