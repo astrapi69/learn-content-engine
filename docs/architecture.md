@@ -505,14 +505,15 @@ id rules on engine#202's probe lesson). The differences sit next to them
 | Parametric `variables` | `E-VAR-*` | not checked, deliberately: the backend only accepts the field |
 | `metadata.retired_ids` not a list of strings | `E-RETIRED-IDS-TYPE` | not checked |
 | An exercise id twice in one lesson | `E-EXERCISE-ID-DUP` (engine#202) | not checked: the probe lesson with two `ex-a` passes |
+| Shape of a language code, on the set and on the lesson | `E-LANG-TAG` (engine#190: a well-formed BCP 47 tag) | error unless `^[a-z]{2,3}(-[A-Za-z0-9]{2,8})?$`: rejects `zh-Hant-TW`, which the engine accepts, and `EN`, on which the engine only warns |
 | `example_url` is an http(s) URL | none | error, case-sensitive: `HTTPS://` fails |
-| Shape of a language code, on the set and on the lesson | none | error unless `^[a-z]{2,3}(-[A-Za-z0-9]{2,8})?$` |
 | A set's `id` and `tags` | none; plain strings in the manifest schema | error unless an ASCII slug: `währung-a1` and the tag `präsenz` fail |
 | A set's `version` semver-shaped; set ids unique in a manifest | none | error |
 
 The first six rows are engine errors the backend does not apply; it saves and
-serves lessons that carry them. The other rows are rules the engine does not
-have. Each can be answered from a lesson or a manifest alone, so by the
+serves lessons that carry them. The seventh is a rule both apply in different
+shapes; engine#190 decided the engine's, and the backend's is the one to
+replace. The other rows are rules the engine does not have. Each can be answered from a lesson or a manifest alone, so by the
 assignment test it belongs in the engine, and the backend's version is one of
 the versions to measure when it moves. No real content hits a row today: the
 backend's models accept all 63 manifests and 631 lessons of the ten content
