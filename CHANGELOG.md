@@ -5,7 +5,12 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
-## [Unreleased]
+## [0.33.0] - 2026-09-25
+
+Schema 1.18, a description-only change (what `bridge` lifts; two line breaks
+restored). New checks: language tags as `E-LANG-TAG` (0 hits across the ten
+content repositories) and four warnings for language pairs, set titles and
+card-back scripts; `isSlugId` counts characters like the schema.
 
 ### `isSlugId` counts characters, as the schema does (engine#205)
 
