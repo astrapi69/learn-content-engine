@@ -18,6 +18,21 @@ points. No content is affected (the longest lesson id is 69 bytes, Latin).
 The byte limit of a file name (ids become `lessons/<id>.json`) is documented
 as a known limit under [slug ids](docs/lesson-format.md#slug-ids).
 
+### A bridge lesson has no exercise-type minimum either (engine#185, schema 1.18)
+
+`purpose: "bridge"` lifted only the exercise minimum, so a bridge lesson of
+theory alone, or with exercises of one type, still fell short on
+`E-QUALITY-TYPES`. Decided (owner, 2026-09-25): a lesson without an
+assessment intent needs neither count nor variety, so `bridge` now lifts both.
+The theory minimum and the per-exercise minimums still apply. This only
+relaxes: nothing that passed before falls short now.
+
+Schema 1.18 changes no field: the description of `purpose` says what `bridge`
+lifts, and two descriptions get back the line breaks the em dash rewrite of
+1.16 had swallowed (the root `Lesson` and `InlineExample`, engine#182). The
+manifest schema, `quality-rules.json` and `grading-presets.json` move their
+version in lockstep.
+
 ## [0.32.0] - 2026-09-25
 
 No schema change: `x-schema-version` stays 1.17. Three new errors

@@ -108,7 +108,7 @@ export type EstimatedMinutes = number;
  */
 export type SlugId1 = string;
 /**
- * What the lesson is for (schema 1.17, engine#185). ``practice`` (the default when absent): a lesson that teaches and drills; every quality minimum applies. ``bridge``: an opening, a part divider, an interlude or a closing that carries theory and leads over, without an assessment intent; no minimum number of exercises. ``quiz``: a check of what was taught, often in one exercise type; no minimum number of exercise types. Read by the quality check (``validateLessonQuality``), never by ``validateLesson``: it does not change whether a lesson is valid.
+ * What the lesson is for (schema 1.17, engine#185). ``practice`` (the default when absent): a lesson that teaches and drills; every quality minimum applies. ``bridge``: an opening, a part divider, an interlude or a closing that carries theory and leads over, without an assessment intent; no minimum number of exercises or exercise types (schema 1.18). ``quiz``: a check of what was taught, often in one exercise type; no minimum number of exercise types. Read by the quality check (``validateLessonQuality``), never by ``validateLesson``: it does not change whether a lesson is valid.
  */
 export type LessonPurpose = "practice" | "bridge" | "quiz";
 /**
@@ -390,7 +390,8 @@ export type VariationOf = string | null;
 /**
  * One lesson in a content set (Phase 43 / 2B-lesson).
  *
- * A lesson is the unit a user works through end-to-end - typically 5-15 minutes of content. The viewer (Phase 44)
+ * A lesson is the unit a user works through end-to-end -
+ * typically 5-15 minutes of content. The viewer (Phase 44)
  * walks the steps in order; SRS (Phase 46) tracks the
  * cards referenced by each exercise.
  *
@@ -518,7 +519,8 @@ export interface LessonStep {
 /**
  * One inline worked example on a theory step or exercise (schema v1.5).
  *
- * An inline example carries REAL content the learner reads in place - a sample sentence (language lessons) or a code snippet with syntax
+ * An inline example carries REAL content the learner reads in place -
+ * a sample sentence (language lessons) or a code snippet with syntax
  * highlighting (programming lessons). This is DISTINCT from
  * ``LessonStep.example_url`` (#139 / schema v1.4), which links OUT to an
  * external illustration: ``example_url`` is the LINK variant,

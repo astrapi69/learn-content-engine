@@ -77,7 +77,7 @@ inherited by the set's lessons unless a lesson declares its own.
 
 ## Schema-version policy (additive)
 
-The lesson schema is versioned (`x-schema-version`, currently `1.17`) and evolves
+The lesson schema is versioned (`x-schema-version`, currently `1.18`) and evolves
 **additively**: new fields are optional, so **older content stays valid under a
 newer schema**. For example, v1.5 added the inline `examples` field; a v1.4
 lesson without `examples` validates unchanged under v1.5. v1.6 added the native
@@ -94,7 +94,9 @@ all: it rewrote the em dashes in the schema descriptions, which the counter
 records because it counts edits to the schema FILE, not to its field set.
 v1.17 adds a field again: a lesson's optional `purpose` (`practice`, `bridge`,
 `quiz`), which selects the [quality minimums](lesson-format.md#quality-minimums)
-and never changes whether a lesson is valid.
+and never changes whether a lesson is valid. v1.18 changes no field: it
+widens what `bridge` lifts in the description of `purpose` and restores two
+line breaks the em dash rewrite of v1.16 had swallowed (engine#182).
 
 Additive evolution is also why moving a pin never feels urgent, and that
 instinct is only partly right. It holds for fields: content that does not use a
