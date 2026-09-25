@@ -22,6 +22,8 @@ export interface VariableIssue {
   id: string;
   path: string;
   message: string;
+  /** The values the message interpolates (engine#201). */
+  params?: Readonly<Record<string, string | number>>;
 }
 
 export interface VariableReference {
@@ -186,8 +188,14 @@ interface DeclaredVariable {
 /** The semantic rules over one exercise's ``variables`` and its references. */
 export function variableIssues(exercise: object, path: string): VariableIssue[] {
   const issues: VariableIssue[] = [];
-  const error = (id: string, at: string, message: string): void => {
-    issues.push({ severity: "error", id, path: at, message });
+  // One issue per (id, path, params): a name repeated in one expression or one
+  // field is one problem, not one per occurrence (engine#201).
+  const reported = new Set<string>();
+  const error = (id: string, at: string, message: string, params: Record<string, string | number>): void => {
+    const key = JSON.stringify([id, at, params]);
+    if (reported.has(key)) return;
+    reported.add(key);
+    issues.push({ severity: "error", id, path: at, message, params });
   };
   const declaredRaw = (exercise as { variables?: unknown }).variables;
   const declared: DeclaredVariable[] = Array.isArray(declaredRaw) ? (declaredRaw as DeclaredVariable[]) : [];
@@ -205,22 +213,35 @@ export function variableIssues(exercise: object, path: string): VariableIssue[] 
     const hasExpression = typeof variable.expression === "string";
 
     if (hasExpression && hasRangeField) {
-      error("E-VAR-KIND", at, `variable '${variable.name}' is either a range (min/max/step) or an expression, not both`);
+      error("E-VAR-KIND", at, `variable '${variable.name}' is either a range (min/max/step) or an expression, not both`, {
+        name: variable.name,
+        reason: "both",
+      });
     } else if (!hasExpression && !rangeComplete) {
-      error("E-VAR-KIND", at, `variable '${variable.name}' needs either 'min' and 'max' (sampled) or an 'expression' (computed)`);
+      error("E-VAR-KIND", at, `variable '${variable.name}' needs either 'min' and 'max' (sampled) or an 'expression' (computed)`, {
+        name: variable.name,
+        reason: "neither",
+      });
     }
     if (known.has(variable.name)) {
-      error("E-VAR-DUP", at, `variable '${variable.name}' is declared more than once`);
+      error("E-VAR-DUP", at, `variable '${variable.name}' is declared more than once`, { name: variable.name });
     }
     if (rangeComplete && !hasExpression && typeof variable.min === "number" && typeof variable.max === "number") {
       if (variable.min >= variable.max) {
-        error("E-VAR-RANGE", at, `variable '${variable.name}': min (${variable.min}) must be below max (${variable.max})`);
+        error("E-VAR-RANGE", at, `variable '${variable.name}': min (${variable.min}) must be below max (${variable.max})`, {
+          name: variable.name,
+          min: variable.min,
+          max: variable.max,
+        });
       }
     }
     if (hasExpression) {
       const parsed = parseVariableExpression(variable.expression as string);
       if ("error" in parsed) {
-        error("E-VAR-EXPR", at, `variable '${variable.name}': expression does not parse (${parsed.error})`);
+        error("E-VAR-EXPR", at, `variable '${variable.name}': expression does not parse (${parsed.error})`, {
+          name: variable.name,
+          parseError: parsed.error,
+        });
       } else {
         for (const name of parsed.names) {
           if (known.has(name)) used.add(name);
@@ -229,6 +250,7 @@ export function variableIssues(exercise: object, path: string): VariableIssue[] 
               "E-VAR-UNDEFINED",
               at,
               `variable '${variable.name}' uses '${name}', which is not declared before it (an expression may only use earlier variables)`,
+              { name, site: "expression", variable: variable.name },
             );
           }
         }
@@ -240,23 +262,29 @@ export function variableIssues(exercise: object, path: string): VariableIssue[] 
   for (const reference of collectVariableReferences(exercise)) {
     const at = `${path}${reference.path}`;
     if (reference.name === null) {
-      error("E-VAR-REF", at, `'{{${reference.raw}}}' is not a variable name; put the expression into a computed variable and reference that`);
+      error("E-VAR-REF", at, `'{{${reference.raw}}}' is not a variable name; put the expression into a computed variable and reference that`, {
+        raw: reference.raw ?? "",
+      });
     } else if (known.has(reference.name)) {
       used.add(reference.name);
     } else {
-      error("E-VAR-UNDEFINED", at, `'{{${reference.name}}}' references a variable the exercise does not declare`);
+      error("E-VAR-UNDEFINED", at, `'{{${reference.name}}}' references a variable the exercise does not declare`, {
+        name: reference.name,
+        site: "reference",
+      });
     }
   }
 
-  for (const variable of declared) {
+  declared.forEach((variable, index) => {
     if (!used.has(variable.name)) {
       issues.push({
         severity: "warning",
         id: "W-VAR-UNUSED",
-        path: `${path}/variables`,
+        path: `${path}/variables/${index}`,
         message: `variable '${variable.name}' is declared but no field references it and no later expression uses it`,
+        params: { name: variable.name },
       });
     }
-  }
+  });
   return issues;
 }

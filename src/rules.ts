@@ -19,8 +19,16 @@
  */
 import { KNOWN_CONTENT_DOMAINS, isKnownContentDomain, isKnownLevel } from "./content-domains.js";
 import type { ExtensionRegistry } from "./extensions.js";
-import { describeInvisibleChars, findInvisibleChars } from "./invisible-chars.js";
-import { err, makeIssue, splitIssues, warn, type ValidationIssue, type ValidationResult } from "./issues.js";
+import { describeInvisibleChars, findInvisibleChars, type InvisibleCharFinding } from "./invisible-chars.js";
+import {
+  err,
+  makeIssue,
+  splitIssues,
+  warn,
+  type ValidationIssue,
+  type ValidationParamValue,
+  type ValidationResult,
+} from "./issues.js";
 import { lessonIdOrderingIssues } from "./set-ordering.js";
 import { collectStableIds } from "./stable-ids.js";
 import type { Exercise, Lesson, LessonStep } from "./types/lesson-schema.generated.js";
@@ -125,6 +133,7 @@ function checkMatching(exercise: Exercise, path: string, issues: ValidationIssue
           path,
           `MATCHING left value '${term}' is repeated at positions ${positions.join(", ")}; each left term must be unique (case-insensitive) so the pairing is solvable`,
           "matching",
+          { term, positions },
         ),
       );
     }
@@ -192,20 +201,21 @@ function checkWordTiles(exercise: Exercise, path: string, issues: ValidationIssu
   }
   if (!exercise.accept_orderings) return;
   const expected = tiles.map((_tile, index) => index);
-  for (const ordering of exercise.accept_orderings) {
+  exercise.accept_orderings.forEach((ordering, orderingIndex) => {
     const sorted = [...ordering].sort((a, b) => a - b);
     const isPermutation = sorted.length === expected.length && sorted.every((value, index) => value === expected[index]);
     if (!isPermutation) {
       issues.push(
         err(
           "E-TILES-ORDERING",
-          path,
+          `${path}/accept_orderings/${orderingIndex}`,
           `accept_orderings entry ${JSON.stringify(ordering)} must be a permutation of [0..${tiles.length - 1}]`,
           "word_tiles",
+          { ordering, maxIndex: tiles.length - 1 },
         ),
       );
     }
-  }
+  });
 }
 
 function checkClozeMultiselect(exercise: Exercise, path: string, issues: ValidationIssue[]): void {
@@ -228,6 +238,7 @@ function checkClozeMultiselect(exercise: Exercise, path: string, issues: Validat
         path,
         `CLOZE multiselect 'accept' and 'distractors' must be disjoint; shared option(s): ${JSON.stringify(overlap)}`,
         "cloze",
+        { shared: overlap },
       ),
     );
   }
@@ -256,6 +267,7 @@ function checkCloze(exercise: Exercise, path: string, issues: ValidationIssue[])
         path,
         `CLOZE marker count mismatch: sentence has ${markers} '___' markers but blanks has ${blanks.length} entries`,
         "cloze",
+        { markers, blanks: blanks.length },
       ),
     );
   }
@@ -272,6 +284,7 @@ function checkCloze(exercise: Exercise, path: string, issues: ValidationIssue[])
         `${path}/sentence`,
         `the sentence carries nothing but its blanks, so the exercise is a question with an answer, not a gap text; the native '${nativeType}' type expresses it directly and a consumer renders it as such (a cloze renders a gap for the learner to read around)`,
         "cloze",
+        { nativeType },
       ),
     );
   }
@@ -356,14 +369,14 @@ function checkExtExercise(exercise: Exercise, path: string, ext: ExtContext, iss
   const requiredMajor = ext.required.get(type);
   if (requiredMajor === undefined) {
     issues.push(
-      err("E-EXT-UNDECLARED", path, `exercise uses extension type '${type}' but the lesson does not declare it in 'requires_extensions'`, "extensions"),
+      err("E-EXT-UNDECLARED", path, `exercise uses extension type '${type}' but the lesson does not declare it in 'requires_extensions'`, "extensions", { type }),
     );
     return;
   }
   const extension = ext.registry.find((candidate) => candidate.type === type && candidate.major === requiredMajor);
   if (!extension) {
     issues.push(
-      err("E-EXT-UNSUPPORTED", path, `no registered extension for '${type}@${requiredMajor}'; the consumer cannot render this lesson`, "extensions"),
+      err("E-EXT-UNSUPPORTED", path, `no registered extension for '${type}@${requiredMajor}'; the consumer cannot render this lesson`, "extensions", { type, major: requiredMajor }),
     );
     return;
   }
@@ -394,14 +407,14 @@ function checkExercise(
   ext: ExtContext,
   issues: ValidationIssue[],
 ): void {
-  for (const cardId of exercise.card_ids ?? []) {
+  (exercise.card_ids ?? []).forEach((cardId, cardIndex) => {
     if (!knownCardIds.has(cardId)) {
-      issues.push(err("E-CARD-REF", `${path}/card_ids`, `exercise references unknown card '${cardId}'`, "cards"));
+      issues.push(err("E-CARD-REF", `${path}/card_ids/${cardIndex}`, `exercise references unknown card '${cardId}'`, "cards", { cardId }));
     }
-  }
+  });
   checkHintLengths(exercise, path, issues);
   for (const issue of variableIssues(exercise, path)) {
-    issues.push(makeIssue(issue.severity, issue.id, issue.path, issue.message, "variables-parametric-exercises"));
+    issues.push(makeIssue(issue.severity, issue.id, issue.path, issue.message, "variables-parametric-exercises", issue.params));
   }
   if (isExtType(exercise.type)) {
     checkExtExercise(exercise, path, ext, issues);
@@ -448,6 +461,7 @@ function checkPromptDuplication(step: LessonStep, exercise: Exercise, path: stri
         path,
         "prompt equals the exercise 'sentence' (compared after trimming and Unicode NFC normalisation); consumers show the prompt as the heading and the sentence as the question, so the learner reads the same text twice - phrase the prompt as the instruction and keep the question in 'sentence'",
         "rule-catalog",
+        { field: "sentence" },
       ),
     );
   }
@@ -458,6 +472,7 @@ function checkPromptDuplication(step: LessonStep, exercise: Exercise, path: stri
         path,
         "prompt equals the step 'title' (compared after trimming and Unicode NFC normalisation); consumers show the title in the step list or header and the prompt as the heading, so the learner reads the same text twice - shorten the title to a heading or phrase the prompt as the concrete task",
         "rule-catalog",
+        { field: "title" },
       ),
     );
   }
@@ -492,8 +507,26 @@ function checkUnusedCards(lesson: Lesson, issues: ValidationIssue[]): void {
       "/cards",
       `${unused.length} ${noun} defined but never referenced by an exercise: ${unused.join(", ")}`,
       "cards",
+      { count: unused.length, cardIds: unused },
     ),
   );
+}
+
+/** The values of W-INVISIBLE-CHAR, from the same findings the message is
+ *  built from: every distinct codepoint with its name (numeric order), the
+ *  occurrence count and every distinct path (the message lists five). */
+function invisibleCharParams(findings: readonly InvisibleCharFinding[]): Record<string, ValidationParamValue> {
+  const byCodepoint = new Map<string, string>();
+  for (const finding of findings) byCodepoint.set(finding.codepoint, finding.name);
+  const sorted = [...byCodepoint].sort(
+    ([left], [right]) => Number.parseInt(left.slice(2), 16) - Number.parseInt(right.slice(2), 16),
+  );
+  return {
+    codepoints: sorted.map(([codepoint]) => codepoint),
+    names: sorted.map(([, name]) => name),
+    occurrences: findings.length,
+    paths: [...new Set(findings.map((finding) => finding.path))],
+  };
 }
 
 /** Warn about invisible Unicode characters anywhere in the lesson's text
@@ -503,8 +536,9 @@ function checkUnusedCards(lesson: Lesson, issues: ValidationIssue[]): void {
  *  (#49). Never an error - the content is structurally valid, it just carries
  *  characters the author cannot see. */
 function checkInvisibleChars(lesson: Lesson, issues: ValidationIssue[]): void {
-  const description = describeInvisibleChars(findInvisibleChars(lesson));
-  if (description) issues.push(warn("W-INVISIBLE-CHAR", "", description, "author-lints"));
+  const findings = findInvisibleChars(lesson);
+  const description = describeInvisibleChars(findings);
+  if (description) issues.push(warn("W-INVISIBLE-CHAR", "", description, "author-lints", invisibleCharParams(findings)));
 }
 
 /** Semantic + lint pass. Assumes the input is already structurally valid (so the
@@ -540,6 +574,11 @@ function checkStableIdDuplicates(lesson: Lesson, issues: ValidationIssue[]): voi
         "/",
         `stable_id '${duplicate.stableId}' is used more than once in this lesson (${where}); a stable_id identifies exactly one element`,
         "rule-catalog",
+        {
+          stableId: duplicate.stableId,
+          elementKinds: duplicate.locations.map((location) => location.kind),
+          elementIds: duplicate.locations.map((location) => location.elementId),
+        },
       ),
     );
   }
@@ -690,6 +729,7 @@ function checkSetEvaluations(manifest: unknown): ValidationIssue[] {
             `${path}/grades`,
             `the lowest grade row starts at ${floor} percent, so a run below it earns no grade and the consumer has to invent a label the author never wrote; add a row at 0 unless "no grade down here" is the intent`,
             "evaluation",
+            { floor },
           ),
         );
       }
@@ -720,6 +760,7 @@ function checkRetiredIdsDuplicates(
       "/metadata/retired_ids",
       `retired_ids lists ${[...duplicateIds].map((entry) => `'${entry}'`).join(", ")} more than once; a retirement is declared once - the duplicate usually hides a mis-edited entry`,
       "stable-identity-stable_id",
+      { retiredIds: [...duplicateIds] },
     ),
   ];
 }
@@ -735,6 +776,7 @@ function unknownDomainIssues(domain: string | undefined, path: string): Validati
       path,
       `domain '${domain}' is outside the known vocabulary (${KNOWN_CONTENT_DOMAINS.join(", ")}); it stays valid ('other' contract), but consumers cannot group it with existing subjects - prefer a known domain or accept the fragmentation deliberately`,
       "content-domains",
+      { domain: domain ?? "" },
     ),
   ];
 }
@@ -761,6 +803,7 @@ function checkManifestDomainVocabulary(normalized: unknown): ValidationIssue[] {
           `/sets/${setIndex}/level`,
           `level '${setEntry.level}' is neither a CEFR band (A1..C2) nor, for a non-language set, the explicit 'none' sentinel; a level facet would offer it as a category`,
           "content-domains",
+          { level: setEntry.level },
         ),
       );
     }

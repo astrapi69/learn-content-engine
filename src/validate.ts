@@ -34,7 +34,7 @@ import { err, type ValidationIssue, type ValidationResult } from "./issues.js";
 import { normalizeManifestAliases, validateLessonRules, validateManifestRules } from "./rules.js";
 import type { Lesson } from "./types/lesson-schema.generated.js";
 
-export type { ValidationIssue, ValidationResult, ValidationSeverity } from "./issues.js";
+export type { ValidationIssue, ValidationParams, ValidationParamValue, ValidationResult, ValidationSeverity } from "./issues.js";
 export { warn } from "./issues.js";
 export { unusedCardIds } from "./rules.js";
 
@@ -65,7 +65,9 @@ function toStructuralIssues(errors: ErrorObject[]): ValidationIssue[] {
     const params = error.params as { additionalProperty?: unknown };
     const path = error.instancePath || "/";
     if (typeof params.additionalProperty === "string") {
-      return err("E-UNKNOWN-FIELD", path, `${error.message} (${params.additionalProperty})`, "rule-catalog");
+      return err("E-UNKNOWN-FIELD", path, `${error.message} (${params.additionalProperty})`, "rule-catalog", {
+        field: params.additionalProperty,
+      });
     }
     return err("E-SCHEMA", path, `${error.message}`, "rule-catalog");
   });

@@ -50,6 +50,7 @@ function checkMixedPrefix(lessonIds: string[], issues: ValidationIssue[]): void 
       `some lesson ids carry an NN- ordering prefix and some do not (${unprefixed.join(", ")}); ` +
         "consumers sort ids lexicographically, so the unprefixed ids land wherever their first character falls",
       "lesson-ordering",
+      { unprefixedIds: unprefixed },
     ),
   );
 }
@@ -69,6 +70,7 @@ function checkPrefixWidth(lessonIds: string[], issues: ValidationIssue[]): void 
       `NN- ordering prefixes have different digit widths (${sortedWidths}); ` +
         "lexicographic sorting puts '10-' before '2-', so zero-pad every prefix to one fixed width",
       "lesson-ordering",
+      { widths: [...widths].sort((a, b) => a - b) },
     ),
   );
 }
@@ -85,6 +87,7 @@ function checkNumericDivergence(lessonIds: string[], issues: ValidationIssue[]):
         `the display order diverges from the numeric reading: consumers sort '${lexicographic[i]!}' before '${numericAware[i]!}'; ` +
           "zero-pad the embedded numbers to a fixed width",
         "lesson-ordering",
+        { displayedFirst: lexicographic[i]!, numericFirst: numericAware[i]! },
       ),
     );
     return;
