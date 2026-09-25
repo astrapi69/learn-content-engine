@@ -149,9 +149,11 @@ const { valid, errors, warnings } = validateLessonRules(lesson); // same result 
   0.9 kB (24.0 kB, 9.2 kB gzip before), the quality minimums of engine#185
   1.1 kB (22.9 kB, 8.8 kB gzip before), the issue parameters of engine#201
   1.2 kB (21.7 kB, 8.4 kB gzip before that), all measured the same way.
-  `validateLesson` alone is about 145 kB (measured on 2026-09-24 from an entry
-  importing only `validateLesson`), most of it ajv, and it reads the
-  schema from the file system, which a browser does not have (engine#191).
+  `validateLesson` alone is about 152 kB (46.0 kB gzip, measured the same way
+  on 2026-09-25 from an entry importing only `validateLesson`), most of it
+  ajv. Since engine#203 it carries the two schemas as a module instead of
+  reading them from the file system, so it runs in a browser too; the 145 kB
+  measured on 2026-09-24 did not count the schemas, which it read at run time.
 
 Why it exists: a consumer that re-implements a rule instead of calling it ends
 up with a copy that drifts (see

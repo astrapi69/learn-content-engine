@@ -26,6 +26,33 @@ A new error can turn valid content red. Measured with this build over the 631
 lessons on `origin/main` of the ten content repositories: 0 hits; a seeded
 duplicate in a real lesson is found in all three namespaces.
 
+### No schema file in a consumer's build, and `validateLesson` runs in a browser (engine#203)
+
+The structural layer read `schema/*.json` at run time through
+`new URL(`../schema/${fileName}`, import.meta.url)` and `node:fs`. Vite turns
+such a URL into a lookup over every file in `schema/` and copied all of them
+into every build that imported the package root, parse-only builds included,
+and a browser could not run `validateLesson` at all (no file system). The two
+schemas are now a generated module, `src/schemas.generated.ts` (`make
+sync-types` writes it, `sync-types-check` guards it), without their annotation
+keywords (`description`, `title`, `$comment`), which never change what a schema
+accepts; a test compiles both forms and compares their verdicts on every
+conformance fixture and on negative probes. The JSON files stay the authored
+source and still ship.
+
+Measured with Vite 8.3.0 (the reference app's version), one import per build:
+
+| Import | JS before | JS after | Schema files before | after |
+|---|---|---|---|---|
+| `parseLesson` from the root | 30,482 B | 30,482 B | 146,976 B (3 files) | none |
+| the root, nothing used | 670 B | 670 B | 146,976 B (3 files) | none |
+| `validateLesson` from the root | 151,294 B | 158,704 B | 146,976 B (3 files) | none |
+| `validateLessonRules` from `/rules` | 19,334 B | 19,334 B | none | none |
+
+The `node:fs` / `node:url` build warnings are gone (2 before, 0 after), and the
+built `validateLesson` now validates in a browser-like run, where it threw a
+`TypeError` before.
+
 ## [0.31.0] - 2026-09-25
 
 Schema 1.17: one additive lesson field, `purpose`. Every manifest and lesson

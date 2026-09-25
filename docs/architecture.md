@@ -452,9 +452,10 @@ semantic rules alone, `learn-content-engine/rules` (engine#191): no ajv, no
 (24.0 kB before them, 22.9 kB before the quality minimums of engine#185,
 21.7 kB before the issue parameters of engine#201; `dist/rules.js` bundled
 with esbuild, measured 2026-09-25).
-That figure counts the entry's JavaScript; a
-consumer that still imports parse functions from the package root gets 146 kB
-of schema files copied into a Vite build that nothing reads (engine#203). The
+Until engine#203, a consumer that imported parse functions from the package
+root also got 146 kB of schema files copied into its Vite build that nothing
+read; the structural layer now takes the schemas from a module, and a
+parse-only build carries no schema at all. The
 entry removes the reason for the frontend's copies; the app has not switched
 yet. It does not reach the backend's copy (next subsection).
 

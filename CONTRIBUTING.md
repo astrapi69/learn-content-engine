@@ -46,9 +46,11 @@ The `schema/*.json` artifacts are the **authored canonical source** (this engine
 holds schema authority as of v0.6.0); edit them deliberately - the frozen byte
 baseline (`src/schema-baseline.test.ts`) guards against accidental content drift,
 and consumers re-pin. See [Schema authority](README.md#schema-authority).
-`src/types/lesson-schema.generated.ts` is **generated** from the schema
-(its header says `DO NOT EDIT`); do not hand-edit it - regenerate with
-`make sync-types`; the drift check runs in `release-check` + CI.
+`src/types/lesson-schema.generated.ts` and `src/schemas.generated.ts` (the
+two schemas as modules for the structural layer, without their annotations,
+engine#203) are **generated** from the schema (their headers say `DO NOT
+EDIT`); do not hand-edit them - regenerate with `make sync-types`; the drift
+check runs in `release-check` + CI.
 `schema/quality-rules.json` has a twin in code, `QUALITY_MINIMUMS` in
 `src/quality.ts` (the `/rules` entry cannot read JSON from the file system):
 change a minimum in both, `src/quality.test.ts` fails when they differ.
