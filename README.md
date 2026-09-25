@@ -12,7 +12,7 @@ network, storage, or UI code - you supply the bytes and keep fetch +
 persistence. The bundled, strict JSON-Schema makes it a self-contained **format
 reference**: you can author and validate lessons without the application the
 format originated in ([Adaptive Learner](https://github.com/astrapi69/adaptive-learner)).
-Tracks the lesson schema, currently **v1.16**.
+Tracks the lesson schema, currently **v1.17**.
 
 ## Install
 
@@ -119,6 +119,8 @@ The gap analysis behind this list is
 | `asContentSetBook` | fn | project a manifest book block → `ContentSetBook \| null` |
 | `validateLesson` | fn | validate a lesson against the bundled schema + semantic rules → `ValidationResult` |
 | `validateManifest` | fn | validate a manifest against the bundled schema (legacy alias normalized) |
+| `validateLessonQuality` | fn | check a shape-valid lesson against the quality minimums, keyed to its `purpose` (`practice`, `bridge`, `quiz`) → `ValidationResult` of `E-QUALITY-*` shortfalls; a publication threshold, not validity ([Quality minimums](docs/lesson-format.md#quality-minimums)) |
+| `QUALITY_MINIMUMS` | const | the numbers of `schema/quality-rules.json` that `validateLessonQuality` applies |
 | `collectStableIds` | fn | set-wide `stable_id` view over several lessons: total count + duplicates with locations (the cross-lesson half the schema cannot see) |
 | `buildStableIdInventory`, `compareStableIdInventories`, `formatStabilityResult` | fn | the pure core of the shipped `check-stable-ids` gate: published-state vs head, violations V1-V6 (V5/V6 read each tree's declared `retired_ids`, engine#131) |
 | `computeStableIdCoverage`, `gateStableIdCoverage`, `formatCoverageResult` | fn | the pure core of the shipped `check-stable-id-coverage` gate: how many listed sets are fully minted, judged against the repo-local baseline |
@@ -140,18 +142,19 @@ The gap analysis behind this list is
 | `ValidationResult`, `ValidationIssue`, `ValidationSeverity`, `ValidationParams`, `ValidationParamValue` | types | the `validate*` return shape (`{ valid, errors[], warnings[] }`), its issue-severity enum, and the optional `params` an issue carries when its message names a value |
 | `ExerciseExtension`, `ExtensionRegistry` | types | the `ext:` extension registry contract (schema 1.7, see [Extensions](docs/extensions.md)) |
 | `LessonSetContext`, `LessonSourceAdapter`, `ParsedManifest`, `ParsedSet`, `ParsedSetAsset`, `ParsedSetBook` | types | adapter + manifest surface |
-| `Card`, `CardTokenRole`, `ClozeBlank`, `Direction`, `Exercise`, `ExerciseType`, `InlineExample`, `Lesson`, `LessonResource`, `LessonStep`, `MediaType`, `Pair`, `PictureImage`, `StepType`, `TokenRole` | types | the underlying generated schema element types (one per `schema/lesson.schema.json` `$defs` entry `ContentLesson*` wraps) |
+| `Card`, `CardTokenRole`, `ClozeBlank`, `Direction`, `Exercise`, `ExerciseType`, `InlineExample`, `Lesson`, `LessonPurpose`, `LessonResource`, `LessonStep`, `MediaType`, `Pair`, `PictureImage`, `StepType`, `TokenRole` | types | the underlying generated schema element types (one per `schema/lesson.schema.json` `$defs` entry `ContentLesson*` wraps) |
 
 The bundled JSON-Schema ships too, so a content repo can mirror against it
 directly: `import schema from "learn-content-engine/schema/lesson.schema.json"`.
-The same holds for `quality-rules.json` and `grading-presets.json` (the
+The same holds for `quality-rules.json` (the numbers `validateLessonQuality`
+applies) and `grading-presets.json` (the
 [grading presets](docs/lesson-format.md#grading-presets) catalog).
 
 Two subpath entries sit next to the package root:
 
 | Entry | Exports | Purpose |
 |---|---|---|
-| `learn-content-engine/rules` | `validateLessonRules`, `validateManifestRules`, `isSlugId`, `SLUG_ID_PATTERN`, `SLUG_ID_MAX_LENGTH`, plus two helpers the structural layer composes: `unusedCardIds` (the detection core of `W-CARD-UNUSED`) and `normalizeManifestAliases` (maps the legacy `language` alias to `target_language` before validation) | the semantic rules and author lints without the structural layer: no ajv, no `node:*`, for a browser consumer that has already shape-checked its input ([Validation](docs/validation.md#the-rules-without-the-structural-layer-learn-content-enginerules)) |
+| `learn-content-engine/rules` | `validateLessonRules`, `validateManifestRules`, `validateLessonQuality`, `QUALITY_MINIMUMS`, `isSlugId`, `SLUG_ID_PATTERN`, `SLUG_ID_MAX_LENGTH`, plus two helpers the structural layer composes: `unusedCardIds` (the detection core of `W-CARD-UNUSED`) and `normalizeManifestAliases` (maps the legacy `language` alias to `target_language` before validation) | the semantic rules and author lints without the structural layer: no ajv, no `node:*`, for a browser consumer that has already shape-checked its input ([Validation](docs/validation.md#the-rules-without-the-structural-layer-learn-content-enginerules)) |
 | `learn-content-engine/qti` | `importQti`, `exportQti`, `qtiLessonAdapter`, ... | the optional QTI adapter and its XML parser ([QTI interop](docs/qti.md)) |
 
 ## Scope

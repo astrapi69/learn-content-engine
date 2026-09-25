@@ -39,6 +39,10 @@ import { collectStableIds } from "./stable-ids.js";
 import type { Exercise, Lesson, LessonStep } from "./types/lesson-schema.generated.js";
 import { variableIssues } from "./variables.js";
 
+// The quality minimums (engine#185) are a second question next to validity,
+// asked of the same shape-checked lesson, so a browser consumer gets both here.
+export { QUALITY_MINIMUMS, validateLessonQuality } from "./quality.js";
+
 /** The schema's ``$defs/SlugId`` pattern (lesson ids, set ids, tags), kept
  *  here as a string so a consumer can check a slug without a schema
  *  validator. ``src/rules.test.ts`` pins it to the bundled schema. */

@@ -42,6 +42,7 @@ export type {
   ExerciseType,
   InlineExample,
   Lesson,
+  LessonPurpose,
   LessonResource,
   LessonStep,
   MediaType,

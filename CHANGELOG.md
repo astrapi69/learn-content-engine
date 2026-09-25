@@ -5,6 +5,41 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [Unreleased]
+
+### Quality minimums in the engine, keyed to what a lesson is for (engine#185)
+
+`validateLessonQuality(lesson)` checks a shape-valid lesson against the quality
+minimums of `schema/quality-rules.json` (exported as `QUALITY_MINIMUMS`): at
+least five exercises of at least two types, a theory step, two accepted answers
+per `free_text`, three pairs per `matching`. Shortfalls come back as errors
+with five new ids, `E-QUALITY-EXERCISES`, `E-QUALITY-TYPES`, `E-QUALITY-THEORY`,
+`E-QUALITY-FREETEXT-ACCEPTS` and `E-QUALITY-MATCHING-PAIRS`, each with `count`
+and `min` in its params. It is also on the `learn-content-engine/rules` entry.
+See [quality minimums](docs/lesson-format.md#quality-minimums).
+
+The minimums are a publication threshold, not validity: `validateLesson`
+never reports them, so a consumer that generates short lessons (the reference
+app's adaptive lessons) still accepts its own output, and each consumer gives
+a shortfall the weight of its gate.
+
+Schema 1.17 adds the optional lesson field `purpose`: `practice` (the default,
+every minimum), `bridge` (no exercise minimum) and `quiz` (no exercise-type
+minimum). Content without it validates unchanged; the manifest schema moves
+its `x-schema-version` in lockstep and changes nothing else.
+
+Why: the minimums existed in three versions (the content template's gate,
+alc-books' copy, the app's share check) with different exemptions and a
+different count for `matching` with `from_cards`, so a set could pass its
+repository gate and fail to be shared. The one version here replaces the
+template's multiple-choice exemption and alc-books' bridge lessons recognised
+by their id with the declared `purpose`, and counts the pairs `from_cards`
+derives. The distractor requirement the three versions put on `free_text` and
+`picture_choice` has no counterpart. Measured over the 631 lessons of the ten
+content repositories on 2026-09-25: 8 fall short today (seven bridge lessons
+in alc-books, one quiz in alc-traffic-knowledge), none once those eight
+declare their `purpose`.
+
 ## [0.30.0] - 2026-09-25
 
 No schema change: `x-schema-version` stays 1.16, and every manifest and lesson
