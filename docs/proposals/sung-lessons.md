@@ -1,6 +1,7 @@
 # Proposal: sung and chanted lessons, and the voices behind lesson audio
 
-Status: proposal, 2026-09-30. Nothing is built for it yet. Idea by the owner:
+Status: **planned, not started** (owner, 2026-09-30: a bigger task; document
+it now, start later). Tracked in engine#232. Idea by the owner:
 short phrases learned by singing them ("¿Cómo se dice 'ich habe nicht'?" sung
 as "no tengo") stick better than phrases read or spoken. This document records
 what the idea rests on, what already exists, where the voices come from, and

@@ -204,3 +204,44 @@ For sentences whose connectors may legitimately move, add `accept_orderings`
 different `direction` (`source_to_target` / `target_to_source` / `both` /
 `random`). Set it on any exercise; you do not author two separate types. See
 `direction` in [lesson-format.md](lesson-format.md).
+
+## Sung or chanted chunks -> card `audio`
+
+A short phrase that is sung or chanted ("no tengo") needs no new type: the
+recording is the card's `audio`, a path in the set's `assets/`, and a consumer
+plays it with the exercises that drill the card (the reference app plays a
+card's audio before a `free_text` or `matching` answer). Put the lyrics and
+their meaning in a theory step. Singing along and writing down what one hears
+are the adopted audio extensions `ext:ref-speak-and-record` and
+`ext:ref-dictation` ([extensions.md](extensions.md)). Keep the chunks short
+and the melody simple: that is where singing helps recall. Whole songs with
+timed lyrics are planned, not built (engine#232,
+[proposals/sung-lessons.md](proposals/sung-lessons.md)).
+
+```json
+{
+  "id": "pattern-sung-chunk",
+  "title": "A sung chunk as card audio",
+  "cards": [
+    { "id": "no-tengo", "front": "no tengo", "back": "ich habe nicht", "audio": "assets/audio/no-tengo.mp3", "tags": ["chunk"] }
+  ],
+  "steps": [
+    {
+      "id": "t1",
+      "type": "theory",
+      "body": "Hör zu und sing mit: *no tengo* heißt *ich habe nicht*."
+    },
+    {
+      "id": "s1",
+      "type": "exercise",
+      "exercise": {
+        "id": "ft-1",
+        "type": "free_text",
+        "prompt": "Was heißt das Gesungene auf Deutsch?",
+        "card_ids": ["no-tengo"],
+        "accept": ["ich habe nicht", "Ich habe nicht"]
+      }
+    }
+  ]
+}
+```
