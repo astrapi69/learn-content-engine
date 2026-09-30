@@ -183,12 +183,12 @@ the mirror in the same commit.
 Its record so far (adaptive-learner-content-template#70, 2026-09-24): dispatched
 runs opened an issue and closed it again in all ten repos. The first scheduled
 runs, one per repo, found the pin current in seven and the lag in three, where
-they updated the issue a dispatch had opened 21 to 32 minutes earlier. No
-scheduled run has opened an issue yet. That case is deliberately not staged:
+they updated the issue a dispatch had opened 21 to 32 minutes earlier. By then
+no scheduled run had opened an issue. That case was deliberately not staged:
 both triggers run the same steps and differ only in an optional input that
-falls back to the tracked tag. The first scheduled run that meets a lag with no
-issue open decides it: it opens the issue or it does not, and if it does not,
-that is a finding. Until then it is an open point, not a defect.
+falls back to the tracked tag. The first scheduled run that met a lag with no
+issue open would decide it: it opens the issue or it does not, and if it does
+not, that is a finding. Until then it was an open point, not a defect.
 
 That run needs two things at once: a release still unpinned when the scheduled
 run fires (which, with cron running hours late, is the next morning around
@@ -200,6 +200,14 @@ scheduled runs did meet that lag, but a dispatch had opened their issues 21 to
 release routine dispatches the check by hand, the case may never occur. That is
 a side effect of the discipline, not a gap; nobody should wait for this proof
 as if it were due.
+
+It occurred with 0.30.0, and the open point is closed: a scheduled run opens
+the issue (adaptive-learner-content-template#70, closing comment of
+2026-09-30). 0.30.0 was published on 2026-09-25 at 07:16 UTC and stood
+unpinned. Between 10:19 and 10:28 UTC the same day, a scheduled run opened the
+lag issue in each of the ten repos, 9 to 16 seconds after the run started, and
+no dispatch had opened an issue before it. 0.31.0 to 0.34.0 followed the same
+day, and the next day's scheduled runs renamed the ten issues to 0.34.0.
 
 An application consumer has no engine-specific job: its parity test compares
 its generated layer with the release it pins, which answers the consistency
@@ -214,6 +222,34 @@ two were closed unmerged in favour of a manual re-pin, one was merged after a
 manual repair, as one of 36 updates (adaptive-learner#2923). Manual re-pins
 reached 38 of 39 releases first, with a median lag of about three hours. The
 signal exists; in practice the re-pin by hand is the signal.
+
+### Order: the application first, the content fleet in the same round
+
+A release reaches both kinds of consumer, and the order in which they move
+matters.
+
+The application re-pins first. It is the consumer that has to read what content
+may start to use, new fields and new rules, and its re-pin proves that it does.
+In the reference app a new lesson field has to reach the backend's Pydantic
+models before any lesson may declare it, because those models reject unknown
+fields (`extra="forbid"`); `purpose` (schema 1.17) arrived there with the app's
+0.34.0 re-pin.
+
+The content fleet follows in the same round, not when someone next reads the
+currency issues. The application's re-pin names the fleet re-pin as its
+follow-up, and the fleet re-pin is the mechanical change described above:
+measured with the new release over each repo's content first, then the pin and
+the mirror in one commit per repo.
+
+The round from 0.30.0 to 0.34.0 shows the cost of splitting the two. The
+scheduled runs reported the lag in all ten repos on the day of the release. The
+app re-pinned on 2026-09-29 (adaptive-learner#3285), with its schema mirror and
+generated layer in the same PR. The ten content repos followed on 2026-09-30
+(adaptive-learner-content#238 and nine sibling PRs), five days after 0.34.0 was
+published. Measured before that re-pin, the fleet had nothing to fix: 0 files
+with errors over 631 lessons and 63 manifests. The five days were lag without a
+reason, not a migration, and the currency issues were the signal that ended
+them: their first real use.
 
 ## Rule ownership: which layer owns which rule
 
