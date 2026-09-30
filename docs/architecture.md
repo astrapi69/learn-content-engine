@@ -729,6 +729,12 @@ which the conditions acted before the damage instead of after it.
 - **engine#227**: a grade lookup for the `evaluation` block, split out of
   engine#220. It comes with the first consumer that applies the block, so no
   API ships without a user.
+- **engine#232** (planned, not started): sung and chanted lessons. The
+  engine's parts are an optional per-set record of audio provenance (a person,
+  a cloned or synthetic voice), decided before the first generated clip, and,
+  after a pilot, `ext:ref-sing-along` with timed lyrics. Audio is produced by
+  repository tooling with manuscripta's TTS adapters, never by the engine
+  ([proposal](proposals/sung-lessons.md)).
 - **alc-books' domain rule** (moved with 0.29.0): now the engine's
   `W-DOMAIN-UNKNOWN`; its severity dropped with the move (above).
 - **adaptive-learner#3242**: the app's repo export writes a user set's origin

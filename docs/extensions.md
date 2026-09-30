@@ -758,6 +758,14 @@ speaker/show/record buttons there). There is no grade function: capturing,
 storing and reviewing the learner's own recording is entirely consumer-side,
 and this extension does not claim to know when a recording is "correct".
 
+**Planned, not built: `ext:ref-sing-along`** (engine#232). For sung lessons
+with whole songs: the song's audio, `lines` with start and end times (the
+timing model of the LRC lyric format), an optional translation per line and
+optional gaps for a listening cloze. It waits for a pilot with the audio
+extensions above to show that sung chunks are worth it; short sung chunks need
+only card `audio`, this extension and `ext:ref-dictation`. The plan is in
+[proposals/sung-lessons.md](proposals/sung-lessons.md).
+
 ## Example extension: `ext:ref-hotspot`
 
 `src/examples/ext-ref-hotspot/` works out the hotspot case from the

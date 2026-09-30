@@ -507,6 +507,7 @@ sequenceDiagram
 ```
 7. **Graded Audio Input:** STT service integration on top of `ext:ref-speak-and-record` (strictly Consumer responsibility).
 8. **Wider QTI mapping:** `word_tiles` to the order interaction, `ext:ref-hotspot` to the hotspot interaction, both now possible in the 2.x and 3.0 dialects, both waiting for a concrete QTI consumer per the non-goal in `docs/qti.md`.
+9. **Sung and chanted lessons (planned, not started, engine#232):** short phrases learned by singing or chanting them. A pilot needs no new type (card `audio`, `ext:ref-speak-and-record`, `ext:ref-dictation`); the engine's later parts are an optional record of where a set's audio comes from (a generated voice or a person) and, only after the pilot, `ext:ref-sing-along` with timed lyrics. See `docs/proposals/sung-lessons.md`.
 
 ### 6.4 Architectural Principles for Extensions
 
