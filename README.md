@@ -15,7 +15,7 @@ format originated in ([Adaptive Learner](https://github.com/astrapi69/adaptive-l
 Beyond validity it checks a lesson against the shared quality minimums
 (`validateLessonQuality`) and turns a parametric exercise into a concrete
 instance (`resolveExerciseVariables`), so every consumer gets the same answer.
-Tracks the lesson schema, currently **v1.18**.
+Tracks the lesson schema, currently **v1.19**.
 
 ## Install
 

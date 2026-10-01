@@ -58,6 +58,8 @@ interface ResponseInfo {
   cardinality: string;
   correctValues: string[];
   mapKeys: string[];
+  /** Every ``mapEntry`` matches in case (``caseSensitive="true"``). */
+  mapCaseSensitive: boolean;
 }
 
 function identifierOf(element: XmlElement): string {
@@ -73,13 +75,14 @@ function responseFor(item: XmlElement, responseIdentifier: string): ResponseInfo
     ? childrenNamed(correctResponse, "value").map(textOf)
     : [];
   const mapping = declaration && childNamed(declaration, "mapping");
-  const mapKeys = mapping
-    ? childrenNamed(mapping, "mapEntry").map((entry) => attr(entry, "mapKey") ?? "")
-    : [];
+  const mapEntries = mapping ? childrenNamed(mapping, "mapEntry") : [];
+  const mapKeys = mapEntries.map((entry) => attr(entry, "mapKey") ?? "");
+  const mapCaseSensitive = mapEntries.length > 0 && mapEntries.every((entry) => attr(entry, "caseSensitive") === "true");
   return {
     cardinality: (declaration && attr(declaration, "cardinality")) ?? "single",
     correctValues,
     mapKeys,
+    mapCaseSensitive,
   };
 }
 
@@ -115,7 +118,8 @@ function mapTextEntry(interaction: XmlElement, item: XmlElement, responses: Resp
     id: identifierOf(item),
     type: "free_text",
     prompt: promptOf(interaction, item),
-    accept: [...responses.correctValues, ...responses.mapKeys],
+    accept: [...new Set([...responses.correctValues, ...responses.mapKeys])],
+    ...(responses.mapCaseSensitive ? { case_sensitive: true } : {}),
   };
 }
 

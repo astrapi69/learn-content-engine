@@ -275,7 +275,7 @@ describe("exportQti - version option", () => {
     expect(xml).toContain("<qti-prompt>Pick one</qti-prompt>");
     expect(xml).toContain('<qti-simple-choice identifier="OPT0">a</qti-simple-choice>');
     expect(xml).toContain('<qti-text-entry-interaction response-identifier="RESPONSE" expected-length="20"/>');
-    expect(xml).toContain('<qti-map-entry map-key="hello" mapped-value="1"/>');
+    expect(xml).toContain('<qti-map-entry map-key="hello" mapped-value="1" case-sensitive="false"/>');
     expect(xml).toContain('<qti-simple-associable-choice identifier="L0" match-max="1">rouge</qti-simple-associable-choice>');
     expect(xml).toContain('base-type="directedPair"');
     expect(xml).toContain("<p>Say hi</p>");

@@ -94,7 +94,7 @@ it reads and writes single documents, as it does for 2.x.
 |---|---|---|---|
 | `choiceInteraction` | `single` | `multiple_choice` (`multiple` omitted) | `simpleChoice` -> option; `correctResponse` identifiers -> `correct: true` |
 | `choiceInteraction` | `multiple` | `multiple_choice` (`multiple: true`) | every `correctResponse` identifier -> a correct option |
-| `textEntryInteraction` | `single` (`string`) | `free_text` | `correctResponse` value(s) + `mapping` `mapEntry` keys -> `accept[]` |
+| `textEntryInteraction` | `single` (`string`) | `free_text` | `correctResponse` value(s) + `mapping` `mapEntry` keys -> `accept[]`; every `mapEntry` with `caseSensitive="true"` -> `case_sensitive: true` |
 | `matchInteraction` | `multiple` (`directedPair`) | `matching` | each directed pair -> `{ left, right }`, resolved against both `simpleMatchSet`s |
 
 The prompt is taken from the interaction's `<prompt>` (choice / match) or the
@@ -169,6 +169,7 @@ and the `multiple` flag. `cards` come back as `[]`.
 | `cards` / `card_ids` | Not represented; QTI items are standalone. Imported lessons have `cards: []`. |
 | Step `id` | Normalised to the exercise / item `identifier` on import. |
 | `free_text` multiple `accept` | Round-trips: first entry in `correctResponse`, the rest as `mapping` `mapEntry` keys. |
+| `free_text` `case_sensitive` | Round-trips as `caseSensitive` on every `mapEntry` (`false` when undeclared). A case-sensitive answer without alternates is also written as a `mapEntry`, so the declaration survives. The case of a `correctResponse`-only item is not inferred. |
 | `hint`, `examples`, `direction`, `distractors` | Not carried across the QTI boundary. |
 | `shuffle`, timing, scoring, `responseProcessing` | Not preserved (import ignores; export emits neutral defaults). |
 | Unsupported interaction types | Import throws `QtiImportError` with the full per-item list. |

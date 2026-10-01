@@ -759,11 +759,22 @@ which the conditions acted before the damage instead of after it.
   advisory `audit_content.py` without an engine counterpart. Measured over the
   632 lessons of the eleven content repositories: 0 hits. Two distractors
   differ from an answer only in case, and both are intended because those
-  exercises teach capitalisation, so the comparison is case-sensitive. The
+  exercises teach capitalisation, so 0.35.0 compared in case; engine#242
+  turned that into a declaration (below). The
   round went in the documented order on 2026-10-01: the app re-pinned first
   (adaptive-learner#3529), then the template pinned 0.35.0 and its audit
   dropped the copy (adaptive-learner-content-template#96), and the ten
   repositories followed the same day.
+- **engine#242** (engine side done, schema 1.19): case is not an error
+  unless the exercise says so (maintainer, 2026-10-01). A `free_text`
+  exercise declares `case_sensitive: true` where it teaches case;
+  `E-FREETEXT-DISJOINT` compares in case only there, and the QTI adapter
+  carries the flag as `caseSensitive`. Until then an author could not say it:
+  the reference app grades free text without case (code answers aside), so
+  the two exercises in adaptive-learner-content that teach capitalisation
+  graded the lower-case answer correct. Open downstream: the app grades in
+  case where an exercise declares it, the two exercises declare it, the
+  fleet re-pins.
 - **alc-books' domain rule** (moved with 0.29.0): now the engine's
   `W-DOMAIN-UNKNOWN`; its severity dropped with the move (above).
 - **adaptive-learner#3242** (closed 2026-09-29): the app's repo export wrote a
