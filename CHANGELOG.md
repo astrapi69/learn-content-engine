@@ -5,7 +5,11 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
-## [Unreleased]
+## [0.35.0] - 2026-10-01
+
+No schema change: `x-schema-version` stays 1.18. One new error,
+`E-FREETEXT-DISJOINT`, so a lesson that passed 0.34.0 can fail; measured
+over the eleven content repositories, none does.
 
 ### A free_text answer must not also be a distractor (engine#237)
 
