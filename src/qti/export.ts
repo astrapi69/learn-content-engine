@@ -95,13 +95,17 @@ function textEntryItem(exercise: Exercise, dialect: Dialect): string {
   const { el, at } = dialect;
   const accept = exercise.accept ?? [];
   const primary = accept[0] ?? "";
-  const alternates = accept.slice(1);
+  const caseSensitive = exercise.case_sensitive === true;
+  // The alternates go into the mapping; a case-sensitive answer without
+  // alternates goes there too, so the declaration survives (engine#242).
+  const mapped = accept.length > 1 ? accept.slice(1) : caseSensitive ? [primary] : [];
   const mapping =
-    alternates.length > 0
+    mapped.length > 0
       ? [
           `      <${el("mapping")} ${at("defaultValue")}="0">`,
-          ...alternates.map(
-            (value) => `        <${el("mapEntry")} ${at("mapKey")}="${escapeAttr(value)}" ${at("mappedValue")}="1"/>`,
+          ...mapped.map(
+            (value) =>
+              `        <${el("mapEntry")} ${at("mapKey")}="${escapeAttr(value)}" ${at("mappedValue")}="1" ${at("caseSensitive")}="${caseSensitive}"/>`,
           ),
           `      </${el("mapping")}>`,
         ].join("\n")

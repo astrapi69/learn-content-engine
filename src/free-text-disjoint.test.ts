@@ -9,9 +9,9 @@ import { validateLesson, type ValidationIssue } from "./validate.js";
  * `distractors` the renderer's fallback pool of wrong options, so a shared
  * entry offers a correct answer as a wrong one. The content template's
  * advisory audit held this rule; cloze multiselect already blocks the same
- * contradiction (E-CLOZE-MS-DISJOINT). Compared exactly after trimming and
- * case-sensitively: two exercises in the hub teach capitalisation with a
- * lower-case distractor ("I am Anna" / "i am anna").
+ * contradiction (E-CLOZE-MS-DISJOINT). Compared after trimming; case counts
+ * only where the exercise declares `case_sensitive: true` (engine#242, see
+ * case-sensitive.test.ts).
  */
 
 const freeText = (exercise: Record<string, unknown>): Record<string, unknown> => ({
@@ -73,7 +73,7 @@ describe("boundaries", () => {
     ]);
   });
 
-  it("a distractor that differs only in case is a legitimate wrong answer", () => {
-    expect(disjointIssues(freeText({ accept: ["I am Anna"], distractors: ["i am anna"] }))).toEqual([]);
+  it("a distractor that differs only in case is a legitimate wrong answer where case is declared", () => {
+    expect(disjointIssues(freeText({ accept: ["I am Anna"], distractors: ["i am Anna"], case_sensitive: true }))).toEqual([]);
   });
 });

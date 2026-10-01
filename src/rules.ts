@@ -196,19 +196,35 @@ function checkFreeText(exercise: Exercise, path: string, issues: ValidationIssue
     issues.push(err("E-FREETEXT-ACCEPT", path, "FREE_TEXT exercise requires non-empty 'accept'", "free_text"));
     return;
   }
-  checkFreeTextDisjoint(exercise.accept, exercise.distractors ?? [], path, issues);
+  checkFreeTextDisjoint(exercise.accept, exercise.distractors ?? [], exercise.case_sensitive === true, path, issues);
 }
 
 /**
  * engine#237: an accepted answer must not also be a distractor, or the
- * renderer's fallback pool offers a correct answer as a wrong one. Exact
- * after trimming and case-sensitive: a distractor that differs only in case
- * is a legitimate wrong answer where capitalisation is what the exercise
- * teaches.
+ * renderer's fallback pool offers a correct answer as a wrong one. Compared
+ * after trimming. Case counts only where the exercise declares
+ * ``case_sensitive`` (engine#242): without it a consumer grades without case,
+ * so a distractor that differs from an answer only in case would be graded
+ * correct. ``shared`` names each answer once, as ``accept`` writes it.
  */
-function checkFreeTextDisjoint(accept: string[], distractors: string[], path: string, issues: ValidationIssue[]): void {
-  const wrong = new Set(distractors.map((distractor) => distractor.trim()));
-  const shared = [...new Set(accept.map((answer) => answer.trim()))].filter((answer) => wrong.has(answer));
+function checkFreeTextDisjoint(
+  accept: string[],
+  distractors: string[],
+  caseSensitive: boolean,
+  path: string,
+  issues: ValidationIssue[],
+): void {
+  const key = (answer: string): string => {
+    const trimmed = answer.trim();
+    return caseSensitive ? trimmed : trimmed.normalize("NFC").toLowerCase();
+  };
+  const wrong = new Set(distractors.map(key));
+  const sharedByKey = new Map<string, string>();
+  for (const answer of accept) {
+    const answerKey = key(answer);
+    if (wrong.has(answerKey) && !sharedByKey.has(answerKey)) sharedByKey.set(answerKey, answer.trim());
+  }
+  const shared = [...sharedByKey.values()];
   if (shared.length === 0) return;
   issues.push(
     err(

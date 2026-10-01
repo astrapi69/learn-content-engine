@@ -5,6 +5,33 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [Unreleased]
+
+### Case is not an error unless the exercise declares it (engine#242)
+
+Schema 1.19 adds `case_sensitive` to `free_text` exercises (boolean,
+default `false`, optional). An exercise that teaches case, such as
+capitalisation, declares `true`, and a consumer then grades it in case;
+without it, case is not an error. The rules follow the declaration:
+`E-FREETEXT-DISJOINT` compares `accept` and `distractors` after trimming,
+in case only where `case_sensitive` is true; `params.shared` names each
+answer once, as `accept` writes it. The QTI adapter writes the flag as
+`caseSensitive` on every `mapEntry` (also for a single answer, so it
+survives) and reads it back when every `mapEntry` carries
+`caseSensitive="true"`; an imported `accept` lists each answer once.
+
+Why: an author could not say that case matters. The reference app grades
+free text without case, so the two exercises in adaptive-learner-content
+that teach capitalisation graded the lower-case answer correct, while
+0.35.0's rule compared in case to keep them valid. Principle (maintainer,
+2026-10-01): case is not an error unless the exercise says so, which is
+how Moodle's short answer and QTI's `caseSensitive` treat it.
+
+A changed comparison can turn valid content red. Measured with this build
+over the 632 lessons of the eleven content repositories: exactly those two
+exercises (`ex-free-i-capital`, `ex-free-nationality`); they declare
+`case_sensitive: true` when their repository pins this release.
+
 ## [0.35.0] - 2026-10-01
 
 No schema change: `x-schema-version` stays 1.18. One new error,

@@ -560,10 +560,14 @@ data URIs. Do **not** use this for text-only multiple choice: use `cloze`
 
 Type a short answer. Requires a non-empty `accept` list; the first entry is the
 canonical answer, the rest are accepted variants (matching is exact, then
-Levenshtein-tolerant). `distractors` is optional: the renderer's fallback pool
-of wrong options. No entry may be in both lists (`E-FREETEXT-DISJOINT`). They
-are compared after trimming and case-sensitively, so a lower-case distractor
-can test capitalisation (`I am Anna` against `i am Anna`).
+Levenshtein-tolerant). Case is not an error: an exercise where it is, because
+it teaches capitalisation, declares `"case_sensitive": true` (schema 1.19,
+engine#242), and a consumer then grades in case. `distractors` is optional:
+the renderer's fallback pool of wrong options. No entry may be in both lists
+(`E-FREETEXT-DISJOINT`). They are compared after trimming, and in case only
+where the exercise declares `case_sensitive`: there a lower-case distractor
+tests capitalisation (`I am Anna` against `i am Anna`), without it the same
+pair is one answer offered as right and wrong.
 
 ```json
 {
@@ -907,7 +911,9 @@ lesson field, `purpose`; the manifest schema moves its `x-schema-version` in
 lockstep and changes nothing else, so `schema_version`'s default stays at
 `1.7`. v1.18 is a description-only edit again: the description of
 `purpose` (what `bridge` lifts) and two line breaks restored after v1.16
-(engine#182). When comparing your pin
+(engine#182). v1.19 (engine#242) adds an exercise field, `case_sensitive`;
+the manifest schema moves its `x-schema-version` in lockstep and changes
+nothing else. When comparing your pin
 against a new engine release, `x-schema-version` tells you the schema
 DEFINITION moved; `schema_version` tells you whether your MANIFESTS need a
 field update.
@@ -1239,7 +1245,7 @@ itself instead of parsing the English message.
 | `E-PIC-MIN` | [`picture_choice`](#picture_choice) has fewer than 2 `images`. |
 | `E-PIC-ONE-CORRECT` | `picture_choice` does not have exactly one `is_correct: "true"`. |
 | `E-FREETEXT-ACCEPT` | [`free_text`](#free_text) has empty/missing `accept`. |
-| `E-FREETEXT-DISJOINT` | `free_text` `accept` and `distractors` share an entry (after trimming, case-sensitive). |
+| `E-FREETEXT-DISJOINT` | `free_text` `accept` and `distractors` share an entry (after trimming; in case only with `case_sensitive: true`). |
 | `E-TILES-MIN` | [`word_tiles`](#word_tiles) has fewer than 2 `tiles`. |
 | `E-TILES-ORDERING` | An `accept_orderings` entry is not a permutation of the tile indices. |
 | `E-CLOZE-SENTENCE` | [`cloze`](#cloze) (`type`/`select`) has no `sentence`. |
@@ -1338,7 +1344,7 @@ an extension's issues, whose paths are relative to its exercise
 | `E-EXERCISE-ID-DUP` | `exerciseId`, `positions` (1-based step positions) |
 | `E-EXT-UNDECLARED` | `type` |
 | `E-EXT-UNSUPPORTED` | `type`, `major` |
-| `E-FREETEXT-DISJOINT` | `shared` (the trimmed answers in both lists, each once) |
+| `E-FREETEXT-DISJOINT` | `shared` (the answers in both lists, each once, as the accept list writes them) |
 | `E-LANG-TAG` | `field`, `tag` |
 | `E-MATCH-DUP-LEFT` | `term` (as first written), `positions` (1-based) |
 | `E-QUALITY-EXERCISES` | `count`, `min` |
