@@ -194,7 +194,12 @@ deliberately **not**:
   [extension tier](docs/extensions.md) (`ext:` types) without touching the core
   enum; the core stays the portable authority.
 - **a runtime** - no rendering, grading, scheduling/SRS, persistence, or
-  networking; consumers own all of that.
+  networking; consumers own all of that. What it computes, it computes as pure
+  functions of what the format defines: `resolveExerciseVariables` (since
+  0.34.0) turns a parametric exercise into one instance from the random
+  source the consumer passes in, and the
+  [grading presets](docs/lesson-format.md#grading-presets) are a catalog the
+  consumer applies, not grading code.
 - **a content repository** - it ships the format, the validator, and the
   author tooling, not lessons.
 
