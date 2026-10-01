@@ -5,7 +5,12 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
-## [Unreleased]
+## [0.36.0] - 2026-10-01
+
+Schema 1.19: one additive exercise field, `case_sensitive`. `E-FREETEXT-DISJOINT` now
+compares without case unless an exercise declares it, so a lesson that passed
+0.35.0 can fail; measured over the eleven content repositories, two
+exercises do, and they declare the field with the re-pin.
 
 ### Case is not an error unless the exercise declares it (engine#242)
 
