@@ -754,6 +754,14 @@ which the conditions acted before the damage instead of after it.
   after a pilot, `ext:ref-sing-along` with timed lyrics. Audio is produced by
   repository tooling with manuscripta's TTS adapters, never by the engine
   ([proposal](proposals/sung-lessons.md)).
+- **engine#237** (engine side done): a `free_text` answer that is also a
+  distractor (`E-FREETEXT-DISJOINT`), the last content rule of the template's
+  advisory `audit_content.py` without an engine counterpart. Measured over the
+  632 lessons of the eleven content repositories: 0 hits. Two distractors
+  differ from an answer only in case, and both are intended because those
+  exercises teach capitalisation, so the comparison is case-sensitive. Open
+  downstream: the audit drops its copy once the repositories pin the release
+  that ships the rule.
 - **alc-books' domain rule** (moved with 0.29.0): now the engine's
   `W-DOMAIN-UNKNOWN`; its severity dropped with the move (above).
 - **adaptive-learner#3242** (closed 2026-09-29): the app's repo export wrote a

@@ -194,7 +194,31 @@ function checkPictureChoice(exercise: Exercise, path: string, issues: Validation
 function checkFreeText(exercise: Exercise, path: string, issues: ValidationIssue[]): void {
   if (!exercise.accept || exercise.accept.length === 0) {
     issues.push(err("E-FREETEXT-ACCEPT", path, "FREE_TEXT exercise requires non-empty 'accept'", "free_text"));
+    return;
   }
+  checkFreeTextDisjoint(exercise.accept, exercise.distractors ?? [], path, issues);
+}
+
+/**
+ * engine#237: an accepted answer must not also be a distractor, or the
+ * renderer's fallback pool offers a correct answer as a wrong one. Exact
+ * after trimming and case-sensitive: a distractor that differs only in case
+ * is a legitimate wrong answer where capitalisation is what the exercise
+ * teaches.
+ */
+function checkFreeTextDisjoint(accept: string[], distractors: string[], path: string, issues: ValidationIssue[]): void {
+  const wrong = new Set(distractors.map((distractor) => distractor.trim()));
+  const shared = [...new Set(accept.map((answer) => answer.trim()))].filter((answer) => wrong.has(answer));
+  if (shared.length === 0) return;
+  issues.push(
+    err(
+      "E-FREETEXT-DISJOINT",
+      path,
+      `FREE_TEXT 'accept' and 'distractors' must be disjoint; shared answer(s): ${JSON.stringify(shared)}`,
+      "free_text",
+      { shared },
+    ),
+  );
 }
 
 function checkWordTiles(exercise: Exercise, path: string, issues: ValidationIssue[]): void {

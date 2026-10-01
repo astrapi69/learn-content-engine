@@ -560,7 +560,10 @@ data URIs. Do **not** use this for text-only multiple choice: use `cloze`
 
 Type a short answer. Requires a non-empty `accept` list; the first entry is the
 canonical answer, the rest are accepted variants (matching is exact, then
-Levenshtein-tolerant).
+Levenshtein-tolerant). `distractors` is optional: the renderer's fallback pool
+of wrong options. No entry may be in both lists (`E-FREETEXT-DISJOINT`). They
+are compared after trimming and case-sensitively, so a lower-case distractor
+can test capitalisation (`I am Anna` against `i am Anna`).
 
 ```json
 {
@@ -1236,6 +1239,7 @@ itself instead of parsing the English message.
 | `E-PIC-MIN` | [`picture_choice`](#picture_choice) has fewer than 2 `images`. |
 | `E-PIC-ONE-CORRECT` | `picture_choice` does not have exactly one `is_correct: "true"`. |
 | `E-FREETEXT-ACCEPT` | [`free_text`](#free_text) has empty/missing `accept`. |
+| `E-FREETEXT-DISJOINT` | `free_text` `accept` and `distractors` share an entry (after trimming, case-sensitive). |
 | `E-TILES-MIN` | [`word_tiles`](#word_tiles) has fewer than 2 `tiles`. |
 | `E-TILES-ORDERING` | An `accept_orderings` entry is not a permutation of the tile indices. |
 | `E-CLOZE-SENTENCE` | [`cloze`](#cloze) (`type`/`select`) has no `sentence`. |
@@ -1334,6 +1338,7 @@ an extension's issues, whose paths are relative to its exercise
 | `E-EXERCISE-ID-DUP` | `exerciseId`, `positions` (1-based step positions) |
 | `E-EXT-UNDECLARED` | `type` |
 | `E-EXT-UNSUPPORTED` | `type`, `major` |
+| `E-FREETEXT-DISJOINT` | `shared` (the trimmed answers in both lists, each once) |
 | `E-LANG-TAG` | `field`, `tag` |
 | `E-MATCH-DUP-LEFT` | `term` (as first written), `positions` (1-based) |
 | `E-QUALITY-EXERCISES` | `count`, `min` |
