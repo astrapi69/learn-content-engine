@@ -122,6 +122,13 @@ const CASES: ParamCase[] = [
     params: { shared: ["3"] },
   },
   {
+    id: "E-FREETEXT-DISJOINT",
+    label: "an answer in both accept and distractors",
+    issues: () => all(lesson([ex({ id: "f1", type: "free_text", prompt: "?", accept: ["dog", "Dog"], distractors: ["dog", "cat"] })])),
+    path: "/steps/0/exercise",
+    params: { shared: ["dog"] },
+  },
+  {
     id: "E-CLOZE-MARKERS",
     label: "one marker, two blanks",
     issues: () => all(lesson([ex({ id: "c1", type: "cloze", cloze_mode: "type", prompt: "?", sentence: "Paris is the capital of ___.", blanks: [{ accept: ["France"] }, { accept: ["x"] }] })])),

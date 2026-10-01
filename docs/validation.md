@@ -65,7 +65,7 @@ consumer follows (the app checks no exercise-id uniqueness, the engine does):
 | `multiple_choice` requires >= 2 `options` with unique texts | `MULTIPLE_CHOICE requires at least 2 'options'` / `option texts must be unique` |
 | `multiple_choice` (single) requires exactly one option marked `correct`; with `multiple` at least one | `exactly one option marked 'correct'` / `at least one option marked 'correct'` |
 | `picture_choice` requires >= 2 images, exactly one `is_correct: "true"` | `exactly one image marked` |
-| `free_text` requires non-empty `accept` | `FREE_TEXT exercise requires non-empty 'accept'` |
+| `free_text` requires non-empty `accept`; no entry may also be a distractor (compared after trimming, case-sensitively) | `FREE_TEXT exercise requires non-empty 'accept'` / `must be disjoint` |
 | `word_tiles` requires >= 2 `tiles`; each `accept_orderings` entry is a permutation | `permutation of [0..n-1]` |
 | `cloze` (`type`/`select`) requires `sentence` + `blanks` with `markers == blanks.length`; `select` also needs `distractors` | `CLOZE marker count mismatch` |
 | `cloze` (`multiselect`) requires `sentence`, non-empty `accept` + `distractors`, and the two must be **disjoint** | `must be disjoint` |

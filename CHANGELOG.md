@@ -5,6 +5,27 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [Unreleased]
+
+### A free_text answer must not also be a distractor (engine#237)
+
+New error `E-FREETEXT-DISJOINT`: an entry in a `free_text` exercise's
+`accept` that is also in its `distractors`, compared after trimming and
+case-sensitively. `params.shared` lists the shared answers, each once.
+`validateLesson` and `validateLessonRules` (the `/rules` entry) both report
+it. It is the `free_text` counterpart of `E-CLOZE-MS-DISJOINT`.
+
+Why: the schema calls `distractors` the renderer's fallback pool of wrong
+options, so a shared entry offers a correct answer as a wrong one. The rule
+lived only in the content template's advisory audit, outside CI, the last
+content rule there without an engine counterpart. Case-sensitive because two
+exercises in adaptive-learner-content teach capitalisation with a distractor
+that differs only in case (`I am Anna` against `i am Anna`).
+
+A new error can turn valid content red. Measured with this build over the
+632 lessons on `origin/main` of the eleven content repositories: 0 hits. An
+overlap seeded into a real lesson is found.
+
 ## [0.34.0] - 2026-09-25
 
 No schema change: `x-schema-version` stays 1.18. New API: the engine evaluates
