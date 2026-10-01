@@ -451,7 +451,8 @@ Closed on 2026-09-24: all ten content repos pin 0.29.0, the engine rule reports
 **0** there (the 44 false warnings are gone), and the template's copy is gone
 from `validate_content.py` in all of them (adaptive-learner-content-template#87
 and the wave after it). The fixture repo adaptive-learner-content-test, outside
-the ten, still pins 0.23.0 and carries the copy.
+the ten, kept 0.23.0 and the copy until 2026-10-01, when it took 0.34.0 and
+the template's files (adaptive-learner-content-test#102).
 
 What the case shows: the guideline still holds, but the case is not evidence
 that one rule in the engine is the better rule. It shows two versions nobody
