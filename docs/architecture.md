@@ -360,9 +360,12 @@ instead of an exemption per heuristic, and `from_cards` counts the pairs
 parsing derives. Measured before building over the 631 lessons of the ten
 content repos: the three versions judged 10 lessons differently; with
 `purpose` set on the seven bridge lessons and the one quiz, none of the 631
-falls short. The app's share check calls the engine since adaptive-learner#3222; the
-template's gate and alc-books' copy still apply their own versions (as of
-2026-10-01, both pinned to 0.34.0).
+falls short. All three call the engine now: the app's share check since
+adaptive-learner#3222, the template's gate and with it every content
+repository, alc-books included, since adaptive-learner-content-template#92
+and its wave (2026-10-01). The seven alc-books bridge lessons and the one
+alc-traffic-knowledge quiz declare their `purpose` (alc-books#27,
+alc-traffic-knowledge#32).
 
 It also settles the question of the canonical version: **none of the three
 is canonical.** Template and alc-books differ in an exemption, the app in the
@@ -403,7 +406,10 @@ six. Measured over the 53 sets and 631 lessons of the ten content
 repositories: 0 findings for every rule. Two severities dropped with the move
 (the template's errors for the pair and `title_native` are warnings now); a
 repo that needs them blocking gets that from
-adaptive-learner-content-template#83.
+adaptive-learner-content-template#83. The template's copies are gone since
+adaptive-learner-content-template#92 (2026-10-01): its validator keeps the
+shape, the directory layout and the set manifests, and the engine gate passes
+each lesson its set's source language.
 
 Three more rules in the same validator are content rules too. `free_text` and
 `picture_choice` need a non-empty `distractors` list; alc-books and the app's
@@ -700,10 +706,10 @@ which the conditions acted before the damage instead of after it.
   is for. A bridge lesson is not a special type but a lesson without an
   assessment intent; the author declares it in `purpose`, instead of one
   heuristic per exemption, and the same field answers the multiple-choice-only
-  exemption (`quiz`). The reference app applies it (adaptive-learner#3222). Open
-  (as of 2026-10-01): the content template's gate and alc-books still apply
-  their own versions, and the seven alc-books bridge lessons and the one
-  alc-traffic-knowledge quiz do not declare their `purpose` yet.
+  exemption (`quiz`). Every consumer applies it since 2026-10-01: the
+  reference app (adaptive-learner#3222) and the content repositories' engine
+  gate (adaptive-learner-content-template#92 and its wave), with the bridge
+  lessons and the quiz declaring their `purpose`.
 - **engine#186** (closed, 0.29.0): one hint-length rule, kept as a warning; the
   template's copy is gone in all ten content repos. Its severity dropped with
   the move (above).
@@ -714,8 +720,9 @@ which the conditions acted before the damage instead of after it.
 - **engine#190** (engine side done): the language-pair and set-metadata
   checks are in the engine (above). Open downstream: the template drops
   `validate_set_meta` and `back_looks_like_source` and passes each set's
-  source language to `validateLesson` (open as of 2026-10-01). The app's
-  backend dropped its own language-code shape (adaptive-learner#3245), and its
+  source language to `validateLesson`: done on 2026-10-01
+  (adaptive-learner-content-template#92 and its wave). The app's backend
+  dropped its own language-code shape (adaptive-learner#3245), and its
   frontend applies the lesson-level rules through `/rules`.
 - **adaptive-learner#3222** (closed 2026-09-30): the app stopped
   re-implementing engine rules in the frontend; it calls
@@ -730,9 +737,9 @@ which the conditions acted before the damage instead of after it.
   repos go from an advisory audit outside CI to the blocking engine gate
   (measured over the 631 lessons: 0 hits). The app's lesson funnel applies it
   through `validateLessonRules` (adaptive-learner#3222); the backend no longer
-  checks ids at all (adaptive-learner#3245). Open downstream (as of
-  2026-10-01): the template's `audit_content.py` still carries its three
-  duplicate-id checks.
+  checks ids at all (adaptive-learner#3245). The template's advisory
+  `audit_content.py` dropped its three duplicate-id checks on 2026-10-01
+  (adaptive-learner-content-template#92).
 - **engine#220** (closed, 0.34.0): the engine evaluates what it defines.
   `resolveExerciseVariables` samples, evaluates and substitutes a parametric
   exercise on the parser the validator uses; the reference app's own
