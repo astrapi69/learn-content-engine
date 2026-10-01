@@ -58,7 +58,7 @@ npx learn-content-engine lint sets/en/de-b1/lessons/*.json
 
 Was geprüft wird, ist nicht Rechtschreibung, sondern die *Kohärenz des Tests selbst*: dass die Lücken eines Lückentexts zu seinen `___`-Markern passen, dass jede `card_ids`-Referenz auf eine echte Karte zeigt, dass eine Bildauswahl genau ein richtiges Bild hat, dass sich akzeptierte Antworten und Distraktoren einer Mehrfachauswahl nicht überlappen. Das sind die Fehler, die stillschweigend eine unbewertbare Übung erzeugen, und sie verlassen nie den Rechner des Autors.
 
-Neben harten Fehlern gibt die Engine **Autoren-Lints** aus: Warnungen, die nie blockieren, aber wahrscheinliche Fehler markieren: eine Karte, die keine Übung je verwendet, ein Hinweis, der die Länge der Antwort verrät, eine mehrdeutige Zuordnung. Und in den Content-Repos verlangt ein **Qualitäts-Boden** eine echte Lektion statt eines Fragments: mindestens fünf Übungen, zwei Übungstypen und ein Theorie-Schritt. Nichts davon ist Geschmackssache; alles davon dient einem Test, der für jeden korrekt bewertet, der ihn ausführt.
+Neben harten Fehlern gibt die Engine **Autoren-Lints** aus: Warnungen, die nie blockieren, aber wahrscheinliche Fehler markieren: eine Karte, die keine Übung je verwendet, ein Hinweis, der die Länge der Antwort verrät, eine mehrdeutige Zuordnung. Und ein **Qualitäts-Boden** verlangt eine echte Lektion statt eines Fragments: mindestens fünf Übungen, zwei Übungstypen und ein Theorie-Schritt. Die Content-Repos setzen ihn in der CI durch; seit Engine 0.31.0 legt ihn die Engine fest (`validateLessonQuality`), und eine Lektion, die eine Einleitung oder ein Quiz ist, sagt das in ihrem `purpose`, statt an ihm zu scheitern. Nichts davon ist Geschmackssache; alles davon dient einem Test, der für jeden korrekt bewertet, der ihn ausführt.
 
 Wenn eine Warnung auf echte Arbeit zeigt (eine unreferenzierte Karte, die geübt werden sollte), kann die CLI beim Verdrahten helfen:
 
@@ -112,13 +112,14 @@ Alles außerhalb dieser Tabelle (Ordering, Association, Gap-Match, Hotspot, ein 
 
 ## Was die Engine sich weigert zu tun, und warum Ihnen das hilft
 
-Die Linie ist es wert, ausgesprochen zu werden, denn sie ist es, was die Pipeline wartbar hält statt zu einem Monolithen zu machen. Die Engine validiert und kanonisiert. Das ist alles. Sie rendert nicht, speichert nicht, druckt nicht, spricht nicht mit einem LMS.
+Die Linie ist es wert, ausgesprochen zu werden, denn sie ist es, was die Pipeline wartbar hält statt zu einem Monolithen zu machen. Die Engine validiert und kanonisiert, und seit 0.34.0 macht sie außerdem aus einer parametrischen Übung eine konkrete Instanz (`resolveExerciseVariables`), sodass jeder Consumer dieselben Werte berechnet. Das ist alles. Sie rendert nicht, bewertet nicht, speichert nicht, druckt nicht, spricht nicht mit einem LMS.
 
 | Die Engine tut                                  | Consumer-Tooling tut                                          |
 |-------------------------------------------------|---------------------------------------------------------------|
 | Quelle in eine kanonische Lektion parsen        | Für einen Bildschirm rendern und Wiederholungen planen        |
 | Struktur, Semantik und Qualität validieren      | Einen Test und einen Lösungsschlüssel drucken                 |
 | Die QTI-Teilmenge abbilden, in beide Richtungen | Fortschritt persistieren, synchronisieren, an ein LMS liefern |
+| Eine parametrische Übung in eine konkrete Instanz auflösen | Die Antwort des Lernenden bewerten |
 
 Zwei ehrliche Grenzen fallen daraus, und sie zu benennen ist der Punkt:
 

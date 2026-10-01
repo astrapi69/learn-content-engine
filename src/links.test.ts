@@ -1,31 +1,33 @@
-import { existsSync, readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { describe, it, expect } from "vitest";
 
 /**
  * Internal-link consistency across the docs. Every relative markdown link in the
- * README, CONTRIBUTING and docs/ must resolve to an existing file, and every
- * ``#anchor`` must resolve to a heading in the target file. Keeps the doc tree
- * from rotting as files move or headings get renamed.
+ * README, CHANGELOG, CONTRIBUTING and EVERY markdown file under docs/ (blog
+ * articles in both languages and proposals included) must resolve to an
+ * existing file, and every ``#anchor`` must resolve to a heading in the target
+ * file. Keeps the doc tree from rotting as files move or headings get renamed.
+ *
+ * The file list used to be hand-kept and covered eleven files; the comparative
+ * analysis, the schema diagrams, all blog articles and all proposals were
+ * outside it, and a proposal kept pointing at a README heading that no longer
+ * existed (found in the docs audit of 2026-10-01). It is walked now.
  */
 
 const repoRoot = fileURLToPath(new URL("..", import.meta.url));
 
-const DOC_FILES = [
-  "README.md",
-  "CHANGELOG.md",
-  "CONTRIBUTING.md",
-  "docs/getting-started.md",
-  "docs/concepts.md",
-  "docs/lesson-format.md",
-  "docs/authoring-patterns.md",
-  "docs/validation.md",
-  "docs/architecture.md",
-  "docs/extensions.md",
-  "docs/qti.md",
-];
+/** Every markdown file under ``dir``, as a path relative to the repo root. */
+const markdownUnder = (dir: string): string[] =>
+  readdirSync(resolve(repoRoot, dir), { withFileTypes: true }).flatMap((entry) => {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) return markdownUnder(path);
+    return entry.name.endsWith(".md") ? [relative(repoRoot, resolve(repoRoot, path))] : [];
+  });
+
+const DOC_FILES = ["README.md", "CHANGELOG.md", "CONTRIBUTING.md", ...markdownUnder("docs")];
 
 /** GitHub-style heading slug. */
 const slugify = (heading: string): string =>
@@ -71,6 +73,12 @@ const links = collectLinks();
 describe("docs — internal link consistency", () => {
   it("scans a non-trivial number of internal links", () => {
     expect(links.length).toBeGreaterThanOrEqual(15);
+  });
+
+  it("walks every doc folder, blog articles and proposals included", () => {
+    expect(DOC_FILES).toContain("docs/blog/de/did-we-reinvent-the-wheel.md");
+    expect(DOC_FILES).toContain("docs/proposals/author-ergonomics-app-track.md");
+    expect(DOC_FILES).toContain("docs/comparative-analysis.md");
   });
 
   for (const link of links) {

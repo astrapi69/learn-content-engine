@@ -1,10 +1,18 @@
 # App-track proposal: `multiple_choice`, word_tiles grading, `from_cards`
 
+> **Historical (all three items shipped).** `from_cards` arrived in engine
+> 0.7.0 and the native `multiple_choice` type in 0.8.0 (both schema 1.6); the
+> reference app grades `word_tiles` by token sequence since adaptive-learner#1545
+> (app v2.2.0). The premise below no longer holds either: since engine v0.6.0
+> the lesson schema's source of truth is this engine, not the app's Pydantic
+> model ([schema authority](../../README.md#schema-authority)). The text is kept
+> as the record of the plan.
+
 This is a **co-design spec for the adaptive-learner app**, not engine work. The
 lesson schema's source of truth is the app's Pydantic model (EXP-039); these
 three items change the schema and/or grading, which live there. Once the app
-ships them, the engine follows via the
-[schema-sync procedure](../../README.md#schema-sync-from-adaptive-learner). File
+ships them, the engine follows via the schema-sync procedure (retired with the
+authority flip of v0.6.0). File
 references below are in `astrapi69/adaptive-learner`.
 
 Companion to the engine-side author-ergonomics work (warnings, rule IDs, lint
