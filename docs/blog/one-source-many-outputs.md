@@ -58,7 +58,7 @@ npx learn-content-engine lint sets/en/de-b1/lessons/*.json
 
 What it checks is not spelling but *coherence of the test itself*: that a cloze's blanks line up with its `___` markers, that every `card_ids` reference resolves to a real card, that a picture-choice has exactly one correct image, that a multi-select's accepted answers and distractors don't overlap. These are the errors that silently produce an ungradeable exercise, and they never leave the author's machine.
 
-Alongside hard errors, the engine emits **author lints**: warnings that never block but flag likely mistakes: a card no exercise ever uses, a hint that gives away the answer's length, an ambiguous match. And in the content repos, a **quality floor** asks for a real lesson, not a fragment: at least five exercises, two exercise types, and one theory step. None of it is about taste; all of it is about a test that grades correctly for whoever runs it.
+Alongside hard errors, the engine emits **author lints**: warnings that never block but flag likely mistakes: a card no exercise ever uses, a hint that gives away the answer's length, an ambiguous match. And a **quality floor** asks for a real lesson, not a fragment: at least five exercises, two exercise types, and one theory step. The content repos enforce it in CI; since engine 0.31.0 the engine defines it (`validateLessonQuality`), and a lesson that is an introduction or a quiz says so in its `purpose` instead of failing it. None of it is about taste; all of it is about a test that grades correctly for whoever runs it.
 
 When a warning does point at real work (an unreferenced card that should be drilled), the CLI can help wire it:
 
@@ -112,13 +112,14 @@ Everything outside that table (ordering, association, gap-match, hotspot, an ite
 
 ## What the engine refuses to do, and why that helps you
 
-It is worth being explicit about the line, because it is what keeps the pipeline maintainable rather than a monolith. The engine validates and canonicalizes. That is all. It does not render, does not store, does not print, does not talk to an LMS.
+It is worth being explicit about the line, because it is what keeps the pipeline maintainable rather than a monolith. The engine validates and canonicalizes, and since 0.34.0 it also turns a parametric exercise into a concrete instance (`resolveExerciseVariables`), so every consumer computes the same values. That is all. It does not render, does not grade, does not store, does not print, does not talk to an LMS.
 
 | The engine does | Consumer tooling does |
 |---|---|
 | Parse source into a canonical lesson | Render for a screen and schedule reviews |
 | Validate structure, semantics, and quality | Print a test and an answer key |
 | Map the QTI subset, both directions | Persist progress, sync, deliver to an LMS |
+| Resolve a parametric exercise into a concrete instance | Grade the learner's answer |
 
 Two honest limits fall out of this, and naming them is the point:
 

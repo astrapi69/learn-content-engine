@@ -68,7 +68,7 @@ flowchart LR
   Author[Content-Autor] -->|Lektions-JSON| Core
   Author -->|Lektions-JSON mit requires_extensions| Ref
   subgraph Engine[learn-content-engine]
-    Core[Kerntypen: Schema 1.14]
+    Core[Kerntypen]
     Ref[Referenz-Extensions: src/examples/ext-ref-*]
   end
   Core -->|garantiert ladbar| App[adaptive-learner]

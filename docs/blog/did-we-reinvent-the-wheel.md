@@ -68,7 +68,7 @@ flowchart LR
   Author[Content author] -->|lesson JSON| Core
   Author -->|lesson JSON with requires_extensions| Ref
   subgraph Engine[learn-content-engine]
-    Core[Core types: schema 1.14]
+    Core[Core types]
     Ref[Reference extensions: src/examples/ext-ref-*]
   end
   Core -->|guaranteed to load| App[adaptive-learner]

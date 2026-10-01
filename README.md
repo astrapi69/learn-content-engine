@@ -12,6 +12,9 @@ network, storage, or UI code - you supply the bytes and keep fetch +
 persistence. The bundled, strict JSON-Schema makes it a self-contained **format
 reference**: you can author and validate lessons without the application the
 format originated in ([Adaptive Learner](https://github.com/astrapi69/adaptive-learner)).
+Beyond validity it checks a lesson against the shared quality minimums
+(`validateLessonQuality`) and turns a parametric exercise into a concrete
+instance (`resolveExerciseVariables`), so every consumer gets the same answer.
 Tracks the lesson schema, currently **v1.18**.
 
 ## Install
@@ -64,8 +67,8 @@ if (!result.valid) console.error(result.errors); // [{ path, message, id, severi
 - [**Concepts**](docs/concepts.md) - the pipeline, context inheritance, the legacy alias, schema policy.
 - [**Lesson format reference**](docs/lesson-format.md) - every field and exercise type, with tested examples.
 - [**Schema diagrams**](docs/schema-diagrams.md) - four pictures of the format; the two schema-derived ones are generated and drift-gated.
-- [**Authoring patterns**](docs/authoring-patterns.md) - expressing common exercise ideas (true/false, conjugation, synonyms, collocations, word order) with the existing types.
-- [**Validation**](docs/validation.md) - the strict schema, the semantic rules, the error model, and the `/rules` entry for browser consumers.
+- [**Authoring patterns**](docs/authoring-patterns.md) - expressing common exercise ideas (true/false, conjugation, synonyms, collocations, word order, sung chunks) with the existing types.
+- [**Validation**](docs/validation.md) - the strict schema, the semantic rules, the quality minimums, the error model, and the `/rules` entry for browser consumers.
 - [**Extensions**](docs/extensions.md) - opt-in `ext:` exercise types, the portability contract, the registry.
 - [**QTI interop**](docs/qti.md) - the optional QTI import/export adapter (2.x and 3.0 dialects) and its `qti import` / `qti export` command, mapping table, fidelity limits.
 - [**Architecture**](docs/architecture.md) - the engine boundary, consumer parity, roadmap.

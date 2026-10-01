@@ -360,8 +360,9 @@ instead of an exemption per heuristic, and `from_cards` counts the pairs
 parsing derives. Measured before building over the 631 lessons of the ten
 content repos: the three versions judged 10 lessons differently; with
 `purpose` set on the seven bridge lessons and the one quiz, none of the 631
-falls short. The three consumer versions stay until each consumer calls the
-engine (the template's gate, alc-books, the app's share check).
+falls short. The app's share check calls the engine since adaptive-learner#3222; the
+template's gate and alc-books' copy still apply their own versions (as of
+2026-10-01, both pinned to 0.34.0).
 
 It also settles the question of the canonical version: **none of the three
 is canonical.** Template and alc-books differ in an exemption, the app in the
@@ -487,13 +488,13 @@ unchecked. The case is the evidence for the measurement under
 the one it was set up for: it was meant to keep a move from turning repos red,
 and here it showed that the engine's version was the imprecise one.
 
-#### The app's frontend repeats engine errors
+#### The app's frontend repeated engine errors (resolved, adaptive-learner#3222)
 
-The app's share check (`validateSetForSharing`) re-implements `E-MATCH-DUP-LEFT` so that an author
-sees it before an export or a share. The intent is right; the means is a second
+The app's share check (`validateSetForSharing`) re-implemented `E-MATCH-DUP-LEFT` so that an author
+sees it before an export or a share. The intent was right; the means was a second
 implementation of a rule the engine already reports, and the copy already
-differs: it compares left terms case-sensitively, the engine does not, so
-"Empathie" next to "empathie" passes the app and fails the repo gate
+differed: it compared left terms case-sensitively, the engine does not, so
+"Empathie" next to "empathie" passed the app and failed the repo gate
 (adaptive-learner#3222). The app kept the engine's validators out of its
 bundle to avoid the structural ajv layer. Since 0.29.0 the engine offers the
 semantic rules alone, `learn-content-engine/rules` (engine#191): no ajv, no
@@ -504,61 +505,66 @@ with esbuild, measured 2026-09-25).
 Until engine#203, a consumer that imported parse functions from the package
 root also got 146 kB of schema files copied into its Vite build that nothing
 read; the structural layer now takes the schemas from a module, and a
-parse-only build carries no schema at all. The
-entry removes the reason for the frontend's copies; the app has not switched
-yet. It does not reach the backend's copy (next subsection).
+parse-only build carries no schema at all.
 
-A second frontend copy sits in `validateGeneratedLesson` (`analysis-to-lesson.ts`),
-which checks every generated lesson and every imported lesson file. It repeats
+A second frontend copy sat in `validateGeneratedLesson` (`analysis-to-lesson.ts`),
+which checks every generated lesson and every imported lesson file. It repeated
 twelve engine errors by meaning (the four step rules, `E-CARD-REF`,
 `E-MATCH-PAIRS`, `E-FREETEXT-ACCEPT`, `E-TILES-MIN`, `E-TILES-ORDERING`,
-`E-PIC-ONE-CORRECT`, `E-CLOZE-SENTENCE`, `E-CLOZE-MARKERS`) and differs in both
+`E-PIC-ONE-CORRECT`, `E-CLOZE-SENTENCE`, `E-CLOZE-MARKERS`) and differed in both
 directions: a `matching` with `from_cards` and no `pairs`, valid in the engine,
-fails the import ("needs pairs"); a `picture_choice` with one image, a
+failed the import ("needs pairs"); a `picture_choice` with one image, a
 single-answer `multiple_choice` without a correct option and a `select` cloze
-without distractors pass it, where the engine reports `E-PIC-MIN`,
+without distractors passed it, where the engine reports `E-PIC-MIN`,
 `E-MC-ONE-CORRECT` and `E-CLOZE-SELECT-DISTRACTORS`.
 
-#### The app's backend repeats the engine's semantic rules
+**Resolved (adaptive-learner#3222, closed 2026-09-30).** The app pins 0.34.0;
+its share check and its exercise editor defer to the engine's rules, the share
+check reports every engine error and lint and applies `validateLessonQuality`,
+and the lesson funnel runs `validateLessonRules` with the app's extension
+registry, all from `learn-content-engine/rules`.
+
+#### The app's backend repeated the engine's semantic rules (resolved, adaptive-learner#3245)
 
 The content loader in the app's backend (`plugins/adaptive-learner-plugin-content-loader`)
 validates every manifest the API mode lists or downloads and every lesson it
 serves or saves. Its structural layer is generated from this engine's schema;
-its semantic layer is hand-written in `schema.py` and `models.py`
-([Roadmap](#roadmap), stage 4). It repeats 27 of the 38 lesson-level errors in
-`src/rules.ts` and `src/variables.ts`: the per-type rules of the six core
-exercise types, the four step rules, `E-CARD-REF`, and since engine#202
-`E-CARD-ID-DUP` and `E-STEP-ID-DUP`, which the backend had before the engine.
-On one seeded negative per rule both reject (25 of 25 for the first 25; the two
-id rules on engine#202's probe lesson). The differences sit next to them
+its semantic layer was hand-written in `schema.py` and `models.py`
+([Roadmap](#roadmap), stage 4). It repeated 25 of the 35 lesson-level errors in
+`src/rules.ts` and `src/variables.ts` (as of 0.29.0): the per-type rules of the
+six core exercise types, the four step rules and `E-CARD-REF`. On one seeded
+negative per rule both rejected (25 of 25). The differences sat next to them
 (adaptive-learner#3245, measured against engine 0.26.0 and 0.29.0):
 
 | Rule | Engine id | Backend |
 |---|---|---|
-| A `left` term repeated in a `matching` | `E-MATCH-DUP-LEFT` | not checked: "a" next to "a" passes |
+| A `left` term repeated in a `matching` | `E-MATCH-DUP-LEFT` | not checked: "a" next to "a" passed |
 | A `stable_id` twice in one lesson | `E-STABLE-ID-DUP` | not checked |
-| An `ext:` type not declared, or not registered | `E-EXT-UNDECLARED`, `E-EXT-UNSUPPORTED` | not checked: any `ext:` exercise passes |
-| Parametric `variables` | `E-VAR-*` | not checked, deliberately: the backend only accepts the field |
+| An `ext:` type not declared, or not registered | `E-EXT-UNDECLARED`, `E-EXT-UNSUPPORTED` | not checked: any `ext:` exercise passed |
+| Parametric `variables` | `E-VAR-*` | not checked, deliberately: the backend only accepted the field |
 | `metadata.retired_ids` not a list of strings | `E-RETIRED-IDS-TYPE` | not checked |
-| An exercise id twice in one lesson | `E-EXERCISE-ID-DUP` (engine#202) | not checked: the probe lesson with two `ex-a` passes |
-| Shape of a language code, on the set and on the lesson | `E-LANG-TAG` (engine#190: a well-formed BCP 47 tag) | error unless `^[a-z]{2,3}(-[A-Za-z0-9]{2,8})?$`: rejects `zh-Hant-TW`, which the engine accepts, and `EN`, on which the engine only warns |
-| `example_url` is an http(s) URL | none | error, case-sensitive: `HTTPS://` fails |
-| A set's `id` and `tags` | none; plain strings in the manifest schema | error unless an ASCII slug: `währung-a1` and the tag `präsenz` fail |
+| A card id or a step id twice in one lesson | none then (engine#202 added it) | error |
+| `example_url` is an http(s) URL | none | error, case-sensitive: `HTTPS://` failed |
+| Shape of a language code, on the set and on the lesson | none then (engine#190 added `E-LANG-TAG`) | error unless `^[a-z]{2,3}(-[A-Za-z0-9]{2,8})?$`: rejected `zh-Hant-TW`, which the engine accepts |
+| A set's `id` and `tags` | none; plain strings in the manifest schema | error unless an ASCII slug: `währung-a1` and the tag `präsenz` failed |
 | A set's `version` semver-shaped; set ids unique in a manifest | none | error |
 
-The first six rows are engine errors the backend does not apply; it saves and
-serves lessons that carry them. The seventh is a rule both apply in different
-shapes; engine#190 decided the engine's, and the backend's is the one to
-replace. The other rows are rules the engine does not have. Each can be answered from a lesson or a manifest alone, so by the
-assignment test it belongs in the engine, and the backend's version is one of
-the versions to measure when it moves. No real content hits a row today: the
-backend's models accept all 63 manifests and 631 lessons of the ten content
-repos.
+The first five rows were engine errors the backend did not apply; it saved and
+served lessons that carried them. The other rows were rules the engine did not
+have. No real content hit a row: the backend's models accepted all 63
+manifests and 631 lessons of the ten content repos.
 
-`learn-content-engine/rules` does not reach this copy: the backend is Python
-and cannot import the package. The schema reaches it through generation; the
-semantic rules do not, and no gate compares the two (the app's
-`check_engine_schema_parity.py` compares the schema files only).
+**Resolved (adaptive-learner#3245, closed 2026-09-29), by cutting, not by
+copying.** None of the repeated rules protected backend data: after parsing,
+the backend reads no exercise content. So the backend keeps only what its own
+data needs (a path-safe set id, which is a directory in its cache; a semver
+`version`, which it compares; unique set ids in a manifest; a semver
+`schema_version`) and, until a frontend guard for rendered links is proven
+active, the http(s) check on `example_url`. The repeated rules, the
+language-code shape, the ASCII tag rule and the card and step id checks are
+gone there; the authoring rules among them are the engine's (engine#190,
+engine#202), applied by the content repos' engine gate and by the frontend
+through `learn-content-engine/rules`.
 
 ### Fixed: a lesson's `domain`
 
@@ -577,14 +583,15 @@ says the right thing. The severity did not move with it: alc-books'
 part under [Moving a rule](#moving-a-rule-the-conditions) is not met here
 either, until adaptive-learner-content-template#83.
 
-The origin of the value is fixed only in part. adaptive-learner#2425 (closing
+The origin of the value was fixed in two steps. adaptive-learner#2425 (closing
 adaptive-learner#2376 on 2026-08-05) filters the `domain` in the set-level files
 of the app's repo export: manifest, search index and README. The lesson files are written as the app holds them, and a
 lesson without its own `domain` inherits the set's (`parseLesson`), which for a
 user set is its origin marker. A test through the same reads the export makes
 reproduces it on the app's develop branch: the manifest says `language`, the
-lesson file says `imported` (adaptive-learner#3242). No content repo holds such
-a lesson today.
+lesson file said `imported` (adaptive-learner#3242). adaptive-learner#3302
+(2026-09-29) closed it: the export writes no origin marker into the lesson
+files either. No content repo held such a lesson.
 
 ### Moving a rule: the conditions
 
@@ -693,7 +700,10 @@ which the conditions acted before the damage instead of after it.
   is for. A bridge lesson is not a special type but a lesson without an
   assessment intent; the author declares it in `purpose`, instead of one
   heuristic per exemption, and the same field answers the multiple-choice-only
-  exemption (`quiz`). Open: the consumers switch and delete their versions.
+  exemption (`quiz`). The reference app applies it (adaptive-learner#3222). Open
+  (as of 2026-10-01): the content template's gate and alc-books still apply
+  their own versions, and the seven alc-books bridge lessons and the one
+  alc-traffic-knowledge quiz do not declare their `purpose` yet.
 - **engine#186** (closed, 0.29.0): one hint-length rule, kept as a warning; the
   template's copy is gone in all ten content repos. Its severity dropped with
   the move (above).
@@ -704,24 +714,25 @@ which the conditions acted before the damage instead of after it.
 - **engine#190** (engine side done): the language-pair and set-metadata
   checks are in the engine (above). Open downstream: the template drops
   `validate_set_meta` and `back_looks_like_source` and passes each set's
-  source language to `validateLesson`; the app's share check and backend
-  follow the engine's tag rule instead of their own shapes.
-- **adaptive-learner#3222**: the app stops re-implementing engine rules, in
-  the frontend: the share check's `E-MATCH-DUP-LEFT`, `SLUG_RE`, and the
-  per-type checks in `validateGeneratedLesson`; the share check's quality
-  minimums can call `validateLessonQuality` (engine#185). The PR sequence is in the plan comment there.
-- **adaptive-learner#3245**: the backend's semantic layer, which the `/rules`
-  entry cannot reach.
+  source language to `validateLesson` (open as of 2026-10-01). The app's
+  backend dropped its own language-code shape (adaptive-learner#3245), and its
+  frontend applies the lesson-level rules through `/rules`.
+- **adaptive-learner#3222** (closed 2026-09-30): the app stopped
+  re-implementing engine rules in the frontend; it calls
+  `learn-content-engine/rules` instead (above).
+- **adaptive-learner#3245** (closed 2026-09-29): the backend's semantic layer
+  is cut to what its own data needs (above).
 - **engine#201** (done, 0.30.0): parameters on validation issues, so a
   consumer can keep its own wording; a precondition for the app's switch.
 - **engine#202** (engine side done): card, step and exercise ids are each
   unique within a lesson (`E-CARD-ID-DUP`, `E-STEP-ID-DUP`,
   `E-EXERCISE-ID-DUP`), the promise the schema's descriptions always made. The
   repos go from an advisory audit outside CI to the blocking engine gate
-  (measured over the 631 lessons: 0 hits). Open downstream: the template's
-  `audit_content.py` drops its three duplicate-id checks, the app's
-  `validateGeneratedLesson` can take the rule from `/rules`, and the backend
-  lacks the exercise-id check (table above).
+  (measured over the 631 lessons: 0 hits). The app's lesson funnel applies it
+  through `validateLessonRules` (adaptive-learner#3222); the backend no longer
+  checks ids at all (adaptive-learner#3245). Open downstream (as of
+  2026-10-01): the template's `audit_content.py` still carries its three
+  duplicate-id checks.
 - **engine#220** (closed, 0.34.0): the engine evaluates what it defines.
   `resolveExerciseVariables` samples, evaluates and substitutes a parametric
   exercise on the parser the validator uses; the reference app's own
@@ -737,9 +748,9 @@ which the conditions acted before the damage instead of after it.
   ([proposal](proposals/sung-lessons.md)).
 - **alc-books' domain rule** (moved with 0.29.0): now the engine's
   `W-DOMAIN-UNKNOWN`; its severity dropped with the move (above).
-- **adaptive-learner#3242**: the app's repo export writes a user set's origin
-  marker as the `domain` of every lesson file (above); adaptive-learner#2376
-  fixed the set-level files only.
+- **adaptive-learner#3242** (closed 2026-09-29): the app's repo export wrote a
+  user set's origin marker as the `domain` of every lesson file (above);
+  adaptive-learner#2376 had fixed the set-level files only.
 
 ## Roadmap
 
