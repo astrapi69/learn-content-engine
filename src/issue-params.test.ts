@@ -398,6 +398,19 @@ const CASES: ParamCase[] = [
     params: { setId: "s1", field: "title", rootValue: '"Root title"', setValue: '"Set title"' },
   },
   {
+    id: "W-LESSON-COUNT-CLAIM",
+    label: "a description stating a stale lesson count",
+    issues: () => {
+      const { errors, warnings } = validateManifest({
+        name: "Repo",
+        sets: [{ id: "s1", title: "Set", target_language: "de", level: "A1", version: "1.0.0", lesson_count: 115, description: "Kurs (90 Lektionen)." }],
+      });
+      return [...errors, ...warnings];
+    },
+    path: "/sets/0/description",
+    params: { field: "description", claimed: 90, lessonCount: 115 },
+  },
+  {
     id: "E-QUALITY-EXERCISES",
     label: "one exercise in a practice lesson",
     issues: () => quality(lesson([theoryStep, ex({ id: "f1", type: "free_text", prompt: "?", accept: ["x", "y"] })])),
