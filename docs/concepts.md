@@ -53,9 +53,10 @@ A content repo describes each set twice: as a `sets[]` entry in the root
   value, so a set marked `visibility: hidden` at the root stays hidden.
 - The projection defaults (`visible`, `authored`, ...) apply only when **both**
   entries are silent.
-- Where **both** carry a value, the set file's is kept for now. Which file owns
-  which field, and a rule that reports a contradiction, are the next steps of
-  engine#246.
+- Where **both** carry a value, the set file's is kept for now, and
+  `validateManifestPair(rootManifest, setManifest)` warns
+  (`W-MANIFEST-ENTRY-MISMATCH`) when the two differ. Which file owns which
+  field is the next step of engine#246.
 
 ## Context inheritance vs. standalone
 

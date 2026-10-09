@@ -237,6 +237,14 @@ a published retirement, retired-yet-alive - lives in the stability gate
 (`V1`/`V5`/`V6`, see
 [stable identity](lesson-format.md#stable-identity-stable_id)).
 
+`validateManifest` sees one file. A set is described in two, the root
+manifest and its own, so `validateManifestPair(rootManifest, setManifest)`
+compares the two entries of one set and returns `W-MANIFEST-ENTRY-MISMATCH`
+per field they carry with different values (engine#246). It never blocks and
+reports nothing when the root does not list the set. A repo-wide runner calls
+it once per set manifest, next to `validateManifest`; see
+[root entry and set manifest](lesson-format.md#root-entry-and-set-manifest).
+
 ## Quality minimums
 
 Validity is not the only question a consumer asks before it publishes or

@@ -34,6 +34,7 @@ import type { Lesson } from "./types/lesson-schema.generated.js";
 
 export type { ValidationIssue, ValidationParams, ValidationParamValue, ValidationResult, ValidationSeverity } from "./issues.js";
 export { warn } from "./issues.js";
+export { validateManifestPair } from "./manifest-pair.js";
 export { unusedCardIds } from "./rules.js";
 
 // strict:false so ajv tolerates the schema's ``x-schema-version`` annotation

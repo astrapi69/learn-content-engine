@@ -4,7 +4,7 @@ import { validateLessonQuality } from "./quality.js";
 import { lessonIdOrderingIssues } from "./set-ordering.js";
 import { ISSUE_EMITTING_SOURCES, readSource } from "./test-support/emitters.js";
 import type { Lesson } from "./types/lesson-schema.generated.js";
-import { validateLesson, validateManifest, type ValidationIssue } from "./validate.js";
+import { validateLesson, validateManifest, validateManifestPair, type ValidationIssue } from "./validate.js";
 
 /**
  * engine#201: the values a rule interpolates into its message also travel as
@@ -386,6 +386,16 @@ const CASES: ParamCase[] = [
       }),
     path: "/cards",
     params: { sourceLanguage: "el", script: "Grek", count: 1, cardIds: ["c1"] },
+  },
+  {
+    id: "W-MANIFEST-ENTRY-MISMATCH",
+    label: "a title the root manifest and the set manifest disagree on",
+    issues: () => {
+      const setEntry = { id: "s1", title: "Set title", level: "A1", version: "1.0.0", lesson_count: 1 };
+      return validateManifestPair({ sets: [{ ...setEntry, title: "Root title" }] }, { sets: [setEntry] }).warnings;
+    },
+    path: "/sets/0/title",
+    params: { setId: "s1", field: "title", rootValue: '"Root title"', setValue: '"Set title"' },
   },
   {
     id: "E-QUALITY-EXERCISES",
