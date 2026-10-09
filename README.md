@@ -117,6 +117,7 @@ The gap analysis behind this list is
 | `singleJsonLessonAdapter` | fn | the built-in single-JSON source adapter |
 | `parseManifest` | fn | raw `manifest.yaml` text → `ParsedManifest` |
 | `asContentSetEntry` | fn | raw parsed set → canonical `ContentSetEntry` |
+| `inheritFromRootEntry` | fn | root-manifest entry + set-file entry → one `ParsedSet`; a field the set file leaves silent inherits the root value (engine#246) |
 | `resolveLanguagePair` | fn | language-pair resolution (legacy alias + `en` default) |
 | `setBasePath` | fn | repo-relative base dir for a set |
 | `asContentSetBook` | fn | project a manifest book block → `ContentSetBook \| null` |
