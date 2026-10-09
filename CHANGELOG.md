@@ -5,7 +5,14 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
-## [Unreleased]
+## [0.37.0] - 2026-10-09
+
+A set is described twice, in the root manifest and in its own, and the two
+could disagree without anything saying which value wins (engine#246). Two
+additive functions, no schema change: one combines the two entries, one warns
+where they differ. `validateManifest` gains one warning, for a lesson count in
+the prose that differs from `lesson_count`. Nothing turns red;
+`asContentSetEntry` and every error rule behave as before.
 
 ### A set file inherits what it leaves silent from the root entry (engine#246)
 
