@@ -5,6 +5,23 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [Unreleased]
+
+### A set file inherits what it leaves silent from the root entry (engine#246)
+
+A content repo describes each set twice: in the root `manifest.yaml` and in
+the set's own manifest. `inheritFromRootEntry(rootEntry, setEntry)` combines
+the two into one `ParsedSet`: a field the set file leaves absent or `null`
+takes the root entry's value, and the projection defaults apply only when both
+are silent. Where both carry a value, the set file's is kept; which file owns
+which field follows in a later step of engine#246.
+
+Why: `asContentSetEntry` turns a missing `visibility` into `visible`, so a set
+hidden at the root was visible to every consumer that projects from the set
+file (alc-books and the content template, measured 2026-10-09). The helper is
+new API; `asContentSetEntry` is unchanged, so nothing changes for a consumer
+until it combines the two entries.
+
 ## [0.36.0] - 2026-10-01
 
 Schema 1.19: one additive exercise field, `case_sensitive`. `E-FREETEXT-DISJOINT` now

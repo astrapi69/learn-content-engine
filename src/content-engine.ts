@@ -163,6 +163,32 @@ export function resolveLanguagePair(parsed: {
   };
 }
 
+/**
+ * Combine a set's root-manifest entry with the entry in its own manifest
+ * (``<path>/manifest.yaml``, ``sets[0]``) into one {@link ParsedSet}
+ * (engine#246, step 1).
+ *
+ * A field the set file leaves absent or ``null`` inherits the root entry's
+ * value, so a set hidden at the root stays hidden for a consumer that reads the
+ * set file; the projection defaults apply only when both entries are silent.
+ * Where both carry a value, the set file's is kept for now: which file owns
+ * which field is engine#246 step 3. Neither input is mutated.
+ *
+ * @throws Error when the two entries describe different sets (``id`` differs).
+ */
+export function inheritFromRootEntry(rootEntry: ParsedSet, setEntry: ParsedSet): ParsedSet {
+  if (rootEntry.id !== setEntry.id) {
+    throw new Error(
+      `inheritFromRootEntry: root entry "${rootEntry.id}" and set entry "${setEntry.id}" describe different sets`,
+    );
+  }
+  const merged: Record<string, unknown> = { ...rootEntry };
+  for (const [field, value] of Object.entries(setEntry)) {
+    if (value !== undefined && value !== null) merged[field] = value;
+  }
+  return merged as unknown as ParsedSet;
+}
+
 /** Project a raw parsed manifest set into a canonical {@link ContentSetEntry}. */
 export function asContentSetEntry(
   src: ContentSetSource,

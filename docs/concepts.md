@@ -42,6 +42,21 @@ manifest.yaml ──parseManifest──▶ ParsedManifest
 Validation ([validation.md](validation.md)) is a **separate, opt-in** step: it
 is not part of `parse`.
 
+## Root entry and set file
+
+A content repo describes each set twice: as a `sets[]` entry in the root
+`manifest.yaml`, and as `sets[0]` in the set's own manifest
+(`<path>/manifest.yaml`). A consumer that has both combines them with
+**`inheritFromRootEntry(rootEntry, setEntry)`** before projecting:
+
+- A field the set file leaves **absent or `null`** takes the root entry's
+  value, so a set marked `visibility: hidden` at the root stays hidden.
+- The projection defaults (`visible`, `authored`, ...) apply only when **both**
+  entries are silent.
+- Where **both** carry a value, the set file's is kept for now. Which file owns
+  which field, and a rule that reports a contradiction, are the next steps of
+  engine#246.
+
 ## Context inheritance vs. standalone
 
 A lesson file usually does **not** carry its own `target_language` /
