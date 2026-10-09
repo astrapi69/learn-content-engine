@@ -37,6 +37,19 @@ warnings, 42 for `description` in seven repositories, 2 for `tags`, 1 for
 `title` and 1 for `title_native`. A consumer showed one text or the other
 depending on which file it read.
 
+### A stated lesson count must match `lesson_count` (engine#246)
+
+`validateManifest` warns `W-LESSON-COUNT-CLAIM` when a set's `title` or
+`description` states a lesson count in digits ("(90 Lektionen)", "a 15-lesson
+course") that differs from its `lesson_count`; params `field`, `claimed`,
+`lessonCount`. Number words are not read: in the content repositories they
+also name deliberate subsets. A warning.
+
+Why: alc-psychology described `psych-intro` as "90 Lektionen" in its set
+manifest while the set had 115, and nothing compared the two. Measured with
+this build over 65 manifest files of the eleven content repositories (108 set
+entries): exactly that one warning.
+
 ## [0.36.0] - 2026-10-01
 
 Schema 1.19: one additive exercise field, `case_sensitive`. `E-FREETEXT-DISJOINT` now

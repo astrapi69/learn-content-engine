@@ -237,6 +237,10 @@ a published retirement, retired-yet-alive - lives in the stability gate
 (`V1`/`V5`/`V6`, see
 [stable identity](lesson-format.md#stable-identity-stable_id)).
 
+`validateManifest` also warns `W-LESSON-COUNT-CLAIM` when a set's `title` or
+`description` states a lesson count in digits that differs from its
+`lesson_count`, so prose cannot keep an old count after the set grows.
+
 `validateManifest` sees one file. A set is described in two, the root
 manifest and its own, so `validateManifestPair(rootManifest, setManifest)`
 compares the two entries of one set and returns `W-MANIFEST-ENTRY-MISMATCH`

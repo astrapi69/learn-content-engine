@@ -35,6 +35,7 @@ import {
   type ValidationResult,
 } from "./issues.js";
 import { lessonLanguageIssues, setLanguageIssues } from "./language-rules.js";
+import { lessonCountClaimIssues } from "./lesson-count-claim.js";
 import { lessonIdOrderingIssues } from "./set-ordering.js";
 import { collectStableIds } from "./stable-ids.js";
 import type { Exercise, Lesson, LessonStep } from "./types/lesson-schema.generated.js";
@@ -775,6 +776,7 @@ export function validateManifestRules(input: unknown): ValidationResult {
       ...checkManifestLessonOrdering(manifestMetadata),
       ...checkManifestDomainVocabulary(normalized),
       ...checkRetiredIdsDuplicates(manifestMetadata),
+      ...lessonCountClaimIssues(normalized),
     ],
   };
 }
