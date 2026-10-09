@@ -22,6 +22,21 @@ file (alc-books and the content template, measured 2026-10-09). The helper is
 new API; `asContentSetEntry` is unchanged, so nothing changes for a consumer
 until it combines the two entries.
 
+### Root manifest and set manifest disagreeing is reported (engine#246)
+
+`validateManifestPair(rootManifest, setManifest)` compares a set's two
+entries and warns `W-MANIFEST-ENTRY-MISMATCH` per field both carry with
+different values (params `setId`, `field`, `rootValue`, `setValue`). `null`
+and an absent key are silent at every depth, and nested objects compare by
+content. A warning, so no repository turns red; `validateManifest` is
+unchanged and still checks one file at a time.
+
+Why: nothing reported the drift. Measured with this build on 2026-10-09
+over the hub, the template and the eight alc-* repositories (53 sets): 46
+warnings, 42 for `description` in seven repositories, 2 for `tags`, 1 for
+`title` and 1 for `title_native`. A consumer showed one text or the other
+depending on which file it read.
+
 ## [0.36.0] - 2026-10-01
 
 Schema 1.19: one additive exercise field, `case_sensitive`. `E-FREETEXT-DISJOINT` now

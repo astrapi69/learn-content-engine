@@ -123,6 +123,7 @@ The gap analysis behind this list is
 | `asContentSetBook` | fn | project a manifest book block → `ContentSetBook \| null` |
 | `validateLesson` | fn | validate a lesson against the bundled schema + semantic rules → `ValidationResult` |
 | `validateManifest` | fn | validate a manifest against the bundled schema (legacy alias normalized) |
+| `validateManifestPair` | fn | compare a set manifest with its root-manifest entry; `W-MANIFEST-ENTRY-MISMATCH` per differing field (engine#246) |
 | `validateLessonQuality` | fn | check a shape-valid lesson against the quality minimums, keyed to its `purpose` (`practice`, `bridge`, `quiz`) → `ValidationResult` of `E-QUALITY-*` shortfalls; a publication threshold, not validity ([Quality minimums](docs/lesson-format.md#quality-minimums)) |
 | `resolveExerciseVariables` | fn | resolve a parametric exercise into a concrete instance: sample, evaluate in declaration order, round, substitute every `{{name}}`; returns the exercise, the values (to persist and replay) and the tolerances of pure-reference accepted answers ([Variables](docs/lesson-format.md#variables-parametric-exercises)) |
 | `evaluateExpression` | fn | evaluate a computed variable's expression with values for its names, on the parser the validator uses |
