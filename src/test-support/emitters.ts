@@ -57,6 +57,14 @@ export function reachableModules(entry: string): string[] {
   return [...seen].sort();
 }
 
-/** The modules reachable from `entry` that carry a rule id literal. */
+/** Modules that name rule ids without emitting any: the table of retired
+ *  ids (engine#256) names ids that are no longer emitted, by design.
+ *  rule-ids.test.ts proves it emits nothing. */
+export const RULE_ID_TABLES = ["./rule-ids.ts"];
+
+/** The modules reachable from `entry` that carry a rule id literal, except
+ *  the id tables. */
 export const emittersReachedFrom = (entry: string): string[] =>
-  reachableModules(entry).filter((file) => /"[EW]-[A-Z0-9-]+"/.test(readSource(file)));
+  reachableModules(entry).filter(
+    (file) => !RULE_ID_TABLES.includes(file) && /"[EW]-[A-Z0-9-]+"/.test(readSource(file)),
+  );

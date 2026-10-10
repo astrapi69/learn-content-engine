@@ -1239,9 +1239,14 @@ correct, and `free_text` is graded against `accept` alone.
 
 `validateLesson` returns `{ valid, errors, warnings }`. **Errors** block (`valid`
 is false); **warnings** never block: they flag likely authoring mistakes. Every
-issue carries a stable `id`, a `severity`, and a `docAnchor`. IDs are stable API:
-a downstream (e.g. a content-repo) validator can mirror a rule by its id without
-drifting. An issue whose message names a value also carries it in `params`
+issue carries a stable `id`, a `severity`, and a `docAnchor`. The prefix of an
+id carries its tier: `E-` blocks, `W-` warns. An id is stable while its rule keeps
+its tier, so a downstream (e.g. a content-repo) validator can mirror a rule by its
+id without drifting. Raising or lowering a rule renames it (`W-X` becomes `E-X`):
+a breaking change for whoever mirrors or accepts a rule by its full id, announced
+as such in the CHANGELOG and recorded in `RENAMED_RULE_IDS`, which maps every
+retired id to its current one (`currentRuleId` follows it). Retired so far:
+`W-MANIFEST-ENTRY-MISMATCH`, now `E-MANIFEST-ENTRY-MISMATCH` (0.38.0, engine#246). An issue whose message names a value also carries it in `params`
 (see [issue parameters](#issue-parameters)), so a consumer can word the problem
 itself instead of parsing the English message.
 

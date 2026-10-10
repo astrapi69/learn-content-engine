@@ -27,6 +27,7 @@ export {
 // --- Conformance: explicit schema validation against the bundled artifact ---
 export { validateLesson, validateManifest, validateManifestPair } from "./validate.js";
 export { QUALITY_MINIMUMS, validateLessonQuality } from "./quality.js";
+export { RENAMED_RULE_IDS, currentRuleId } from "./rule-ids.js";
 export { resolveExerciseVariables } from "./resolve-variables.js";
 export type { ResolveExerciseVariablesOptions, ResolvedExerciseVariables } from "./resolve-variables.js";
 export { evaluateExpression } from "./variables.js";

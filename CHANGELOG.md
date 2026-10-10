@@ -22,6 +22,20 @@ A warning, so nothing turns red. Measured over the 632 lessons of the eleven
 content repositories: exactly the two hints the issue names
 (adaptive-learner-content, el/fr-a1 lesson 07), no other new hit.
 
+### A raised rule's old id is recorded, and the convention is documented (engine#256)
+
+New: `RENAMED_RULE_IDS` (retired rule id to current id) and
+`currentRuleId(id)`, exported from the package root and from
+`learn-content-engine/rules`. The rule catalog and `docs/architecture.md`
+now say what 0.38.0 relied on without writing it down: a rule id's prefix
+carries its tier (`E-` blocks, `W-` warns), an id is stable while its rule
+keeps its tier, and raising or lowering a rule renames it, a breaking change
+for whoever keys on the full id, announced in the CHANGELOG and recorded in
+the table. The catalog had promised unqualified "stable API".
+
+The table holds one entry, the 0.38.0 raise:
+`W-MANIFEST-ENTRY-MISMATCH` is now `E-MANIFEST-ENTRY-MISMATCH`.
+
 ## [0.38.0] - 2026-10-10
 
 Each set field has one owner: the root manifest's entry owns `title`,

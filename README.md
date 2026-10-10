@@ -130,6 +130,8 @@ The gap analysis behind this list is
 | `resolveExerciseVariables` | fn | resolve a parametric exercise into a concrete instance: sample, evaluate in declaration order, round, substitute every `{{name}}`; returns the exercise, the values (to persist and replay) and the tolerances of pure-reference accepted answers ([Variables](docs/lesson-format.md#variables-parametric-exercises)) |
 | `evaluateExpression` | fn | evaluate a computed variable's expression with values for its names, on the parser the validator uses |
 | `QUALITY_MINIMUMS` | const | the numbers of `schema/quality-rules.json` that `validateLessonQuality` applies |
+| `RENAMED_RULE_IDS` | const | every retired rule id mapped to the id its rule carries now; a rule id's prefix carries its tier, so a raise or lowering renames it ([Rule catalog](docs/lesson-format.md#rule-catalog)) |
+| `currentRuleId` | fn | the id a rule carries now: `id` itself, or for a retired id the one it was renamed to; for a mirror or an accepted-warnings list keyed on full ids |
 | `collectStableIds` | fn | set-wide `stable_id` view over several lessons: total count + duplicates with locations (the cross-lesson half the schema cannot see) |
 | `buildStableIdInventory`, `compareStableIdInventories`, `formatStabilityResult` | fn | the pure core of the shipped `check-stable-ids` gate: published-state vs head, violations V1-V6 (V5/V6 read each tree's declared `retired_ids`, engine#131) |
 | `computeStableIdCoverage`, `gateStableIdCoverage`, `formatCoverageResult` | fn | the pure core of the shipped `check-stable-id-coverage` gate: how many listed sets are fully minted, judged against the repo-local baseline |
@@ -164,7 +166,7 @@ Two subpath entries sit next to the package root:
 
 | Entry | Exports | Purpose |
 |---|---|---|
-| `learn-content-engine/rules` | `validateLessonRules`, `validateManifestRules`, `validateLessonQuality`, `QUALITY_MINIMUMS`, `isSlugId`, `SLUG_ID_PATTERN`, `SLUG_ID_MAX_LENGTH`, plus two helpers the structural layer composes: `unusedCardIds` (the detection core of `W-CARD-UNUSED`) and `normalizeManifestAliases` (maps the legacy `language` alias to `target_language` before validation) | the semantic rules and author lints without the structural layer: no ajv, no `node:*`, for a browser consumer that has already shape-checked its input ([Validation](docs/validation.md#the-rules-without-the-structural-layer-learn-content-enginerules)) |
+| `learn-content-engine/rules` | `validateLessonRules`, `validateManifestRules`, `validateLessonQuality`, `QUALITY_MINIMUMS`, `RENAMED_RULE_IDS`, `currentRuleId`, `isSlugId`, `SLUG_ID_PATTERN`, `SLUG_ID_MAX_LENGTH`, plus two helpers the structural layer composes: `unusedCardIds` (the detection core of `W-CARD-UNUSED`) and `normalizeManifestAliases` (maps the legacy `language` alias to `target_language` before validation) | the semantic rules and author lints without the structural layer: no ajv, no `node:*`, for a browser consumer that has already shape-checked its input ([Validation](docs/validation.md#the-rules-without-the-structural-layer-learn-content-enginerules)) |
 | `learn-content-engine/qti` | `importQti`, `exportQti`, `qtiLessonAdapter`, ... | the optional QTI adapter and its XML parser ([QTI interop](docs/qti.md)) |
 
 ## Scope
