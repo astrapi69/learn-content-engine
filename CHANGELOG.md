@@ -5,6 +5,23 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [Unreleased]
+
+### W-HINT-LENGTH reads Spanish, French, Italian, Portuguese and Greek hints (engine#255)
+
+The rule knew German and English number words and length nouns only, so a
+hint that gives the answer length away in another source language passed
+(`Τρία γράμματα.`). It now reads the number words up to twelve and the
+length nouns of Spanish, French, Italian, Portuguese and Greek, the languages
+`W-LESSON-COUNT-CLAIM` already reads, with the same Unicode-aware word
+boundaries. For answer length one these languages count only the explicit
+"single" forms (`una sola letra`, `un seul caractère`): a bare article
+(`cambia una letra`) is ordinary prose there.
+
+A warning, so nothing turns red. Measured over the 632 lessons of the eleven
+content repositories: exactly the two hints the issue names
+(adaptive-learner-content, el/fr-a1 lesson 07), no other new hit.
+
 ## [0.38.0] - 2026-10-10
 
 Each set field has one owner: the root manifest's entry owns `title`,

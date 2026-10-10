@@ -510,6 +510,46 @@ describe("W-HINT-LENGTH: one rule for engine and template (engine#186)", () => {
   });
 });
 
+describe("W-HINT-LENGTH in the other source languages (engine#255)", () => {
+  // The fleet's source languages beyond German and English, the same set
+  // W-LESSON-COUNT-CLAIM reads: Spanish, French, Italian, Portuguese, Greek.
+  // Plural counts and the explicit "single" adjectives only: a bare article
+  // ("cambia una letra") is ordinary prose in these languages.
+  const withHint = (hint: string) =>
+    validateLesson(lesson([ex({ id: "e1", type: "free_text", prompt: "?", accept: ["x"], hint })]));
+
+  it.each([
+    // the reproduction: two live hints in adaptive-learner-content el/fr-a1
+    "Τρία γράμματα.",
+    "Τρία γράμματα, αρχίζει από n.",
+    "Η λέξη έχει τέσσερις χαρακτήρες.",
+    "Tiene cinco letras.",
+    "Son 6 caracteres.",
+    "Cinq lettres, commence par B.",
+    "Un seul caractère.",
+    "Sono sei lettere.",
+    "Una sola lettera.",
+    "Tem quatro letras.",
+    "Uma única letra.",
+    "Número de letras: siete.",
+  ])("warns on %j", (hint) => {
+    expect(hasWarning(withHint(hint), "W-HINT-LENGTH")).toBe(true);
+  });
+
+  it.each([
+    "Cambia una letra: ser, no estar.",
+    "Il y a une lettre muette à la fin.",
+    "Τα γράμματα του αλφαβήτου.",
+    "Δύο γραμματικοί κανόνες.",
+    "Dos palabras, la primera con mayúscula.",
+    "Un mot neuf.",
+    "Sei pronto? Usa il presente.",
+    "Os caracteres especiais ficam iguais.",
+  ])("stays silent on %j", (hint) => {
+    expect(hasWarning(withHint(hint), "W-HINT-LENGTH")).toBe(false);
+  });
+});
+
 describe("W-PROMPT-DUP: the prompt repeats the sentence or the step title (engine#169)", () => {
   // The device finding: a multiselect cloze whose prompt and sentence carry
   // the same question. Consumers render the prompt as the heading and the

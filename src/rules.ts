@@ -87,13 +87,47 @@ const readableText = (text: string): string => text.normalize("NFC").trim();
 // and "Leerzeichen" not "Zeichen", "characteristic" not "character".
 const NOT_WORD_BEFORE = String.raw`(?<![\p{L}\p{N}])`;
 const NOT_WORD_AFTER = String.raw`(?![\p{L}\p{N}])`;
-/** Numbers from two on: digits and number words up to twelve. */
-const PLURAL_COUNT = String.raw`\d+|zwei|drei|vier|f(?:ü|ue)nf|sechs|sieben|acht|neun|zehn|elf|zw(?:ö|oe)lf|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve`;
-/** Answer length one: the article forms ("mit einem Buchstaben"), "one" and
- *  the single-character adjectives ("ein einzelnes Zeichen", "a single
- *  character"). */
-const SINGULAR_COUNT = String.raw`ein(?:e[nmrs]?)?|one|einzeln\p{L}*|single`;
-const LENGTH_NOUN = String.raw`buchstaben?|zeichen|letters?|characters?`;
+/** Numbers from two on: digits and number words up to twelve, in the
+ *  fleet's source languages (German, English, and since engine#255 Spanish,
+ *  French, Italian, Portuguese and Greek, the set W-LESSON-COUNT-CLAIM reads). */
+const PLURAL_COUNT = [
+  String.raw`\d+`,
+  // de
+  String.raw`zwei|drei|vier|f(?:ü|ue)nf|sechs|sieben|acht|neun|zehn|elf|zw(?:ö|oe)lf`,
+  // en
+  "two|three|four|five|six|seven|eight|nine|ten|eleven|twelve",
+  // es
+  "dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce",
+  // fr
+  "deux|trois|quatre|cinq|sept|huit|neuf|dix|onze|douze",
+  // it
+  "due|tre|quattro|cinque|sei|sette|otto|nove|dieci|undici|dodici",
+  // pt
+  "dois|duas|três|quatro|sete|oito|dez|doze",
+  // el
+  "δύο|τρία|τρεις|τέσσερα|τέσσερις|πέντε|έξι|επτά|εφτά|οκτώ|οχτώ|εννέα|εννιά|δέκα|έντεκα|δώδεκα",
+].join("|");
+/** Answer length one. German and English: the article forms ("mit einem
+ *  Buchstaben"), "one" and the single-character adjectives ("ein einzelnes
+ *  Zeichen", "a single character"). The other languages: only the explicit
+ *  "single" forms, because a bare article ("cambia una letra", "une lettre
+ *  muette") is ordinary prose there. */
+const SINGULAR_COUNT = [
+  String.raw`ein(?:e[nmrs]?)?|one|einzeln\p{L}*|single`,
+  String.raw`un[ao]?\s+(?:sol[ao]|únic[ao]|unic[ao])`,
+  String.raw`une?\s+seule?`,
+  String.raw`um[a]?\s+(?:só|únic[ao])`,
+  String.raw`ένα\s+μόνο|μόνο\s+ένα`,
+].join("|");
+/** The length nouns, singular and plural, in the same languages. */
+const LENGTH_NOUN = [
+  "buchstaben?|zeichen",
+  "letters?|characters?",
+  String.raw`letras?|car[aá]cter(?:es)?|caracteres?`,
+  String.raw`lettres?|caract[eè]res?`,
+  String.raw`letter[ae]|caratter[ei]`,
+  String.raw`γράμμα(?:τα)?|χαρακτήρ(?:ας|α|ες|ων)`,
+].join("|");
 const ANSWER_LENGTH = new RegExp(
   [
     // "vier Buchstaben", "a five-letter word", "ein einzelnes Zeichen"
