@@ -11,7 +11,10 @@
  *
  * Budgets are deliberately explicit constants: raising one is a reviewed
  * decision, not an accident. Measured 2026-07-13 (engine 0.12.0):
- * core 76.3 kB gzip, qti 47.9 kB gzip.
+ * core 76.3 kB gzip, qti 47.9 kB gzip. Core raised 90 -> 92 kB on 2026-10-10
+ * for engine#254 (declared type migrations): main measured 89.6 kB, the
+ * change 90.3 kB, i.e. +0.7 kB for the gate exception, the declaration
+ * checks and the typed-cloze conversion in migrate.
  *
  * Usage:
  *   npm run build && node scripts/check-bundle-size.mjs
@@ -27,7 +30,7 @@ const BUNDLE_BUDGETS = [
   {
     entryName: "core",
     entryFile: "dist/index.js",
-    gzipLimitKb: 90,
+    gzipLimitKb: 92,
     forbiddenDependencies: ["@rgrove/parse-xml"],
   },
   {

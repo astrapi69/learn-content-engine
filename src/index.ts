@@ -44,6 +44,7 @@ export {
   compareStableIdInventories,
   formatStabilityResult,
   isBaseCredible,
+  stableIdDeclarations,
 } from "./stable-id-stability.js";
 export type {
   StabilityResult,
@@ -51,6 +52,8 @@ export type {
   StableIdElement,
   StableIdInventory,
 } from "./stable-id-stability.js";
+export { TYPE_MIGRATIONS, isAllowedTypeMigration } from "./type-migrations.js";
+export type { TypeMigration } from "./type-migrations.js";
 export {
   computeStableIdCoverage,
   formatCoverageResult,

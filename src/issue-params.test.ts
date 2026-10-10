@@ -411,6 +411,35 @@ const CASES: ParamCase[] = [
     params: { field: "description", claimed: 90, lessonCount: 115 },
   },
   {
+    id: "E-TYPE-MIGRATION-PAIR",
+    label: "a declared transition outside the allowed pairs",
+    issues: () => {
+      const { errors, warnings } = validateManifest({
+        name: "Repo",
+        sets: [{ id: "s1", title: "Set", target_language: "fr", level: "A1", version: "1.0.0", lesson_count: 1 }],
+        metadata: { type_migrations: [{ stable_id: "ex-1", from: "cloze", to: "matching" }] },
+      });
+      return [...errors, ...warnings];
+    },
+    path: "/metadata/type_migrations/0",
+    params: { stableId: "ex-1", from: "cloze", to: "matching" },
+  },
+  {
+    id: "W-TYPE-MIGRATIONS-DUP",
+    label: "the same stable_id declared twice",
+    issues: () => {
+      const entry = { stable_id: "ex-1", from: "cloze", to: "free_text" };
+      const { errors, warnings } = validateManifest({
+        name: "Repo",
+        sets: [{ id: "s1", title: "Set", target_language: "fr", level: "A1", version: "1.0.0", lesson_count: 1 }],
+        metadata: { type_migrations: [entry, entry] },
+      });
+      return [...errors, ...warnings];
+    },
+    path: "/metadata/type_migrations",
+    params: { stableIds: ["ex-1"] },
+  },
+  {
     id: "E-QUALITY-EXERCISES",
     label: "one exercise in a practice lesson",
     issues: () => quality(lesson([theoryStep, ex({ id: "f1", type: "free_text", prompt: "?", accept: ["x", "y"] })])),
