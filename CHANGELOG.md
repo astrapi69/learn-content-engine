@@ -5,6 +5,28 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [Unreleased]
+
+### Each set field has one owner, and a disagreement is an error (engine#246)
+
+A set is described twice, in the root manifest and in its own. The root entry
+now owns `title`, `description`, `visibility` and `review_status`
+(`ROOT_OWNED_SET_FIELDS`), the set manifest owns the lesson list, and every
+other field lives in both and must be identical.
+
+- `resolveSetEntry(rootEntry, setEntry)` returns the one `ParsedSet` to
+  project: the root-owned fields from the root, the rest from the set
+  manifest, a silent field from the other file. `inheritFromRootEntry` stays
+  for compatibility; prefer the new function.
+- `validateManifestPair` reports `E-MANIFEST-ENTRY-MISMATCH`, an **error**,
+  where 0.37.0 warned with `W-MANIFEST-ENTRY-MISMATCH`. Same params, same
+  path. A repository whose two entries disagree turns red on this release.
+
+Why the tier rose now: the content repositories removed `description` from
+their set manifests and fixed the other drift first. Measured on 2026-10-10
+over the hub, the template and the nine fleet repositories (54 sets): 0
+findings, against 46 with 0.37.0 the day before.
+
 ## [0.37.0] - 2026-10-09
 
 A set is described twice, in the root manifest and in its own, and the two

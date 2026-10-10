@@ -388,11 +388,11 @@ const CASES: ParamCase[] = [
     params: { sourceLanguage: "el", script: "Grek", count: 1, cardIds: ["c1"] },
   },
   {
-    id: "W-MANIFEST-ENTRY-MISMATCH",
+    id: "E-MANIFEST-ENTRY-MISMATCH",
     label: "a title the root manifest and the set manifest disagree on",
     issues: () => {
       const setEntry = { id: "s1", title: "Set title", level: "A1", version: "1.0.0", lesson_count: 1 };
-      return validateManifestPair({ sets: [{ ...setEntry, title: "Root title" }] }, { sets: [setEntry] }).warnings;
+      return validateManifestPair({ sets: [{ ...setEntry, title: "Root title" }] }, { sets: [setEntry] }).errors;
     },
     path: "/sets/0/title",
     params: { setId: "s1", field: "title", rootValue: '"Root title"', setValue: '"Set title"' },

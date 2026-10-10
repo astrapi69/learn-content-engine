@@ -778,17 +778,18 @@ which the conditions acted before the damage instead of after it.
   (adaptive-learner-content#245), and the template
   (adaptive-learner-content-template#98) and the nine fleet repositories
   re-pinned 0.36.0.
-- **engine#246** (steps 1 and 2 in 0.37.0): a set is described twice, in the
-  root manifest and in its own, and nothing said which value wins.
-  `inheritFromRootEntry` lets a field the set manifest leaves silent take the
-  root value, so a set hidden at the root stays hidden;
-  `validateManifestPair` warns (`W-MANIFEST-ENTRY-MISMATCH`) per field the two
-  carry with different values. Measured 2026-10-09 over ten content
-  repositories: 46 warnings, 42 of them `description`. `W-LESSON-COUNT-CLAIM`
-  catches the stale-number case it surfaced (a set manifest said 90 lessons
-  for a set of 115). Open: step 3, one owning file per field (the root owns
-  `description`, maintainer 2026-10-09), a projection helper, and the error
-  tier.
+- **engine#246** (steps 1 and 2 in 0.37.0, step 3 after it): a set is
+  described twice, in the root manifest and in its own, and nothing said
+  which value wins. Each field now has one owner: the root entry owns
+  `title`, `description`, `visibility` and `review_status`
+  (`ROOT_OWNED_SET_FIELDS`), the set manifest the lesson list, everything
+  else lives in both and must be identical. `resolveSetEntry` applies that,
+  and `validateManifestPair` reports `E-MANIFEST-ENTRY-MISMATCH` (a warning
+  in 0.37.0). The content repositories removed `description` from their set
+  manifests and fixed the other drift on 2026-10-10 (the hub, the template
+  and the nine fleet repositories): 0 findings over 54 sets before the tier
+  was raised. `W-LESSON-COUNT-CLAIM` catches the stale-number case the
+  measurement surfaced (a set manifest said 90 lessons for a set of 115).
 - **alc-books' domain rule** (moved with 0.29.0): now the engine's
   `W-DOMAIN-UNKNOWN`; its severity dropped with the move (above).
 - **adaptive-learner#3242** (closed 2026-09-29): the app's repo export wrote a
