@@ -5,7 +5,14 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
-## [Unreleased]
+## [0.38.0] - 2026-10-10
+
+Each set field has one owner: the root manifest's entry owns `title`,
+`description`, `visibility` and `review_status`, the set manifest the lesson
+list, every other field lives in both and must be identical (engine#246).
+`resolveSetEntry` projects accordingly, and `validateManifestPair` now reports
+a disagreement as an error. Measured over the eleven content repositories: 0
+findings, so none turns red on the re-pin. No schema change.
 
 ### Each set field has one owner, and a disagreement is an error (engine#246)
 

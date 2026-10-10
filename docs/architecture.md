@@ -778,7 +778,7 @@ which the conditions acted before the damage instead of after it.
   (adaptive-learner-content#245), and the template
   (adaptive-learner-content-template#98) and the nine fleet repositories
   re-pinned 0.36.0.
-- **engine#246** (steps 1 and 2 in 0.37.0, step 3 after it): a set is
+- **engine#246** (closed; steps 1 and 2 in 0.37.0, step 3 in 0.38.0): a set is
   described twice, in the root manifest and in its own, and nothing said
   which value wins. Each field now has one owner: the root entry owns
   `title`, `description`, `visibility` and `review_status`
