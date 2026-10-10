@@ -335,6 +335,23 @@ template: it needs the file system.
   two versions, written separately four days apart, differed from the start in
   several ways (below).
 
+### Rule ids carry their tier
+
+A rule's id names its tier in the prefix: `E-` blocks, `W-` warns. Moving a
+rule between the layers or changing how strictly it applies can therefore
+change its id. Raising or lowering a rule renames it: 0.38.0 raised the
+manifest mismatch rule, so `W-MANIFEST-ENTRY-MISMATCH` became
+`E-MANIFEST-ENTRY-MISMATCH` (engine#246). Such a rename is a breaking change
+for every tool that keys on the full id, a mirror or an accepted-warnings
+list, and it breaks in silence: the old id simply stops matching. So it is
+announced as breaking in the CHANGELOG and recorded in `RENAMED_RULE_IDS`
+(retired id to current id), which `currentRuleId` follows (engine#256). A
+tool that holds ids maps them through it, or keys on the name without the
+prefix. The alternative, ids that keep their prefix across a raise, was
+rejected: every existing id, in the core rules and in the reference
+extensions, follows the convention, so the prefix would mislead after the
+first raise.
+
 ### Known violations, as of 2026-09-24
 
 #### Quality minimums: three versions
