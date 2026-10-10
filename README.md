@@ -133,9 +133,12 @@ The gap analysis behind this list is
 | `RENAMED_RULE_IDS` | const | every retired rule id mapped to the id its rule carries now; a rule id's prefix carries its tier, so a raise or lowering renames it ([Rule catalog](docs/lesson-format.md#rule-catalog)) |
 | `currentRuleId` | fn | the id a rule carries now: `id` itself, or for a retired id the one it was renamed to; for a mirror or an accepted-warnings list keyed on full ids |
 | `collectStableIds` | fn | set-wide `stable_id` view over several lessons: total count + duplicates with locations (the cross-lesson half the schema cannot see) |
-| `buildStableIdInventory`, `compareStableIdInventories`, `formatStabilityResult` | fn | the pure core of the shipped `check-stable-ids` gate: published-state vs head, violations V1-V6 (V5/V6 read each tree's declared `retired_ids`, engine#131) |
+| `buildStableIdInventory`, `compareStableIdInventories`, `formatStabilityResult` | fn | the pure core of the shipped `check-stable-ids` gate: published-state vs head, violations V1-V6 (V5/V6 read each tree's declared `retired_ids`, engine#131; V3 accepts a change the head declares in `type_migrations`, engine#254) |
 | `computeStableIdCoverage`, `gateStableIdCoverage`, `formatCoverageResult` | fn | the pure core of the shipped `check-stable-id-coverage` gate: how many listed sets are fully minted, judged against the repo-local baseline |
 | `isBaseCredible` | fn | whether a comparison base is a plausible predecessor: an empty history is a broken run, not a clean one (the floor under the stability gate) |
+| `stableIdDeclarations` | fn | a set manifest's `retired_ids` and `type_migrations`, tagged with the set, as the stability gate reads them (engine#254) |
+| `TYPE_MIGRATIONS` | const | the type changes a set may declare under a kept `stable_id`: `cloze` -> `multiple_choice`, `cloze` -> `free_text` (engine#254) |
+| `isAllowedTypeMigration` | fn | whether `from` -> `to` is one of `TYPE_MIGRATIONS` |
 | `lessonIdOrderingIssues` | fn | set-level ordering check over a set's lesson ids: mixed `NN-` prefixes, inconsistent widths, lexicographic-vs-numeric divergence (`validateManifest` runs it over `metadata.lessons`) |
 | `KNOWN_CONTENT_DOMAINS` | const | the canonical domain vocabulary of the known-values-plus-other contract (engine#127); consumers group their subject facet on it instead of keeping a copy |
 | `CEFR_LEVELS` | const | the CEFR proficiency bands (`A1`..`C2`) a language set declares as its `level` |
@@ -149,6 +152,7 @@ The gap analysis behind this list is
 | `SetReviewStatus`, `SetAttribution` | types | the set entry's review standing (schema v1.9) and attribution block |
 | `StableIdReport`, `StableIdDuplicate` | types | the `collectStableIds` return shape |
 | `StabilityResult`, `StabilityViolation`, `StableIdElement`, `StableIdInventory` | types | the `buildStableIdInventory`/`compareStableIdInventories` return + input shapes |
+| `TypeMigration` | type | one allowed `{ from, to }` pair of `TYPE_MIGRATIONS` |
 | `StableIdCoverage`, `CoverageVerdict`, `CoverageSet`, `CoverageFailure` | types | the `computeStableIdCoverage` return shape |
 | `ResolvedExerciseVariables`, `ResolveExerciseVariablesOptions` | types | the `resolveExerciseVariables` return shape and its options (`random`, `values`) |
 | `ValidationResult`, `ValidationIssue`, `ValidationSeverity`, `ValidationParams`, `ValidationParamValue` | types | the `validate*` return shape (`{ valid, errors[], warnings[] }`), its issue-severity enum, and the optional `params` an issue carries when its message names a value |

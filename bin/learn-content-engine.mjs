@@ -25,6 +25,7 @@ import {
   compareStableIdInventories,
   formatStabilityResult,
   isBaseCredible,
+  stableIdDeclarations,
 } from "../dist/stable-id-stability.js";
 import {
   parseSuggestWiringArgs,
@@ -130,25 +131,26 @@ if (argv[0] === "check-stable-ids") {
     });
 
   // Each set manifest's metadata.retired_ids feeds the V1/V5/V6 checks
-  // (engine#131). Read loudly: a manifest that fails to parse would
-  // otherwise silently drop the tree's declared retirements, and the
-  // comparison would report V1 for every legally retired id.
+  // (engine#131), its metadata.type_migrations the V3 exception (engine#254).
+  // Read loudly: a manifest that fails to parse would otherwise silently
+  // drop the tree's declarations, and the comparison would report V1 for
+  // every legally retired id and V3 for every declared migration.
   const isSetManifest = (path) =>
     path.split("/").length === 4 && (path.endsWith("/manifest.yaml") || path.endsWith("/manifest.yml"));
-  const readRetired = (paths, read) =>
-    paths.filter(isSetManifest).flatMap((path) => {
+  const readDeclarations = (paths, read) => {
+    const declarations = { retired: [], typeMigrations: [] };
+    for (const path of paths.filter(isSetManifest)) {
       try {
-        const manifest = parseYaml(read(path));
-        const retiredIds = manifest?.metadata?.retired_ids;
-        if (!Array.isArray(retiredIds)) return [];
-        return retiredIds
-          .filter((entry) => typeof entry === "string" && entry !== "")
-          .map((stableId) => ({ set: setOf(path), stableId }));
+        const found = stableIdDeclarations(parseYaml(read(path)), setOf(path));
+        declarations.retired.push(...found.retired);
+        declarations.typeMigrations.push(...found.typeMigrations);
       } catch (error) {
         console.error(`cannot read ${path}: ${String(error)}`);
         process.exit(2);
       }
-    });
+    }
+    return declarations;
+  };
 
   const basePaths = git("ls-tree", "-r", "--name-only", mergeBase, "sets/").split("\n").filter(Boolean);
   const headPaths = git("ls-files", "--cached", "--others", "--exclude-standard", "sets/")
@@ -159,11 +161,11 @@ if (argv[0] === "check-stable-ids") {
   const readHeadFile = (path) => readFileSync(path, "utf8");
   const base = {
     ...buildStableIdInventory(readLessons(basePaths, readBaseFile)),
-    retired: readRetired(basePaths, readBaseFile),
+    ...readDeclarations(basePaths, readBaseFile),
   };
   const head = {
     ...buildStableIdInventory(readLessons(headPaths, readHeadFile)),
-    retired: readRetired(headPaths, readHeadFile),
+    ...readDeclarations(headPaths, readHeadFile),
   };
 
   const result = compareStableIdInventories(base, head);

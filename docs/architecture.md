@@ -795,6 +795,14 @@ which the conditions acted before the damage instead of after it.
   (adaptive-learner-content#245), and the template
   (adaptive-learner-content-template#98) and the nine fleet repositories
   re-pinned 0.36.0.
+- **engine#254** (engine side done; open: the conversion in
+  adaptive-learner-content#222 and a consumer-side test): a declared type migration keeps an
+  exercise's `stable_id`. A set manifest names the change in
+  `metadata.type_migrations` (`cloze` -> `multiple_choice` or `free_text`),
+  `check-stable-ids` accepts it instead of `V3`, and `migrate` converts a
+  typed cloze without a carrier to `free_text` and prints the declaration.
+  The reference app keeps the progress because its element key is derived
+  from the answer, which `migrate` preserves.
 - **engine#246** (closed; steps 1 and 2 in 0.37.0, step 3 in 0.38.0): a set is
   described twice, in the root manifest and in its own, and nothing said
   which value wins. Each field now has one owner: the root entry owns

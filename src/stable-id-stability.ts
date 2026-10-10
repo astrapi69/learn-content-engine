@@ -16,6 +16,8 @@
  * exactly like the validator rules do.
  */
 
+import { isAllowedTypeMigration } from "./type-migrations.js";
+
 /** One identity-bearing element as the gate sees it. */
 export interface StableIdElement {
   /** Repo-relative set directory, e.g. ``sets/de/psych-intro``. */
@@ -36,6 +38,10 @@ export interface StableIdInventory {
   elements: StableIdElement[];
   lessons: { set: string; filename: string }[];
   retired?: { set: string; stableId: string }[];
+  /** The tree's declared type migrations (each set manifest's
+   *  ``metadata.type_migrations``, engine#254); absent means none. Only the
+   *  head's list is read. */
+  typeMigrations?: { set: string; stableId: string; from: string; to: string }[];
 }
 
 /** One violation of the stability promise. */
@@ -56,6 +62,10 @@ export interface StabilityResult {
     headLessons: number;
     baseRetired: number;
     headRetired: number;
+    /** Type migrations the head declares, and how many of them turned a V3
+     *  into an accepted change (engine#254). */
+    headTypeMigrations: number;
+    typeMigrationsApplied: number;
   };
 }
 
@@ -114,8 +124,43 @@ export function buildStableIdInventory(lessons: LessonInput[]): StableIdInventor
   return { elements, lessons: files };
 }
 
+/**
+ * The declarations a set manifest makes for the stability gate: its
+ * ``metadata.retired_ids`` (engine#131) and ``metadata.type_migrations``
+ * (engine#254), tagged with the set. Malformed entries are skipped, not
+ * guessed; ``validateManifest`` reports their shape.
+ */
+export function stableIdDeclarations(
+  manifest: unknown,
+  set: string,
+): { retired: { set: string; stableId: string }[]; typeMigrations: NonNullable<StableIdInventory["typeMigrations"]> } {
+  const metadata = (manifest as { metadata?: Record<string, unknown> } | null)?.metadata ?? {};
+  const retiredIds = Array.isArray(metadata["retired_ids"]) ? (metadata["retired_ids"] as unknown[]) : [];
+  const migrations = Array.isArray(metadata["type_migrations"]) ? (metadata["type_migrations"] as unknown[]) : [];
+  const isText = (value: unknown): value is string => typeof value === "string" && value !== "";
+  return {
+    retired: retiredIds.filter(isText).map((stableId) => ({ set, stableId })),
+    typeMigrations: migrations.flatMap((entry) => {
+      const record = (entry ?? {}) as Record<string, unknown>;
+      const { stable_id: stableId, from, to } = record;
+      return isText(stableId) && isText(from) && isText(to) ? [{ set, stableId, from, to }] : [];
+    }),
+  };
+}
+
 const keyOf = (element: { set: string; stableId: string }): string =>
   `${element.set}\u0000${element.stableId}`;
+
+/** Whether ``base`` -> ``head`` is an exercise type change the head declares
+ *  with an allowed transition (engine#254). */
+function isDeclaredTypeMigration(
+  base: StableIdElement,
+  head: StableIdElement,
+  declared: { from: string; to: string } | undefined,
+): boolean {
+  if (!declared || base.kind !== "exercise" || head.kind !== "exercise") return false;
+  return declared.from === base.type && declared.to === head.type && isAllowedTypeMigration(base.type, head.type);
+}
 
 /**
  * Compare the published state against the head.
@@ -128,7 +173,9 @@ const keyOf = (element: { set: string; stableId: string }): string =>
  * - **V2** an id is used more than once inside one set (set-wide uniqueness;
  *   the same id in two DIFFERENT sets is fine).
  * - **V3** an id points at another kind or exercise type than before (reuse
- *   smell: a card became an exercise, a matching became a cloze).
+ *   smell: a card became an exercise, a matching became a cloze). An
+ *   exercise whose change the head's set declares in ``type_migrations`` with
+ *   an allowed transition is not reuse and passes (engine#254).
  * - **V4** a lesson FILE vanished while its set survived. The filename is the
  *   lesson's identity for progress joins; a whole set disappearing is a
  *   different, deliberate act and is reported through V1 only.
@@ -155,6 +202,8 @@ export function compareStableIdInventories(
   }
 
   const headRetiredKeys = new Set((head.retired ?? []).map(keyOf));
+  const declaredMigrations = new Map((head.typeMigrations ?? []).map((migration) => [keyOf(migration), migration]));
+  let typeMigrationsApplied = 0;
 
   for (const element of base.elements) {
     const matches = headByKey.get(keyOf(element));
@@ -168,7 +217,9 @@ export function compareStableIdInventories(
       continue;
     }
     const moved = matches.find((match) => match.kind !== element.kind || match.type !== element.type);
-    if (moved) {
+    if (moved && isDeclaredTypeMigration(element, moved, declaredMigrations.get(keyOf(element)))) {
+      typeMigrationsApplied += 1;
+    } else if (moved) {
       violations.push({
         rule: "V3",
         set: element.set,
@@ -232,6 +283,8 @@ export function compareStableIdInventories(
       headLessons: head.lessons.length,
       baseRetired: (base.retired ?? []).length,
       headRetired: (head.retired ?? []).length,
+      headTypeMigrations: (head.typeMigrations ?? []).length,
+      typeMigrationsApplied,
     },
   };
 }
@@ -267,7 +320,8 @@ export function formatStabilityResult(result: StabilityResult): string {
   const lines = [
     `checked: ${result.checked.baseIds} base id(s) / ${result.checked.headIds} head id(s), ` +
       `${result.checked.baseLessons} base lesson(s) / ${result.checked.headLessons} head lesson(s), ` +
-      `${result.checked.baseRetired} base retired / ${result.checked.headRetired} head retired`,
+      `${result.checked.baseRetired} base retired / ${result.checked.headRetired} head retired, ` +
+      `type migrations: ${result.checked.headTypeMigrations} declared, ${result.checked.typeMigrationsApplied} applied`,
   ];
   if (result.violations.length === 0) {
     lines.push("ok: every published stable_id still points at its element");

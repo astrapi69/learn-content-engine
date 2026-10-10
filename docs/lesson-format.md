@@ -851,6 +851,49 @@ the app's `element-keys.ts` (which derives its comparison keys from
 `remap-plan.ts` update-guard logic would need to prefer this field when
 present, tracked as follow-up app-side work, not part of this schema change.
 
+### Type migrations
+
+An exercise can change its type and stay the same element (engine#254). The
+case it exists for is `W-CLOZE-NO-CARRIER`: a cloze whose sentence is only
+its blank is a question with an answer, and the native type says so. Before,
+following that advice cost the learner's progress, because a type change
+under the same `stable_id` is id reuse (`V3`) and the only legal path was
+retire-and-mint.
+
+The set manifest declares the change in `metadata.type_migrations`; the
+exercise keeps its `id` and `stable_id`:
+
+```yaml
+metadata:
+  type_migrations:
+    - { stable_id: ex-ms9433ik2pya6, from: cloze, to: multiple_choice }
+    - { stable_id: ex-ms9433ij2plip, from: cloze, to: free_text }
+```
+
+- Only transitions that ask the same question are allowed
+  (`TYPE_MIGRATIONS`): `cloze` -> `multiple_choice` (a select or multiselect)
+  and `cloze` -> `free_text` (a typed answer). `validateManifest` checks the
+  shape (`E-TYPE-MIGRATIONS-SHAPE`), each transition
+  (`E-TYPE-MIGRATION-PAIR`) and an id declared twice
+  (`W-TYPE-MIGRATIONS-DUP`).
+- `check-stable-ids` accepts a declared change of an exercise (kind
+  `exercise` on both sides, `from` and `to` matching); an undeclared one stays
+  `V3`, and so does a card or sub-element changing kind.
+- A sub-element does not migrate: a blank's own `stable_id` is gone after the
+  change and follows the ordinary rules (declare it in `retired_ids`).
+  `migrate` names every such id.
+- The declaration may stay after the change is published. Nothing reads it
+  then: the base and the head carry the same type, so there is nothing to
+  accept. Removing it is harmless too; it is not add-only like `retired_ids`.
+
+What a consumer keeps: the reference app keys a learner's per-element errors
+and review schedule on the exercise identity (`stable_id`, else `id`) plus
+an element key derived from the answer (a cloze blank's first `accept`, the
+text of the correct `multiple_choice` option while options carry no
+`stable_id`, a `free_text` answer's first `accept`). `migrate` writes exactly
+that shape, so the progress carries over without an app change; an option
+`stable_id` minted later moves the key like any other edit.
+
 ## Manifest format
 
 A content repo publishes a root `manifest.yaml` (or JSON) that lists its sets.
@@ -1265,6 +1308,8 @@ itself instead of parsing the English message.
 | `E-EVAL-PASS-MISSING` | Manifest-level ([evaluation](#evaluation)): a set's `evaluation` declares `scheme: "pass_fail"` without `pass_percent`, so nothing says what passing means. |
 | `E-EVAL-GRADES-DUP` | Manifest-level ([evaluation](#evaluation)): two grade rows share a `min_percent`, so one score would earn two grades. A grade table is a set of thresholds; each row needs its own. |
 | `E-RETIRED-IDS-TYPE` | Manifest-level ([stable identity](#stable-identity-stable_id)): `metadata.retired_ids` is present but not a list of strings. Each entry is the identity of a retired exercise or card (`stable_id`, author slug for pre-stable_id elements); a malformed list would make the consumer silently skip the retirement (engine#131). |
+| `E-TYPE-MIGRATIONS-SHAPE` | Manifest-level ([type migrations](#type-migrations)): `metadata.type_migrations` is present but not a list of `{ stable_id, from, to }` entries, each a non-empty string and nothing else. A malformed list would make the stability gate skip the declaration silently (engine#254). |
+| `E-TYPE-MIGRATION-PAIR` | Manifest-level ([type migrations](#type-migrations)): a declared transition is not one of `TYPE_MIGRATIONS` (`cloze` -> `multiple_choice`, `cloze` -> `free_text`), the pairs that ask the same question (engine#254). |
 | `E-MANIFEST-ENTRY-MISMATCH` | Repo-level ([root entry and set manifest](#root-entry-and-set-manifest), `validateManifestPair`): a set's entry in the root manifest and its entry in its own manifest carry one field with different values, so what a consumer shows depends on which file it reads. One error per field; `null` and an absent key count as silent, not as a value. The root owns `title`, `description`, `visibility` and `review_status`; every other field lives in both and must be identical. A warning (`W-MANIFEST-ENTRY-MISMATCH`) in 0.37.0; an error since the content repositories reached 0 findings (engine#246). |
 | `E-STEP-THEORY-BODY` | A [theory step](#steps) has no `body`. |
 | `E-STEP-THEORY-EXERCISE` | A theory step also carries an `exercise`. |
@@ -1320,6 +1365,7 @@ itself instead of parsing the English message.
 | `W-SET-ORDER-PREFIX-WIDTH` | Set-level: `NN-` prefixes with different digit widths (`1-` next to `01-` or `10-`). Lexicographic sorting puts `10-` before `2-`; zero-pad every prefix to one fixed width. |
 | `W-SET-ORDER-NUMERIC` | Set-level: the lexicographic display order diverges from the numeric reading of the ids (`kapitel-10` displays before `kapitel-2`). This is the shape of the observed damage case (engine#106); zero-pad the embedded numbers. |
 | `W-RETIRED-IDS-DUP` | Manifest-level ([stable identity](#stable-identity-stable_id)): `metadata.retired_ids` lists the same id more than once. The retirement still works, but the duplicate usually hides a mis-edited entry (engine#131). |
+| `W-TYPE-MIGRATIONS-DUP` | Manifest-level ([type migrations](#type-migrations)): `metadata.type_migrations` declares the same `stable_id` more than once. The gate reads one of them; the duplicate usually hides a mis-edited entry (engine#254). |
 | `W-EVAL-GRADES-NO-FLOOR` | Manifest-level ([evaluation](#evaluation)): a grade table's lowest `min_percent` is above 0, so a run below it earns no grade and the consumer has to invent a fallback label the author never wrote. A warning, not an error: "below this mark there is no grade" can be the author's intent. |
 | `W-DOMAIN-UNKNOWN` | Manifest and lesson level ([content domains](#content-domains)): a set's `domain`, or a lesson's own `domain`, is outside the known vocabulary (`KNOWN_CONTENT_DOMAINS`). It stays valid - the contract is known values plus other - but consumers cannot group it with existing subjects, so the registry's subject facet fragments. Prefer a known domain, or accept the fragmentation deliberately (engine#127). A lesson without its own `domain` (absent or `null`) inherits the set's and draws nothing; the lesson half exists because the real case sat there, on every lesson of an exported set (engine#183). |
 | `W-LESSON-COUNT-CLAIM` | Manifest-level ([manifest format](#manifest-format)): a set's `title` or `description` states a lesson count in digits that differs from its `lesson_count` ("(90 Lektionen)" in a set of 115). Prose that repeats a number the manifest carries goes stale when the set grows; prefer leaving the count to `lesson_count`, which consumers show anyway. Only digits directly before the lesson noun count (German, English, Spanish, French, Italian, Portuguese, Greek; "15-lesson" too). Number words are not read, because they also name deliberate subsets ("vier Lektionen ... sowie eine Wiederholungslektion"), and a digit glued to a letter (the `1` of "A1-Lektionen") is a level. One warning per distinct differing count and field (engine#246). |
@@ -1389,6 +1435,7 @@ an extension's issues, whose paths are relative to its exercise
 | `E-STABLE-ID-DUP` | `stableId`, `elementKinds`, `elementIds` (parallel lists, one entry per element carrying it) |
 | `E-STEP-ID-DUP` | `stepId`, `positions` (1-based) |
 | `E-TILES-ORDERING` | `ordering` (the entry), `maxIndex` |
+| `E-TYPE-MIGRATION-PAIR` | `stableId`, `from`, `to` |
 | `E-UNKNOWN-FIELD` | `field` |
 | `E-VAR-DUP` | `name` |
 | `E-VAR-EXPR` | `name`, `parseError` |
@@ -1411,6 +1458,7 @@ an extension's issues, whose paths are relative to its exercise
 | `W-SET-ORDER-MIXED-PREFIX` | `unprefixedIds` |
 | `W-SET-ORDER-NUMERIC` | `displayedFirst`, `numericFirst` |
 | `W-SET-ORDER-PREFIX-WIDTH` | `widths` |
+| `W-TYPE-MIGRATIONS-DUP` | `stableIds` |
 | `W-VAR-UNUSED` | `name` |
 
 `E-SCHEMA` carries none on purpose: its message is ajv's, and passing ajv's own
@@ -1472,8 +1520,22 @@ What it does per exercise: `select` becomes a single-answer `multiple_choice`
 -> the other options), `multiselect` becomes `multiple: true` (every `accept`
 entry correct). The `sentence` is merged into the `prompt` so the gap context
 survives; alternate accepts are dropped and distractors equal to a correct
-text are deduped, both reported as notes. `cloze_mode: "type"` and
-multi-blank selects are never touched (they have no clean MC equivalent).
+text are deduped, both reported as notes. A typed cloze whose sentence is
+only its blank (`W-CLOZE-NO-CARRIER`) becomes `free_text` with the blank's
+`accept` list and the hint (the blank's, when the exercise has none; both
+present is skipped). A typed cloze with a carrier sentence and multi-blank
+clozes are never touched (they have no clean equivalent).
+
+Each converted exercise keeps its `id` and `stable_id`. The stability gate
+accepts that only when the set declares the change, so `migrate` prints the
+[type migrations](#type-migrations) block to paste into the set manifest's
+`metadata`, and notes each blank `stable_id` the new type cannot carry:
+
+```text
+declare in the set manifest's metadata (engine#254):
+  type_migrations:
+    - { stable_id: ex-ms9433ij2plip, from: cloze, to: free_text }
+```
 Every rewritten lesson is checked with the bundled validator BEFORE writing;
 an invalid result is reported and never written. Add `--json` for
 machine-readable output.
@@ -1543,7 +1605,7 @@ It compares the working tree against the merge base with `--base` (default
 |---|---|
 | `V1` | a published `stable_id` disappeared WITHOUT being declared in its set's `metadata.retired_ids` (declared retirement is the legal way out since engine#131; the consumer archives the learner progress behind it, adaptive-learner#2188) |
 | `V2` | a `stable_id` is used more than once inside one set (the same id in two different sets is fine) |
-| `V3` | a `stable_id` now points at another kind or exercise type (id reuse) |
+| `V3` | a `stable_id` now points at another kind or exercise type (id reuse); an exercise whose change the set declares in `metadata.type_migrations` passes ([type migrations](#type-migrations), engine#254) |
 | `V4` | a lesson FILE vanished while its set survived (the filename is the lesson's identity for progress joins) |
 | `V5` | a `retired_id` left the set's `retired_ids` list (a published retirement is never un-declared; add-only, like the ids themselves) |
 | `V6` | a `retired_id` is declared retired but still present in the set (a consumer resolves it as living, so the retirement would be silently ignored) |

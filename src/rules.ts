@@ -17,6 +17,7 @@
  *      disjointness, picture "exactly one correct", referential integrity).
  *   3. AUTHOR LINTS (warnings) - never block (``valid`` stays errors-only).
  */
+import { carriesClozeText } from "./cloze-carrier.js";
 import { KNOWN_CONTENT_DOMAINS, isKnownContentDomain, isKnownLevel } from "./content-domains.js";
 import type { ExtensionRegistry } from "./extensions.js";
 import {
@@ -38,6 +39,7 @@ import { lessonLanguageIssues, setLanguageIssues } from "./language-rules.js";
 import { lessonCountClaimIssues } from "./lesson-count-claim.js";
 import { lessonIdOrderingIssues } from "./set-ordering.js";
 import { collectStableIds } from "./stable-ids.js";
+import { typeMigrationIssues } from "./type-migrations.js";
 import type { Exercise, Lesson, LessonStep } from "./types/lesson-schema.generated.js";
 import { variableIssues } from "./variables.js";
 
@@ -67,12 +69,6 @@ export function isSlugId(value: unknown): boolean {
 
 /** Count non-overlapping ``___`` markers (matches Python ``str.count('___')``). */
 const markerCount = (sentence: string): number => sentence.split("___").length - 1;
-
-/** True when a cloze sentence still reads as a sentence once its blanks are
- *  removed: at least one letter or digit is left. A sentence of blanks,
- *  spaces and punctuation alone carries no context for the learner. */
-const carriesClozeText = (sentence: string): boolean =>
-  /[\p{L}\p{N}]/u.test(sentence.split("___").join(" "));
 
 /** True when an array has a repeated value. */
 const hasDuplicate = <T>(values: T[]): boolean => new Set(values).size !== values.length;
@@ -801,7 +797,11 @@ export function validateManifestRules(input: unknown): ValidationResult {
       };
     }
   }
-  const setIssues = [...checkSetEvaluations(normalized), ...checkSetLanguages(normalized)];
+  const setIssues = [
+    ...checkSetEvaluations(normalized),
+    ...checkSetLanguages(normalized),
+    ...typeMigrationIssues(manifestMetadata),
+  ];
   const setErrors = setIssues.filter((issue) => issue.severity === "error");
   return {
     valid: setErrors.length === 0,

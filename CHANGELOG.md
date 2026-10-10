@@ -5,6 +5,40 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [Unreleased]
+
+### A declared type migration keeps an exercise's stable_id (engine#254)
+
+`W-CLOZE-NO-CARRIER` names a better type for a cloze whose sentence is only
+its blank. Following it used to cost the learner's progress: the stability
+gate read the type change under the same `stable_id` as id reuse (`V3`), so
+the only legal path was retire-and-mint.
+
+- A set manifest declares the change in `metadata.type_migrations`
+  (`stable_id`, `from`, `to`). Allowed transitions (`TYPE_MIGRATIONS`):
+  `cloze` -> `multiple_choice` and `cloze` -> `free_text`.
+- `check-stable-ids` accepts a declared exercise type change and keeps
+  reporting an undeclared one as `V3`; it reports how many migrations the
+  head declares and applies. New export `stableIdDeclarations`, which the CLI
+  now uses for `retired_ids` too.
+- `validateManifest` checks the declaration: `E-TYPE-MIGRATIONS-SHAPE`,
+  `E-TYPE-MIGRATION-PAIR`, `W-TYPE-MIGRATIONS-DUP`.
+- `migrate` converts a typed cloze without a carrier sentence to
+  `free_text`, prints the `type_migrations` block for every converted
+  exercise that keeps a `stable_id`, and notes a blank `stable_id` the new
+  type cannot carry.
+
+The consumer side was checked in the reference app before building: it keys
+per-element progress on the exercise identity plus an answer-derived element
+key, and the shape `migrate` writes keeps that key, so the progress carries
+over without an app change.
+
+Measured with this build on a copy of adaptive-learner-content (the case of
+adaptive-learner-content#222): the 105 listed exercises convert (58 + 42
+selects to `multiple_choice`, 5 typed answers to `free_text`), the gate
+reports 105 declared and 105 applied and passes against `main`, the engine
+gate reports 0 errors, and `W-CLOZE-NO-CARRIER` drops from 105 to 0.
+
 ## [0.39.0] - 2026-10-10
 
 No schema change: `x-schema-version` stays 1.19. `W-HINT-LENGTH` reads five
