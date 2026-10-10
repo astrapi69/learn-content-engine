@@ -15,6 +15,8 @@ export {
   asContentSetBook,
   asContentSetEntry,
   inheritFromRootEntry,
+  ROOT_OWNED_SET_FIELDS,
+  resolveSetEntry,
   parseLesson,
   parseManifest,
   resolveLanguagePair,

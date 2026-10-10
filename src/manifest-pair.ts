@@ -5,12 +5,12 @@
  * time, so a field the two carry with different values went unreported, and
  * which value a consumer showed depended on which file it read.
  *
- * This check sees both entries of one set and warns per field that differs.
- * A warning first, so existing content repos do not turn red; field ownership
- * (and an error for a contradiction in an owned field) is step 3.
+ * This check sees both entries of one set and reports an error per field that
+ * differs. It was a warning in 0.37.0 (``W-MANIFEST-ENTRY-MISMATCH``) until the
+ * content repositories were clean (step 3: 0 findings over the eleven).
  */
 
-import { splitIssues, warn, type ValidationIssue, type ValidationResult } from "./issues.js";
+import { err, splitIssues, type ValidationIssue, type ValidationResult } from "./issues.js";
 
 type ManifestEntry = Record<string, unknown>;
 
@@ -60,10 +60,10 @@ function mismatchIssues(setId: string, rootEntry: ManifestEntry, setEntry: Manif
     const setValue = asText(setEntry[field]);
     if (rootValue === setValue) continue;
     issues.push(
-      warn(
-        "W-MANIFEST-ENTRY-MISMATCH",
+      err(
+        "E-MANIFEST-ENTRY-MISMATCH",
         `/sets/0/${field}`,
-        `set '${setId}': '${field}' is ${rootValue} in the root manifest but ${setValue} in the set manifest`,
+        `set '${setId}': '${field}' is ${rootValue} in the root manifest but ${setValue} in the set manifest; the two must be identical`,
         "root-entry-and-set-manifest",
         { setId, field, rootValue, setValue },
       ),
@@ -74,10 +74,9 @@ function mismatchIssues(setId: string, rootEntry: ManifestEntry, setEntry: Manif
 
 /**
  * Compare a set's own manifest with its entry in the root manifest
- * (engine#246). Returns ``W-MANIFEST-ENTRY-MISMATCH`` per field present in
+ * (engine#246). Returns ``E-MANIFEST-ENTRY-MISMATCH`` per field present in
  * both with different values; ``null`` and an absent key are both silent, so
- * they never differ. Paths point into the set manifest. Never blocks
- * (``valid`` stays ``true``) and never throws.
+ * they never differ. Paths point into the set manifest. Never throws.
  *
  * Reports nothing when there is no pair to compare (the set manifest has no
  * entry, or the root does not list that set id): that is not this check's

@@ -21,8 +21,8 @@ const rootWith = (...sets: EntryFields[]) => ({ name: "Repo", sets });
 const setManifestWith = (setEntry: EntryFields) => ({ sets: [setEntry] });
 
 const mismatches = (rootEntry: EntryFields, setEntry: EntryFields) =>
-  validateManifestPair(rootWith(rootEntry), setManifestWith(setEntry)).warnings.filter(
-    (issue) => issue.id === "W-MANIFEST-ENTRY-MISMATCH",
+  validateManifestPair(rootWith(rootEntry), setManifestWith(setEntry)).errors.filter(
+    (issue) => issue.id === "E-MANIFEST-ENTRY-MISMATCH",
   );
 
 describe("validateManifestPair (engine#246, step 2)", () => {
@@ -34,7 +34,7 @@ describe("validateManifestPair (engine#246, step 2)", () => {
 
     expect(issues).toHaveLength(1);
     expect(issues[0]).toMatchObject({
-      severity: "warning",
+      severity: "error",
       path: "/sets/0/title",
       params: {
         setId: "en-a1-from-de",
@@ -86,8 +86,8 @@ describe("validateManifestPair (engine#246, step 2)", () => {
       setManifestWith(entry({ title: "Set title" })),
     );
 
-    expect(result.warnings).toHaveLength(1);
-    expect(result.warnings[0]!.params?.["setId"]).toBe("example-set");
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]!.params?.["setId"]).toBe("example-set");
   });
 
   it.each([
@@ -99,10 +99,12 @@ describe("validateManifestPair (engine#246, step 2)", () => {
     expect(validateManifestPair(rootManifest, setManifest)).toEqual({ valid: true, errors: [], warnings: [] });
   });
 
-  it("never blocks: the result stays valid while it warns", () => {
+  it("blocks: a disagreement makes the result invalid (engine#246, step 3)", () => {
     const result = validateManifestPair(rootWith(entry({ title: "A" })), setManifestWith(entry({ title: "B" })));
 
-    expect(result.valid).toBe(true);
-    expect(result.errors).toEqual([]);
+    expect(result.valid).toBe(false);
+    expect(result.warnings).toEqual([]);
+    expect(result.errors.map((issue) => issue.id)).toEqual(["E-MANIFEST-ENTRY-MISMATCH"]);
   });
+
 });

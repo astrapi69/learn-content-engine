@@ -46,17 +46,25 @@ is not part of `parse`.
 
 A content repo describes each set twice: as a `sets[]` entry in the root
 `manifest.yaml`, and as `sets[0]` in the set's own manifest
-(`<path>/manifest.yaml`). A consumer that has both combines them with
-**`inheritFromRootEntry(rootEntry, setEntry)`** before projecting:
+(`<path>/manifest.yaml`). Each field has one owner (engine#246): the root
+entry owns `title`, `description`, `visibility` and `review_status` (the
+fields a catalog shows before anything is downloaded, exported as
+`ROOT_OWNED_SET_FIELDS`), the set manifest owns the lesson list, and every
+other field lives in both and must be identical.
 
-- A field the set file leaves **absent or `null`** takes the root entry's
-  value, so a set marked `visibility: hidden` at the root stays hidden.
+A consumer that has both entries resolves them with
+**`resolveSetEntry(rootEntry, setEntry)`** before projecting:
+
+- The root-owned fields come from the root entry, the rest from the set file.
+- A field one file leaves **absent or `null`** is taken from the other, so a
+  set marked `visibility: hidden` at the root stays hidden.
 - The projection defaults (`visible`, `authored`, ...) apply only when **both**
   entries are silent.
-- Where **both** carry a value, the set file's is kept for now, and
-  `validateManifestPair(rootManifest, setManifest)` warns
-  (`W-MANIFEST-ENTRY-MISMATCH`) when the two differ. Which file owns which
-  field is the next step of engine#246.
+
+`validateManifestPair(rootManifest, setManifest)` reports
+`E-MANIFEST-ENTRY-MISMATCH` for a field the two carry with different values.
+`inheritFromRootEntry` (0.37.0) does the fallback without the ownership and is
+kept for compatibility; prefer `resolveSetEntry`.
 
 ## Context inheritance vs. standalone
 

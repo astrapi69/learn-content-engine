@@ -171,8 +171,9 @@ export function resolveLanguagePair(parsed: {
  * A field the set file leaves absent or ``null`` inherits the root entry's
  * value, so a set hidden at the root stays hidden for a consumer that reads the
  * set file; the projection defaults apply only when both entries are silent.
- * Where both carry a value, the set file's is kept for now: which file owns
- * which field is engine#246 step 3. Neither input is mutated.
+ * Where both carry a value, the set file's is kept. Prefer
+ * {@link resolveSetEntry}, which applies the field ownership on top. Neither
+ * input is mutated.
  *
  * @throws Error when the two entries describe different sets (``id`` differs).
  */
@@ -187,6 +188,34 @@ export function inheritFromRootEntry(rootEntry: ParsedSet, setEntry: ParsedSet):
     if (value !== undefined && value !== null) merged[field] = value;
   }
   return merged as unknown as ParsedSet;
+}
+
+/**
+ * The set fields the root manifest's entry owns (engine#246): the discovery
+ * fields a catalog shows before anything is downloaded. Every other field
+ * lives in both entries and must be identical; the lesson list
+ * (``metadata.lessons``) lives in the set manifest.
+ */
+export const ROOT_OWNED_SET_FIELDS = ["title", "description", "visibility", "review_status"] as const;
+
+/**
+ * Resolve a set's root-manifest entry and its own manifest's entry into the
+ * one {@link ParsedSet} to project (engine#246, step 3).
+ *
+ * The fields in {@link ROOT_OWNED_SET_FIELDS} come from the root entry; every
+ * other field from the set manifest. Either way, a value one file leaves
+ * absent or ``null`` is taken from the other, so the projection defaults
+ * apply only when both are silent. Neither input is mutated.
+ *
+ * @throws Error when the two entries describe different sets (``id`` differs).
+ */
+export function resolveSetEntry(rootEntry: ParsedSet, setEntry: ParsedSet): ParsedSet {
+  const inherited = inheritFromRootEntry(rootEntry, setEntry) as unknown as Record<string, unknown>;
+  const root = rootEntry as unknown as Record<string, unknown>;
+  for (const field of ROOT_OWNED_SET_FIELDS) {
+    if (root[field] !== undefined && root[field] !== null) inherited[field] = root[field];
+  }
+  return inherited as unknown as ParsedSet;
 }
 
 /** Project a raw parsed manifest set into a canonical {@link ContentSetEntry}. */
