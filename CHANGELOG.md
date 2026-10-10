@@ -5,7 +5,12 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
-## [Unreleased]
+## [0.39.0] - 2026-10-10
+
+No schema change: `x-schema-version` stays 1.19. `W-HINT-LENGTH` reads five
+more source languages (a warning, two new hits in the fleet), and the rule
+id convention is documented with a table of retired ids
+(`RENAMED_RULE_IDS`, `currentRuleId`). Nothing turns red on a re-pin.
 
 ### W-HINT-LENGTH reads Spanish, French, Italian, Portuguese and Greek hints (engine#255)
 
