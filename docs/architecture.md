@@ -520,7 +520,9 @@ implementation of a rule the engine already reports, and the copy already
 differed: it compared left terms case-sensitively, the engine does not, so
 "Empathie" next to "empathie" passed the app and failed the repo gate
 (adaptive-learner#3222). The app kept the engine's validators out of its
-bundle to avoid the structural ajv layer. Since 0.29.0 the engine offers the
+bundle to avoid the structural ajv layer. (That layer no longer ships the ajv
+compiler since engine#261: the validators are precompiled at build time, and
+the core entry fell from 90.3 to 65.8 kB gzip.) Since 0.29.0 the engine offers the
 semantic rules alone, `learn-content-engine/rules` (engine#191): no ajv, no
 `node:*`, about 27.3 kB minified since the language rules of engine#190
 (24.9 kB before them, 24.0 kB before the duplicate-id rules of engine#202, 22.9 kB before the quality minimums of engine#185,

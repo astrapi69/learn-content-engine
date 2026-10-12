@@ -5,7 +5,8 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   {
-    ignores: ["dist/**", "node_modules/**", "coverage/**", "docs-api/**"],
+    // The precompiled schema validators are generated code (engine#261).
+    ignores: ["dist/**", "node_modules/**", "coverage/**", "docs-api/**", "src/schema-validators.generated.ts"],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,

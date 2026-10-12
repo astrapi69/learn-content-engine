@@ -30,7 +30,10 @@ Validation runs in two layers (field checks before cross-field checks):
 The input is checked against the bundled JSON-Schema
 ([`schema/lesson.schema.json`](../schema/lesson.schema.json) /
 [`schema/content-manifest.schema.json`](../schema/content-manifest.schema.json),
-draft 2020-12) with [ajv](https://ajv.js.org/). This enforces required fields,
+draft 2020-12) with validators that [ajv](https://ajv.js.org/) precompiles from
+it at build time (engine#261: the package ships the validation functions, not
+the ajv compiler; same options and the same errors as compiling at run time).
+This enforces required fields,
 field types and lengths, enum values (`type`, `cloze_mode`, `direction`,
 `media_type`, ...), and nested shapes (`Pair`, `PictureImage`, `ClozeBlank`).
 
@@ -138,7 +141,8 @@ const { valid, errors, warnings } = validateLessonRules(lesson); // same result 
 - `validateLessonRules(lesson, { extensions })` and
   `validateManifestRules(manifest)` return exactly what `validateLesson` /
   `validateManifest` return for input that passes the structural layer: those
-  two check the shape with ajv and then call these functions, so the two can
+  two check the shape with the precompiled structural validators and then call
+  these functions, so the two can
   never disagree. For input that does not have the schema's shape the result is
   unspecified; check the shape first.
 - `validateLessonQuality(lesson)` and `QUALITY_MINIMUMS` are the
@@ -156,11 +160,14 @@ const { valid, errors, warnings } = validateLessonRules(lesson); // same result 
   0.9 kB (24.0 kB, 9.2 kB gzip before), the quality minimums of engine#185
   1.1 kB (22.9 kB, 8.8 kB gzip before), the issue parameters of engine#201
   1.2 kB (21.7 kB, 8.4 kB gzip before that), all measured the same way.
-  `validateLesson` alone is about 152 kB (46.0 kB gzip, measured the same way
-  on 2026-09-25 from an entry importing only `validateLesson`), most of it
-  ajv. Since engine#203 it carries the two schemas as a module instead of
-  reading them from the file system, so it runs in a browser too; the 145 kB
-  measured on 2026-09-24 did not count the schemas, which it read at run time.
+  `validateLesson` alone is about 170 kB, 23.3 kB gzip (measured the same way
+  on 2026-10-12 from an entry importing only `validateLesson`). Until
+  engine#261 it was 152 kB, 46.0 kB gzip (2026-09-25), most of it the ajv
+  compiler; the precompiled validators are longer source but compress far
+  better, and what a consumer downloads halved. Since engine#203 the schemas
+  travel as a module instead of being read from the file system, so it runs in
+  a browser too; the 145 kB measured on 2026-09-24 did not count the schemas,
+  which it read at run time.
 
 Why it exists: a consumer that re-implements a rule instead of calling it ends
 up with a copy that drifts (see

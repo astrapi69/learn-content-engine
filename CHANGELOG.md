@@ -5,6 +5,34 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [Unreleased]
+
+### The structural validators are precompiled; the core no longer ships the ajv compiler (engine#261)
+
+`validateLesson` and `validateManifest` used to compile the two schemas with
+ajv on their first call, so every consumer's bundle carried the ajv compiler,
+about 40 percent of the core entry. The validators are now generated at build
+time with ajv's standalone code generation
+(`scripts/generate-schema-validators.mjs` writes
+`src/schema-validators.generated.ts`; `make sync-types` regenerates it and
+`make sync-types-check` fails on drift), with the same options as before
+(`allErrors`, `strict: false`). Only one ajv run-time helper ships.
+
+Nothing a consumer sees changes. `src/schema-validators.test.ts` compares the
+precompiled validators with the run-time compiler, error object for error
+object, over the fixtures and every single-node mutation of them (more than a
+thousand inputs, more than five hundred invalid). Over the eleven content
+repositories, the old and the new build return byte-identical
+`validateLesson`/`validateManifest` results for 42,517 inputs (every lesson and
+manifest on `origin/main`, plus up to 60 mutations of each; 32,892 of them
+invalid).
+
+Measured with the bundle gate (gzip): core 90.3 -> 65.8 kB, `/qti` 55.4 ->
+31.5 kB; an entry importing only `validateLesson` 46.0 -> 23.3 kB. The budgets
+go down to the measurement plus about 10 kB (core 92 -> 76 kB, qti 60 -> 42
+kB), and the gate now refuses the ajv compiler (`ajv/dist/compile`,
+`ajv/dist/vocabularies`, `fast-uri`) in both entries.
+
 ## [0.40.0] - 2026-10-12
 
 No schema change: `x-schema-version` stays 1.19 (`metadata` in a set manifest
