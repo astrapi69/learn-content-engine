@@ -6,7 +6,9 @@
  * esbuild (minified, gzip measured) and fails when:
  *   - a bundle exceeds its gzip budget, or
  *   - a forbidden dependency leaks into an entry - the qti XML parser
- *     (@rgrove/parse-xml) must never reach the core import. The metafile
+ *     (@rgrove/parse-xml) must never reach the core import, and the ajv
+ *     compiler (ajv/dist/compile, ajv/dist/vocabularies, fast-uri) reaches
+ *     neither since the schemas are precompiled (engine#261). The metafile
  *     input list is the evidence, not a string scan.
  *
  * Budgets are deliberately explicit constants: raising one is a reviewed
@@ -15,6 +17,10 @@
  * for engine#254 (declared type migrations): main measured 89.6 kB, the
  * change 90.3 kB, i.e. +0.7 kB for the gate exception, the declaration
  * checks and the typed-cloze conversion in migrate.
+ * Lowered on 2026-10-12 for engine#261 (structural validators precompiled with
+ * ajv standalone, the compiler no longer ships): core 90.3 -> 65.8 kB, qti
+ * 55.4 -> 31.5 kB. Budgets set to the measurement plus about 10 kB, the room
+ * the core had when the gate was introduced: core 76 kB, qti 42 kB.
  *
  * Usage:
  *   npm run build && node scripts/check-bundle-size.mjs
@@ -30,14 +36,14 @@ const BUNDLE_BUDGETS = [
   {
     entryName: "core",
     entryFile: "dist/index.js",
-    gzipLimitKb: 92,
-    forbiddenDependencies: ["@rgrove/parse-xml"],
+    gzipLimitKb: 76,
+    forbiddenDependencies: ["@rgrove/parse-xml", "ajv/dist/compile", "ajv/dist/vocabularies", "fast-uri"],
   },
   {
     entryName: "qti",
     entryFile: "dist/qti/index.js",
-    gzipLimitKb: 60,
-    forbiddenDependencies: [],
+    gzipLimitKb: 42,
+    forbiddenDependencies: ["ajv/dist/compile", "ajv/dist/vocabularies", "fast-uri"],
   },
 ];
 
