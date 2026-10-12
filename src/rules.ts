@@ -47,6 +47,10 @@ import { variableIssues } from "./variables.js";
 // asked of the same shape-checked lesson, so a browser consumer gets both here.
 export { QUALITY_MINIMUMS, validateLessonQuality } from "./quality.js";
 export { RENAMED_RULE_IDS, currentRuleId } from "./rule-ids.js";
+// The grade lookup for a set's evaluation block (engine#227): a browser
+// consumer applies the block where it renders the run summary.
+export { gradeFor } from "./grade-for.js";
+export type { EvaluationOutcome } from "./grade-for.js";
 
 /** The schema's ``$defs/SlugId`` pattern (lesson ids, set ids, tags), kept
  *  here as a string so a consumer can check a slug without a schema

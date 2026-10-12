@@ -31,6 +31,8 @@ export { RENAMED_RULE_IDS, currentRuleId } from "./rule-ids.js";
 export { resolveExerciseVariables } from "./resolve-variables.js";
 export type { ResolveExerciseVariablesOptions, ResolvedExerciseVariables } from "./resolve-variables.js";
 export { evaluateExpression } from "./variables.js";
+export { gradeFor } from "./grade-for.js";
+export type { EvaluationOutcome } from "./grade-for.js";
 export { collectStableIds } from "./stable-ids.js";
 export {
   CEFR_LEVELS,
