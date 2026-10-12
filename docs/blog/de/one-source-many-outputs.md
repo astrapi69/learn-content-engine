@@ -112,7 +112,7 @@ Alles außerhalb dieser Tabelle (Ordering, Association, Gap-Match, Hotspot, ein 
 
 ## Was die Engine sich weigert zu tun, und warum Ihnen das hilft
 
-Die Linie ist es wert, ausgesprochen zu werden, denn sie ist es, was die Pipeline wartbar hält statt zu einem Monolithen zu machen. Die Engine validiert und kanonisiert, und seit 0.34.0 macht sie außerdem aus einer parametrischen Übung eine konkrete Instanz (`resolveExerciseVariables`), sodass jeder Consumer dieselben Werte berechnet. Das ist alles. Sie rendert nicht, bewertet nicht, speichert nicht, druckt nicht, spricht nicht mit einem LMS.
+Die Linie ist es wert, ausgesprochen zu werden, denn sie ist es, was die Pipeline wartbar hält statt zu einem Monolithen zu machen. Die Engine validiert und kanonisiert, und seit 0.34.0 macht sie außerdem aus einer parametrischen Übung eine konkrete Instanz (`resolveExerciseVariables`), sodass jeder Consumer dieselben Werte berechnet; seit 0.41.0 bildet sie außerdem den Prozentwert, den ein Consumer für einen Lektionsdurchlauf berechnet hat, auf das Urteil des `evaluation`-Blocks des Sets ab (`gradeFor`), sodass eine Bestehensgrenze oder eine Notentabelle überall dasselbe bedeutet. Das ist alles. Sie rendert nicht, prüft keine Antwort, speichert nicht, druckt nicht, spricht nicht mit einem LMS.
 
 | Die Engine tut                                  | Consumer-Tooling tut                                          |
 |-------------------------------------------------|---------------------------------------------------------------|
@@ -120,6 +120,7 @@ Die Linie ist es wert, ausgesprochen zu werden, denn sie ist es, was die Pipelin
 | Struktur, Semantik und Qualität validieren      | Einen Test und einen Lösungsschlüssel drucken                 |
 | Die QTI-Teilmenge abbilden, in beide Richtungen | Fortschritt persistieren, synchronisieren, an ein LMS liefern |
 | Eine parametrische Übung in eine konkrete Instanz auflösen | Die Antwort des Lernenden bewerten |
+| Den Prozentwert eines Durchlaufs auf Bestehensgrenze oder Note des Sets abbilden | Den Durchlauf werten: welche Antworten zählen und wie |
 
 Zwei ehrliche Grenzen fallen daraus, und sie zu benennen ist der Punkt:
 
