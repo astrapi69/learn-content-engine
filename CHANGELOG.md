@@ -5,7 +5,13 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
-## [Unreleased]
+## [0.40.0] - 2026-10-12
+
+No schema change: `x-schema-version` stays 1.19 (`metadata` in a set manifest
+is open). A set can declare that an exercise changed its type under a kept
+`stable_id`; two new manifest errors and a warning check the declaration,
+and only a manifest that carries one can meet them. Nothing turns red on a
+re-pin.
 
 ### A declared type migration keeps an exercise's stable_id (engine#254)
 
