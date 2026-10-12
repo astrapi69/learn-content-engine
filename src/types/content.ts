@@ -121,7 +121,9 @@ export interface ContentSetGrade {
 
 /** A set's manifest-level evaluation block (engine#171). Describes ONE
  *  lesson run, never an aggregate across the set's lessons. The engine
- *  validates the declaration; scoring and rendering stay consumer-side. */
+ *  validates the declaration and maps a run's percent to its verdict
+ *  (``gradeFor``, engine#227); scoring the run and rendering stay
+ *  consumer-side. */
 export interface ContentSetEvaluation {
   scheme?: EvaluationScheme;
   pass_percent?: number;

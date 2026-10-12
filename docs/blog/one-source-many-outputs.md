@@ -112,7 +112,7 @@ Everything outside that table (ordering, association, gap-match, hotspot, an ite
 
 ## What the engine refuses to do, and why that helps you
 
-It is worth being explicit about the line, because it is what keeps the pipeline maintainable rather than a monolith. The engine validates and canonicalizes, and since 0.34.0 it also turns a parametric exercise into a concrete instance (`resolveExerciseVariables`), so every consumer computes the same values. That is all. It does not render, does not grade, does not store, does not print, does not talk to an LMS.
+It is worth being explicit about the line, because it is what keeps the pipeline maintainable rather than a monolith. The engine validates and canonicalizes, and since 0.34.0 it also turns a parametric exercise into a concrete instance (`resolveExerciseVariables`), so every consumer computes the same values; since 0.41.0 it also maps the percent a consumer computed for a lesson run to the verdict of the set's `evaluation` block (`gradeFor`), so a pass mark or a grade table means the same everywhere. That is all. It does not render, does not check an answer, does not store, does not print, does not talk to an LMS.
 
 | The engine does | Consumer tooling does |
 |---|---|
@@ -120,6 +120,7 @@ It is worth being explicit about the line, because it is what keeps the pipeline
 | Validate structure, semantics, and quality | Print a test and an answer key |
 | Map the QTI subset, both directions | Persist progress, sync, deliver to an LMS |
 | Resolve a parametric exercise into a concrete instance | Grade the learner's answer |
+| Map a run's percent to the set's pass mark or grade | Score the run: which answers count, and how |
 
 Two honest limits fall out of this, and naming them is the point:
 

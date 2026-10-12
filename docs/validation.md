@@ -148,13 +148,19 @@ const { valid, errors, warnings } = validateLessonRules(lesson); // same result 
 - `validateLessonQuality(lesson)` and `QUALITY_MINIMUMS` are the
   [quality minimums](#quality-minimums), the same functions as on the package
   root.
+- `gradeFor(evaluation, percent)` maps a lesson run's percent to the verdict
+  of its set's [evaluation block](lesson-format.md#evaluation), the same
+  function as on the package root: a browser consumer applies the block
+  where it renders the run summary.
 - `isSlugId(value)` is the schema's `$defs/SlugId` (lowercase Unicode letters
   and digits in hyphen-separated runs, at most `SLUG_ID_MAX_LENGTH`
   characters), for a consumer that needs the slug rule without a schema
   validator. `SLUG_ID_PATTERN` is the pattern string itself.
 - The entry imports neither ajv nor `node:*`; `src/rules.test.ts` keeps it that
-  way. Measured with esbuild on 2026-09-25 (`dist/rules.js` bundled, minified,
-  browser): 27.3 kB, 10.2 kB gzip. The language rules of engine#190 (with the
+  way. Measured with esbuild on 2026-10-12 (`dist/rules.js` bundled, minified,
+  browser): 32.4 kB, 12.3 kB gzip, of which `gradeFor` (engine#227) is 0.4 kB
+  (32.0 kB, 12.1 kB gzip before). On 2026-09-25 it was 27.3 kB, 10.2 kB gzip,
+  measured the same way. The language rules of engine#190 (with the
   small changes of engine#205 and the bridge exemption) added 2.4 kB (24.9 kB,
   9.4 kB gzip before), the duplicate-id rules of engine#202
   0.9 kB (24.0 kB, 9.2 kB gzip before), the quality minimums of engine#185

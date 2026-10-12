@@ -5,6 +5,30 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [Unreleased]
+
+### `gradeFor`: a lesson run's percent under its set's evaluation block (engine#227)
+
+A set can declare how one lesson run is evaluated since schema 1.15
+(engine#171): a pass mark (`pass_fail`), a grade table (`grades`) or a plain
+percentage. The engine validated the declaration, but mapping a score to the
+verdict was left to each consumer, with boundary rules only written down in
+the docs. `gradeFor(evaluation, percent)` now does the mapping, on the
+package root and on `learn-content-engine/rules` (no ajv, no `node:*`):
+
+- `pass_percent` is inclusive; `passed` is present whenever the block has a
+  pass mark (advisory under `percent`).
+- Under `grades`, the row with the highest `min_percent` the run reaches, in
+  any row order. A run between two reachable points of a national scale
+  (86.25 % on a 60-point scale) earns the upper grade, as the grading
+  presets intend; below the lowest row there is no grade
+  (`W-EVAL-GRADES-NO-FLOOR`).
+- The percent is the consumer's, unrounded, in 0 to 100; anything else
+  throws a `RangeError`.
+
+New type: `EvaluationOutcome`. No schema change. The first consumer is the
+reference app's lesson summary (adaptive-learner#3736).
+
 ## [0.40.1] - 2026-10-12
 
 No schema change, no API change, no behaviour change: the structural

@@ -13,8 +13,10 @@ persistence. The bundled, strict JSON-Schema makes it a self-contained **format
 reference**: you can author and validate lessons without the application the
 format originated in ([Adaptive Learner](https://github.com/astrapi69/adaptive-learner)).
 Beyond validity it checks a lesson against the shared quality minimums
-(`validateLessonQuality`) and turns a parametric exercise into a concrete
-instance (`resolveExerciseVariables`), so every consumer gets the same answer.
+(`validateLessonQuality`), turns a parametric exercise into a concrete
+instance (`resolveExerciseVariables`) and maps a lesson run's percent to the
+verdict of its set's `evaluation` block (`gradeFor`), so every consumer gets
+the same answer.
 Tracks the lesson schema, currently **v1.19**.
 
 ## Install
@@ -129,6 +131,7 @@ The gap analysis behind this list is
 | `validateLessonQuality` | fn | check a shape-valid lesson against the quality minimums, keyed to its `purpose` (`practice`, `bridge`, `quiz`) → `ValidationResult` of `E-QUALITY-*` shortfalls; a publication threshold, not validity ([Quality minimums](docs/lesson-format.md#quality-minimums)) |
 | `resolveExerciseVariables` | fn | resolve a parametric exercise into a concrete instance: sample, evaluate in declaration order, round, substitute every `{{name}}`; returns the exercise, the values (to persist and replay) and the tolerances of pure-reference accepted answers ([Variables](docs/lesson-format.md#variables-parametric-exercises)) |
 | `evaluateExpression` | fn | evaluate a computed variable's expression with values for its names, on the parser the validator uses |
+| `gradeFor` | fn | a lesson run's percent under its set's `evaluation` block: `passed` against `pass_percent` (inclusive) and, under `grades`, the row with the highest `min_percent` the run reaches; the consumer computes the unrounded percent ([evaluation](docs/lesson-format.md#evaluation)) |
 | `QUALITY_MINIMUMS` | const | the numbers of `schema/quality-rules.json` that `validateLessonQuality` applies |
 | `RENAMED_RULE_IDS` | const | every retired rule id mapped to the id its rule carries now; a rule id's prefix carries its tier, so a raise or lowering renames it ([Rule catalog](docs/lesson-format.md#rule-catalog)) |
 | `currentRuleId` | fn | the id a rule carries now: `id` itself, or for a retired id the one it was renamed to; for a mirror or an accepted-warnings list keyed on full ids |
@@ -155,6 +158,7 @@ The gap analysis behind this list is
 | `TypeMigration` | type | one allowed `{ from, to }` pair of `TYPE_MIGRATIONS` |
 | `StableIdCoverage`, `CoverageVerdict`, `CoverageSet`, `CoverageFailure` | types | the `computeStableIdCoverage` return shape |
 | `ResolvedExerciseVariables`, `ResolveExerciseVariablesOptions` | types | the `resolveExerciseVariables` return shape and its options (`random`, `values`) |
+| `EvaluationOutcome` | type | the `gradeFor` return shape: the `scheme` applied, `passed` when the block has a pass mark, `grade` under `grades` |
 | `ValidationResult`, `ValidationIssue`, `ValidationSeverity`, `ValidationParams`, `ValidationParamValue` | types | the `validate*` return shape (`{ valid, errors[], warnings[] }`), its issue-severity enum, and the optional `params` an issue carries when its message names a value |
 | `ExerciseExtension`, `ExtensionRegistry` | types | the `ext:` extension registry contract (schema 1.7, see [Extensions](docs/extensions.md)) |
 | `LessonSetContext`, `LessonSourceAdapter`, `ParsedManifest`, `ParsedSet`, `ParsedSetAsset`, `ParsedSetBook` | types | adapter + manifest surface |
@@ -170,7 +174,7 @@ Two subpath entries sit next to the package root:
 
 | Entry | Exports | Purpose |
 |---|---|---|
-| `learn-content-engine/rules` | `validateLessonRules`, `validateManifestRules`, `validateLessonQuality`, `QUALITY_MINIMUMS`, `RENAMED_RULE_IDS`, `currentRuleId`, `isSlugId`, `SLUG_ID_PATTERN`, `SLUG_ID_MAX_LENGTH`, plus two helpers the structural layer composes: `unusedCardIds` (the detection core of `W-CARD-UNUSED`) and `normalizeManifestAliases` (maps the legacy `language` alias to `target_language` before validation) | the semantic rules and author lints without the structural layer: no ajv, no `node:*`, for a browser consumer that has already shape-checked its input ([Validation](docs/validation.md#the-rules-without-the-structural-layer-learn-content-enginerules)) |
+| `learn-content-engine/rules` | `validateLessonRules`, `validateManifestRules`, `validateLessonQuality`, `QUALITY_MINIMUMS`, `RENAMED_RULE_IDS`, `currentRuleId`, `gradeFor` (with its `EvaluationOutcome`), `isSlugId`, `SLUG_ID_PATTERN`, `SLUG_ID_MAX_LENGTH`, plus two helpers the structural layer composes: `unusedCardIds` (the detection core of `W-CARD-UNUSED`) and `normalizeManifestAliases` (maps the legacy `language` alias to `target_language` before validation) | the semantic rules and author lints without the structural layer: no ajv, no `node:*`, for a browser consumer that has already shape-checked its input ([Validation](docs/validation.md#the-rules-without-the-structural-layer-learn-content-enginerules)) |
 | `learn-content-engine/qti` | `importQti`, `exportQti`, `qtiLessonAdapter`, ... | the optional QTI adapter and its XML parser ([QTI interop](docs/qti.md)) |
 
 ## Scope
@@ -203,13 +207,15 @@ deliberately **not**:
   type. A consumer needing a bespoke type can add one via the opt-in
   [extension tier](docs/extensions.md) (`ext:` types) without touching the core
   enum; the core stays the portable authority.
-- **a runtime** - no rendering, grading, scheduling/SRS, persistence, or
-  networking; consumers own all of that. What it computes, it computes as pure
-  functions of what the format defines: `resolveExerciseVariables` (since
-  0.34.0) turns a parametric exercise into one instance from the random
-  source the consumer passes in, and the
-  [grading presets](docs/lesson-format.md#grading-presets) are a catalog the
-  consumer applies, not grading code.
+- **a runtime** - no rendering, answer checking, scoring of a run,
+  scheduling/SRS, persistence, or networking; consumers own all of that. What
+  it computes, it computes as pure functions of what the format defines:
+  `resolveExerciseVariables` (since 0.34.0) turns a parametric exercise into
+  one instance from the random source the consumer passes in, and `gradeFor`
+  (since 0.41.0) maps the percent a consumer computed for a run to the
+  verdict of the set's `evaluation` block. The
+  [grading presets](docs/lesson-format.md#grading-presets) are a catalog of
+  such blocks, not grading code.
 - **a content repository** - it ships the format, the validator, and the
   author tooling, not lessons.
 

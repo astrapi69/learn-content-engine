@@ -1103,8 +1103,23 @@ no longer the author's, which is what the block exists for. It stays a
 warning because "below 50 there is simply no grade" can be the intent; the
 example above carries an `F` row at 0 for exactly this reason.
 
-Everything else is the consumer's: sampling the run, computing the score,
-rendering the summary. Absent block, unchanged behaviour.
+The consumer samples the run, computes its percent on the declared `basis`
+and renders the summary. Mapping that percent to the block's verdict is the
+engine's, so every consumer draws the same boundaries:
+`gradeFor(evaluation, percent)` (on the package root and on
+`learn-content-engine/rules`, since 0.41.0) returns the `scheme` applied,
+`passed` when the block has a `pass_percent` (inclusive; advisory under
+`percent`), and under `grades` the row with the highest `min_percent` the run
+reaches, or no grade below the lowest row. It expects the unrounded percent
+in 0 to 100 and throws a `RangeError` for anything else, which is a scoring
+bug on the consumer's side. Absent block, unchanged behaviour.
+
+```ts
+import { gradeFor } from "learn-content-engine/rules";
+
+gradeFor({ scheme: "pass_fail", pass_percent: 70 }, 70); // { scheme: "pass_fail", passed: true }
+gradeFor(set.evaluation, (correct / answered) * 100).grade?.label; // "B" at 80 % on the table above
+```
 
 ### Grading presets
 
@@ -1152,7 +1167,7 @@ and a content repo can read it next to the schema.
   86.25 % for example, and then earns the upper grade. That is expected, not
   a defect of the preset.
 - The thresholds assume the consumer compares the **unrounded** run
-  percentage: 40 of 60 points is 66.67 %, which reaches a row at 66. A
+  percentage, which is what `gradeFor` expects: 40 of 60 points is 66.67 %, which reaches a row at 66. A
   consumer that rounds first moves each boundary by up to half a point.
 
 `src/grading-presets.test.ts` holds every preset to what `validateManifest`

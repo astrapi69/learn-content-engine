@@ -764,9 +764,12 @@ which the conditions acted before the damage instead of after it.
   `resolveExerciseVariables` samples, evaluates and substitutes a parametric
   exercise on the parser the validator uses; the reference app's own
   evaluator (a second parser for the same grammar) can go.
-- **engine#227**: a grade lookup for the `evaluation` block, split out of
-  engine#220. It comes with the first consumer that applies the block, so no
-  API ships without a user.
+- **engine#227** (closed, 0.41.0): `gradeFor` maps a lesson run's percent
+  to the verdict of its set's `evaluation` block (pass mark, grade row), so
+  every consumer draws the same boundaries. Split out of engine#220 and held
+  until a consumer applies the block: the reference app does so in the lesson
+  summary (adaptive-learner#3736), where its exam mode so far compared a run
+  with the learner's own 60/70/80 percent setting.
 - **engine#232** (planned, not started): sung and chanted lessons. The
   engine's parts are an optional per-set record of audio provenance (a person,
   a cloned or synthetic voice), decided before the first generated clip, and,
