@@ -5,7 +5,12 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
-## [Unreleased]
+## [0.41.0] - 2026-10-12
+
+One new function, no schema change, no change to validation: `gradeFor`
+maps the percent a consumer computed for a lesson run to the verdict of its
+set's `evaluation` block. Nothing turns red on a re-pin; the release only
+matters to a consumer that applies the block (adaptive-learner#3736).
 
 ### `gradeFor`: a lesson run's percent under its set's evaluation block (engine#227)
 
