@@ -1,5 +1,5 @@
 # **Comparative Analysis of Exercise Types in E-Learning Platforms**
-**Benchmark Study for the `learn-content-engine` (package 0.40.0, lesson schema currently 1.19)**
+**Benchmark Study for the `learn-content-engine` (package 0.40.1, lesson schema currently 1.19)**
 
 **Version:** 1.9  
 **Date:** September 23, 2026  
@@ -11,7 +11,7 @@
 
 ## **Executive Summary**
 
-This document presents a systematic comparative analysis of exercise types across established e-learning platforms (Moodle, H5P, QTI 3.0, Canvas LMS, Duolingo) in the context of the `learn-content-engine`. Two version numbers matter and are easy to conflate: the npm package is at **0.40.0**, the lesson schema it validates against is currently **1.19** (`x-schema-version` in `schema/lesson.schema.json`). This document benchmarks the schema's exercise types.
+This document presents a systematic comparative analysis of exercise types across established e-learning platforms (Moodle, H5P, QTI 3.0, Canvas LMS, Duolingo) in the context of the `learn-content-engine`. Two version numbers matter and are easy to conflate: the npm package is at **0.40.1**, the lesson schema it validates against is currently **1.19** (`x-schema-version` in `schema/lesson.schema.json`). This document benchmarks the schema's exercise types.
 
 The analysis demonstrates that the engine, with its six core exercise types (`matching`, `picture_choice`, `free_text`, `word_tiles`, `cloze`, `multiple_choice`), fully covers the **global standard for text-based foundational assessments**.
 
@@ -584,7 +584,7 @@ The extensions enable **Constructive Alignment** (Biggs, 1996): Teaching/learnin
 
 ## **8. Conclusion**
 
-The `learn-content-engine` (package 0.40.0, schema currently 1.19) is in an **excellent strategic position**:
+The `learn-content-engine` (package 0.40.1, schema currently 1.19) is in an **excellent strategic position**:
 1. **Standard Parity:** The six core exercise types fully cover the global standard for text-based foundational assessments, and the boundary speaks QTI 2.x and QTI 3.0.
 2. **Architectural Maturity:** The `ext:` concept matches modern best practices (QTI 3.0 PCI) and prevents schema bloat.
 3. **Didactic Growth Potential:** Every gap this analysis identified is covered, as a reference extension or as the core `variables` field; the higher Bloom levels are reachable without compromising core stability.
@@ -626,7 +626,7 @@ Excluded on purpose: Learnosity (proprietary, no public source), Open edX OLX (b
 | `ankitects/anki` | AGPL-3.0 (own LICENSE file) | Rust | 30612 | 2026-09-16 | Anki team |
 | `moodle/moodle` | GPL-3.0 | PHP | 7410 | 2026-09-16 | Moodle HQ and community |
 
-Runtime footprint of `learn-content-engine`: three dependencies (`yaml`; `ajv` only as the one run-time helper of the structural validators, which are precompiled at build time since engine#261, the `/rules` subpath runs without it; `@rgrove/parse-xml` only behind the `/qti` subpath), about 1,950 tests (1,951 on 2026-10-12), no framework. Stars measure attention, not quality, but they are the honest proxy for the size of the community that will answer a question or fix a bug.
+Runtime footprint of `learn-content-engine`: three dependencies (`yaml`; `ajv` only as the one run-time helper of the structural validators, which are precompiled at build time since engine#261, the `/rules` subpath runs without it; `@rgrove/parse-xml` only behind the `/qti` subpath), about 1,960 tests (1,958 on 2026-10-12), no framework. Stars measure attention, not quality, but they are the honest proxy for the size of the community that will answer a question or fix a bug.
 
 ### 9.3 Criteria
 

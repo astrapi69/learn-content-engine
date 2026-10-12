@@ -5,7 +5,12 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
-## [Unreleased]
+## [0.40.1] - 2026-10-12
+
+No schema change, no API change, no behaviour change: the structural
+validators are precompiled at build time, so the core entry no longer ships
+the ajv compiler (core 90.3 -> 65.8 kB gzip). Validation results are
+byte-identical, measured over the eleven content repositories.
 
 ### The structural validators are precompiled; the core no longer ships the ajv compiler (engine#261)
 
