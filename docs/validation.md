@@ -257,8 +257,10 @@ a published retirement, retired-yet-alive - lives in the stability gate
 `validateManifest` sees one file. A set is described in two, the root
 manifest and its own, so `validateManifestPair(rootManifest, setManifest)`
 compares the two entries of one set and returns `E-MANIFEST-ENTRY-MISMATCH`
-(an error) per field they carry with different values (engine#246). It reports
-nothing when the root does not list the set. A repo-wide runner calls
+(an error) per field they carry with different values (engine#246), and
+`W-MANIFEST-DESCRIPTION-COPY` when the set manifest carries `description`,
+which belongs to the root entry alone (engine#268). It reports nothing when
+the root does not list the set. A repo-wide runner calls
 it once per set manifest, next to `validateManifest`; see
 [root entry and set manifest](lesson-format.md#root-entry-and-set-manifest).
 

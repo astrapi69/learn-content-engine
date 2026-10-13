@@ -5,6 +5,23 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [Unreleased]
+
+### `W-MANIFEST-DESCRIPTION-COPY`: the description lives in the root entry (engine#268)
+
+Since engine#246 each field of a set has one owner, and `description`
+belongs to the root entry alone. Nothing checked it: `validateManifestPair`
+reports `E-MANIFEST-ENTRY-MISMATCH` only for copies that differ, so an
+identical copy in the set manifest passed and could drift later (it happened
+in adaptive-learner-content-test#110). `validateManifestPair` now warns
+`W-MANIFEST-DESCRIPTION-COPY` (params `setId`, path `/sets/0/description`)
+whenever the set manifest carries a non-empty `description`: identical,
+different (next to the mismatch error) or with the root silent. The other
+root-owned fields may still be repeated identically.
+
+A warning, so nothing blocks; measured over the eleven content repositories
+on 2026-10-13, 0 of 56 set manifests carry one.
+
 ## [0.41.0] - 2026-10-12
 
 One new function, no schema change, no change to validation: `gradeFor`

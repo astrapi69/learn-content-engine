@@ -62,7 +62,9 @@ A consumer that has both entries resolves them with
   entries are silent.
 
 `validateManifestPair(rootManifest, setManifest)` reports
-`E-MANIFEST-ENTRY-MISMATCH` for a field the two carry with different values.
+`E-MANIFEST-ENTRY-MISMATCH` for a field the two carry with different values,
+and warns `W-MANIFEST-DESCRIPTION-COPY` when the set manifest carries the
+root-owned `description` at all.
 `inheritFromRootEntry` (0.37.0) does the fallback without the ownership and is
 kept for compatibility; prefer `resolveSetEntry`.
 
