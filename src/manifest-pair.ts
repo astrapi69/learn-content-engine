@@ -8,9 +8,13 @@
  * This check sees both entries of one set and reports an error per field that
  * differs. It was a warning in 0.37.0 (``W-MANIFEST-ENTRY-MISMATCH``) until the
  * content repositories were clean (step 3: 0 findings over the eleven).
+ *
+ * One field has a single home: the root entry owns ``description``, and a copy
+ * in the set manifest can only drift. An identical copy passes the mismatch
+ * error, so ``W-MANIFEST-DESCRIPTION-COPY`` names it.
  */
 
-import { err, splitIssues, type ValidationIssue, type ValidationResult } from "./issues.js";
+import { err, splitIssues, warn, type ValidationIssue, type ValidationResult } from "./issues.js";
 
 type ManifestEntry = Record<string, unknown>;
 
@@ -72,11 +76,29 @@ function mismatchIssues(setId: string, rootEntry: ManifestEntry, setEntry: Manif
   return issues;
 }
 
+/** A warning when the set manifest carries ``description``, which belongs to
+ *  the root entry alone; silent (``null``, absent, empty) says nothing. */
+function descriptionCopyIssues(setId: string, setEntry: ManifestEntry): ValidationIssue[] {
+  const description = setEntry["description"];
+  if (isSilent(description) || description === "") return [];
+  return [
+    warn(
+      "W-MANIFEST-DESCRIPTION-COPY",
+      "/sets/0/description",
+      `set '${setId}': the set manifest carries 'description', which belongs to the root entry alone; a copy here can only drift, so keep the text in the root entry and remove it from the set manifest`,
+      "root-entry-and-set-manifest",
+      { setId },
+    ),
+  ];
+}
+
 /**
  * Compare a set's own manifest with its entry in the root manifest
  * (engine#246). Returns ``E-MANIFEST-ENTRY-MISMATCH`` per field present in
  * both with different values; ``null`` and an absent key are both silent, so
- * they never differ. Paths point into the set manifest. Never throws.
+ * they never differ. Warns ``W-MANIFEST-DESCRIPTION-COPY`` when the set
+ * manifest carries ``description``, identical or not. Paths point into the
+ * set manifest. Never throws.
  *
  * Reports nothing when there is no pair to compare (the set manifest has no
  * entry, or the root does not list that set id): that is not this check's
@@ -88,5 +110,5 @@ export function validateManifestPair(rootManifest: unknown, setManifest: unknown
   const setId = setEntry["id"] as string;
   const rootEntry = rootEntryFor(rootManifest, setId);
   if (rootEntry === null) return splitIssues([]);
-  return splitIssues(mismatchIssues(setId, rootEntry, setEntry));
+  return splitIssues([...mismatchIssues(setId, rootEntry, setEntry), ...descriptionCopyIssues(setId, setEntry)]);
 }

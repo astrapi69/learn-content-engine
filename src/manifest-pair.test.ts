@@ -46,7 +46,9 @@ describe("validateManifestPair (engine#246, step 2)", () => {
   });
 
   it("is silent when both entries agree", () => {
-    const result = validateManifestPair(rootWith(entry({ description: "Same" })), setManifestWith(entry({ description: "Same" })));
+    // A field both files may carry; an identical description is the one
+    // agreeing field that still warns (W-MANIFEST-DESCRIPTION-COPY, below).
+    const result = validateManifestPair(rootWith(entry({ tags: ["same"] })), setManifestWith(entry({ tags: ["same"] })));
 
     expect(result).toEqual({ valid: true, errors: [], warnings: [] });
   });
@@ -107,4 +109,62 @@ describe("validateManifestPair (engine#246, step 2)", () => {
     expect(result.errors.map((issue) => issue.id)).toEqual(["E-MANIFEST-ENTRY-MISMATCH"]);
   });
 
+});
+
+describe("W-MANIFEST-DESCRIPTION-COPY: the description lives in the root entry", () => {
+  const descriptionCopies = (rootEntry: EntryFields, setEntry: EntryFields) =>
+    validateManifestPair(rootWith(rootEntry), setManifestWith(setEntry)).warnings.filter(
+      (issue) => issue.id === "W-MANIFEST-DESCRIPTION-COPY",
+    );
+
+  it("warns about an identical copy, which the mismatch error lets through", () => {
+    // The reproduction (adaptive-learner-content-test#110): both files carried
+    // the same text, so E-MANIFEST-ENTRY-MISMATCH stayed silent although the
+    // field has one home.
+    const result = validateManifestPair(
+      rootWith(entry({ description: "A set." })),
+      setManifestWith(entry({ description: "A set." })),
+    );
+
+    expect(result.valid).toBe(true);
+    expect(result.errors).toEqual([]);
+    expect(result.warnings).toHaveLength(1);
+    expect(result.warnings[0]).toMatchObject({
+      id: "W-MANIFEST-DESCRIPTION-COPY",
+      severity: "warning",
+      path: "/sets/0/description",
+      params: { setId: "example-set" },
+    });
+  });
+
+  it("stays silent when only the root entry carries it", () => {
+    expect(descriptionCopies(entry({ description: "A set." }), entry())).toEqual([]);
+  });
+
+  it("warns when only the set manifest carries it: it belongs in the root entry", () => {
+    expect(descriptionCopies(entry(), entry({ description: "A set." }))).toHaveLength(1);
+  });
+
+  it("adds to the mismatch error when the copy differs, without hiding it", () => {
+    const result = validateManifestPair(
+      rootWith(entry({ description: "Root text." })),
+      setManifestWith(entry({ description: "Set text." })),
+    );
+
+    expect(result.errors.map((issue) => issue.id)).toEqual(["E-MANIFEST-ENTRY-MISMATCH"]);
+    expect(result.warnings.map((issue) => issue.id)).toEqual(["W-MANIFEST-DESCRIPTION-COPY"]);
+  });
+
+  it.each([
+    ["null", null],
+    ["an empty string", ""],
+  ])("treats %s as saying nothing", (_label, value) => {
+    expect(descriptionCopies(entry({ description: "A set." }), entry({ description: value }))).toEqual([]);
+  });
+
+  it("leaves the other root-owned fields alone: a repeated title is allowed", () => {
+    const result = validateManifestPair(rootWith(entry({ visibility: "hidden" })), setManifestWith(entry({ visibility: "hidden" })));
+
+    expect(result).toEqual({ valid: true, errors: [], warnings: [] });
+  });
 });

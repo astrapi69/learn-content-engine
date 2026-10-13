@@ -398,6 +398,16 @@ const CASES: ParamCase[] = [
     params: { setId: "s1", field: "title", rootValue: '"Root title"', setValue: '"Set title"' },
   },
   {
+    id: "W-MANIFEST-DESCRIPTION-COPY",
+    label: "a set manifest repeating the root entry's description",
+    issues: () => {
+      const setEntry = { id: "s1", title: "Set", level: "A1", version: "1.0.0", lesson_count: 1, description: "A set." };
+      return validateManifestPair({ sets: [setEntry] }, { sets: [setEntry] }).warnings;
+    },
+    path: "/sets/0/description",
+    params: { setId: "s1" },
+  },
+  {
     id: "W-LESSON-COUNT-CLAIM",
     label: "a description stating a stale lesson count",
     issues: () => {
