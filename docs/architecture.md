@@ -544,8 +544,8 @@ single-answer `multiple_choice` without a correct option and a `select` cloze
 without distractors passed it, where the engine reports `E-PIC-MIN`,
 `E-MC-ONE-CORRECT` and `E-CLOZE-SELECT-DISTRACTORS`.
 
-**Resolved (adaptive-learner#3222, closed 2026-09-30).** The app pins 0.36.0;
-its share check and its exercise editor defer to the engine's rules, the share
+**Resolved (adaptive-learner#3222, closed 2026-09-30).** Since its pin of
+0.34.0 the app's share check and its exercise editor defer to the engine's rules, the share
 check reports every engine error and lint and applies `validateLessonQuality`,
 and the lesson funnel runs `validateLessonRules` with the app's extension
 registry, all from `learn-content-engine/rules`.
@@ -800,14 +800,16 @@ which the conditions acted before the damage instead of after it.
   (adaptive-learner-content#245), and the template
   (adaptive-learner-content-template#98) and the nine fleet repositories
   re-pinned 0.36.0.
-- **engine#254** (engine side done; open: the conversion in
-  adaptive-learner-content#222 and a consumer-side test): a declared type migration keeps an
+- **engine#254** (closed, 0.40.0): a declared type migration keeps an
   exercise's `stable_id`. A set manifest names the change in
   `metadata.type_migrations` (`cloze` -> `multiple_choice` or `free_text`),
   `check-stable-ids` accepts it instead of `V3`, and `migrate` converts a
   typed cloze without a carrier to `free_text` and prints the declaration.
   The reference app keeps the progress because its element key is derived
-  from the answer, which `migrate` preserves.
+  from the answer, which `migrate` preserves; its test pins that
+  (adaptive-learner#3727). The hub converted its 105 carrier-less clozes this
+  way on 2026-10-12 (adaptive-learner-content#252, declared in the set
+  manifests).
 - **engine#246** (closed; steps 1 and 2 in 0.37.0, step 3 in 0.38.0): a set is
   described twice, in the root manifest and in its own, and nothing said
   which value wins. Each field now has one owner: the root entry owns
