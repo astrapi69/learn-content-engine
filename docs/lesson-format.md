@@ -995,7 +995,8 @@ field has one owner (engine#246):
 
 | Field | Owner | In the other file |
 |---|---|---|
-| `title`, `description`, `visibility`, `review_status` | root entry | may be repeated, identically; `description` is best left out of the set manifest |
+| `title`, `visibility`, `review_status` | root entry | may be repeated, identically |
+| `description` | root entry | left out: a copy warns (`W-MANIFEST-DESCRIPTION-COPY`, engine#268) |
 | `metadata.lessons` (the lesson list) | set manifest | not part of a set entry |
 | every other field | both | must be identical |
 
@@ -1011,7 +1012,11 @@ For each field, `null` and an absent key both mean "this file says nothing".
   nested objects compare by content, so key order and `url: null` against a
   missing `url` are not differences. `validateManifest` sees one file at a
   time and cannot find these. (A warning, `W-MANIFEST-ENTRY-MISMATCH`, in
-  0.37.0, raised once the eleven content repositories had 0 findings.)
+  0.37.0, raised once the eleven content repositories had 0 findings.) It
+  also warns `W-MANIFEST-DESCRIPTION-COPY` when the set manifest carries a
+  `description` at all: an identical copy passes the mismatch error and
+  drifts later (engine#268; 0 of the 56 set manifests in the eleven
+  repositories on 2026-10-13).
 
 ## Evaluation
 
@@ -1384,6 +1389,7 @@ itself instead of parsing the English message.
 | `W-EVAL-GRADES-NO-FLOOR` | Manifest-level ([evaluation](#evaluation)): a grade table's lowest `min_percent` is above 0, so a run below it earns no grade and the consumer has to invent a fallback label the author never wrote. A warning, not an error: "below this mark there is no grade" can be the author's intent. |
 | `W-DOMAIN-UNKNOWN` | Manifest and lesson level ([content domains](#content-domains)): a set's `domain`, or a lesson's own `domain`, is outside the known vocabulary (`KNOWN_CONTENT_DOMAINS`). It stays valid - the contract is known values plus other - but consumers cannot group it with existing subjects, so the registry's subject facet fragments. Prefer a known domain, or accept the fragmentation deliberately (engine#127). A lesson without its own `domain` (absent or `null`) inherits the set's and draws nothing; the lesson half exists because the real case sat there, on every lesson of an exported set (engine#183). |
 | `W-LESSON-COUNT-CLAIM` | Manifest-level ([manifest format](#manifest-format)): a set's `title` or `description` states a lesson count in digits that differs from its `lesson_count` ("(90 Lektionen)" in a set of 115). Prose that repeats a number the manifest carries goes stale when the set grows; prefer leaving the count to `lesson_count`, which consumers show anyway. Only digits directly before the lesson noun count (German, English, Spanish, French, Italian, Portuguese, Greek; "15-lesson" too). Number words are not read, because they also name deliberate subsets ("vier Lektionen ... sowie eine Wiederholungslektion"), and a digit glued to a letter (the `1` of "A1-Lektionen") is a level. One warning per distinct differing count and field (engine#246). |
+| `W-MANIFEST-DESCRIPTION-COPY` | Repo-level ([root entry and set manifest](#root-entry-and-set-manifest), `validateManifestPair`): the set manifest carries `description`, which belongs to the root entry alone. An identical copy passes `E-MANIFEST-ENTRY-MISMATCH` and drifts later; keep the text in the root entry and remove it from the set manifest. |
 | `W-LEVEL-UNKNOWN` | Manifest-level ([content domains](#content-domains)): a set's `level` is neither a CEFR band (`A1`..`C2`, case-insensitive) nor, for a non-language set, the explicit `none` sentinel. A consumer's level facet would offer the free-text value (`a0`, `einsteiger`, `reflexion` are live examples) as a category (engine#127). |
 | `W-VAR-UNUSED` | A declared [variable](#variables-parametric-exercises) is referenced by no string field and used by no later expression: dead declaration, usually a typo in the reference. |
 | `W-LANG-TAG-CANONICAL` | A language tag is well-formed but not canonical (`deu` for `de`, `EN` for `en`); the message names the canonical form ([language tags](#language-tags)). |
@@ -1468,6 +1474,7 @@ an extension's issues, whose paths are relative to its exercise
 | `W-LANG-TAG-CANONICAL` | `field`, `tag`, `canonical` |
 | `W-LEVEL-UNKNOWN` | `level` |
 | `W-LESSON-COUNT-CLAIM` | `field` (`"title"` or `"description"`), `claimed`, `lessonCount` |
+| `W-MANIFEST-DESCRIPTION-COPY` | `setId` |
 | `W-PROMPT-DUP` | `field` (`"sentence"` or `"title"`) |
 | `W-RETIRED-IDS-DUP` | `retiredIds` |
 | `W-SET-ORDER-MIXED-PREFIX` | `unprefixedIds` |

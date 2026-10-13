@@ -820,6 +820,11 @@ which the conditions acted before the damage instead of after it.
   and the nine fleet repositories): 0 findings over 54 sets before the tier
   was raised. `W-LESSON-COUNT-CLAIM` catches the stale-number case the
   measurement surfaced (a set manifest said 90 lessons for a set of 115).
+  The removal of `description` was a convention until engine#268 (0.42.0):
+  an identical copy passed the mismatch error, so the evaluation pilot
+  (adaptive-learner-content-test#110) carried one unnoticed.
+  `W-MANIFEST-DESCRIPTION-COPY` now names it; 0 of 56 set manifests carried
+  one on 2026-10-13.
 - **alc-books' domain rule** (moved with 0.29.0): now the engine's
   `W-DOMAIN-UNKNOWN`; its severity dropped with the move (above).
 - **adaptive-learner#3242** (closed 2026-09-29): the app's repo export wrote a
