@@ -5,7 +5,12 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
-## [Unreleased]
+## [0.42.0] - 2026-10-13
+
+One new author warning, no schema change, nothing blocks:
+`W-MANIFEST-DESCRIPTION-COPY` names a set manifest that repeats the
+description the root entry owns. 0 of the 56 set manifests in the eleven
+content repositories carry one.
 
 ### `W-MANIFEST-DESCRIPTION-COPY`: the description lives in the root entry (engine#268)
 
