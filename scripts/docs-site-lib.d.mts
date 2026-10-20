@@ -5,6 +5,7 @@ export interface DocsIndexPage {
   title: string;
 }
 
+export const MERMAID_ASSET: string;
 export function rewriteDocLink(href: string): string;
 export function docTitle(markdown: string, stem: string): string;
 export function renderDocPage(markdown: string, stem: string): string;

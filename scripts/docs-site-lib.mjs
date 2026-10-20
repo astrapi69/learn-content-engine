@@ -7,14 +7,23 @@
  * (repository files, ``docs/blog``, ``docs/proposals``) point at GitHub, and
  * ``../schema/*.json`` stays relative because the site serves ``/schema`` at
  * exactly that path (the schema ``$id`` URLs).
+ *
+ * The site loads nothing from another host (engine#272): a page with a
+ * diagram loads Mermaid from ``MERMAID_ASSET`` next to the pages, the bundle
+ * of the ``mermaid`` devDependency that ``package-lock.json`` pins, which the
+ * build copies there. A CDN would receive every visitor's IP address before
+ * the visitor has done anything.
  */
 
 import { Marked } from "marked";
 
 const GITHUB_BLOB = "https://github.com/astrapi69/learn-content-engine/blob/main/";
+
+/** Where the build puts the Mermaid bundle, relative to the pages: no leading
+ *  slash, so it resolves under the sub-path the site is served from. */
+export const MERMAID_ASSET = "assets/mermaid.min.js";
 const MERMAID_SCRIPT =
-  '<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>\n' +
-  "<script>mermaid.initialize({ startOnLoad: true });</script>";
+  `<script src="${MERMAID_ASSET}"></script>\n` + "<script>mermaid.initialize({ startOnLoad: true });</script>";
 
 const PAGE_STYLE = `
   body { font-family: system-ui, sans-serif; max-width: 48rem; margin: 3rem auto; padding: 0 1rem; line-height: 1.6; }

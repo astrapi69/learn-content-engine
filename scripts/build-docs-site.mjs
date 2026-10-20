@@ -8,16 +8,23 @@
  * The Pages workflow copies the output to ``/docs`` on the site next to
  * ``/api`` (TypeDoc) and ``/schema``. The Markdown stays the source of
  * truth; the output is a build artifact and is gitignored.
+ *
+ * The output carries the Mermaid bundle the diagram pages load
+ * (``assets/mermaid.min.js``): the ``mermaid`` devDependency's own build, at
+ * the version ``package-lock.json`` pins, so no page fetches anything from a
+ * CDN (engine#272).
  */
 
-import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { docTitle, renderDocPage, renderDocsIndex } from "./docs-site-lib.mjs";
+import { MERMAID_ASSET, docTitle, renderDocPage, renderDocsIndex } from "./docs-site-lib.mjs";
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const DOCS_DIR = join(REPO_ROOT, "docs");
+const MERMAID_BUNDLE = createRequire(import.meta.url).resolve("mermaid/dist/mermaid.min.js");
 
 const args = process.argv.slice(2);
 const outFlag = args.indexOf("--out");
@@ -44,4 +51,6 @@ const pages = sources.map((name) => {
   return { file, title: docTitle(markdown, stem) };
 });
 writeFileSync(join(outDir, "index.html"), renderDocsIndex(pages));
-console.log(`docs site: ${pages.length} page(s) + index -> ${outDir}`);
+mkdirSync(dirname(join(outDir, MERMAID_ASSET)), { recursive: true });
+copyFileSync(MERMAID_BUNDLE, join(outDir, MERMAID_ASSET));
+console.log(`docs site: ${pages.length} page(s) + index + ${MERMAID_ASSET} -> ${outDir}`);
