@@ -3,6 +3,8 @@ dist/
 coverage/
 docs-api/
 docs-site/
+# The assembled Pages site (npm run docs:pages).
+_site/
 *.log
 .DS_Store
 .idea/

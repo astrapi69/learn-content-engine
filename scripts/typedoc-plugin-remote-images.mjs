@@ -9,7 +9,8 @@
  * which hands both hosts the visitor's IP address. As text, "npm version" and
  * "CI" stay links to the same targets.
  *
- * Remote means an absolute http(s) or protocol-relative source. A relative,
+ * Remote means an http(s) or protocol-relative source (``isRemoteUrl``, the
+ * definition the third-party host gate applies too). A relative,
  * root-relative or data: source is served by the site itself and stays. A
  * remote image without alt text is decorative in HTML terms and is dropped.
  *
@@ -20,6 +21,8 @@
 
 import { MarkdownEvent } from "typedoc";
 
+import { isRemoteUrl } from "./remote-url.mjs";
+
 /** TypeDoc's markdown-it renderer listens at priority 0; lower runs later. */
 const AFTER_MARKDOWN_RENDERER = -100;
 
@@ -27,8 +30,6 @@ const AFTER_MARKDOWN_RENDERER = -100;
 const IMG_TAG = /<img\b(?:[^>"']|"[^"]*"|'[^']*')*>/gi;
 /** An attribute name with an optional double-quoted, single-quoted or bare value. */
 const ATTRIBUTE = /([^\s"'<>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
-/** The browser fetches these from the host named in the URL itself. */
-const REMOTE_SOURCE = /^(?:https?:)?\/\//i;
 
 /** Attribute values by lower-cased name; the first of two duplicates wins, as in HTML. */
 function attributesOf(imgTag) {
@@ -53,7 +54,7 @@ function asText(altText) {
 export function remoteImagesToAltText(html) {
   return html.replace(IMG_TAG, (imgTag) => {
     const attributes = attributesOf(imgTag);
-    if (!REMOTE_SOURCE.test((attributes.get("src") ?? "").trim())) return imgTag;
+    if (!isRemoteUrl(attributes.get("src") ?? "")) return imgTag;
     return asText(attributes.get("alt") ?? "");
   });
 }

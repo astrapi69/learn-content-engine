@@ -14,6 +14,7 @@ import {
   renderDocsIndex,
   rewriteDocLink,
 } from "../scripts/docs-site-lib.mjs";
+import { describeFinding, scanSite } from "../scripts/external-hosts-lib.mjs";
 
 /**
  * The docs site build (engine#152): every top-level docs/*.md is rendered to
@@ -159,5 +160,11 @@ describe("scripts/build-docs-site.mjs end-to-end", () => {
       .filter((name) => name.endsWith(".html"))
       .filter((name) => readFileSync(join(outDir, name), "utf8").includes(`<script src="${MERMAID_ASSET}">`));
     expect(loadingPages.sort()).toEqual(pagesWithDiagrams.sort());
+  });
+
+  it("loads nothing from another host: the third-party host gate finds nothing in the output", () => {
+    const { scanned, findings } = scanSite(outDir, "https://astrapi69.github.io");
+    expect(scanned).toContain("schema-diagrams.html");
+    expect(findings.map(describeFinding)).toEqual([]);
   });
 });

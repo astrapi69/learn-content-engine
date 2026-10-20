@@ -73,3 +73,13 @@ jobs:
 
       - name: API docs drift gate (TypeDoc build stays green, warnings are errors)
         run: npm run docs:api:check
+
+      # The Pages site loads nothing from a third-party host (engine#272). The
+      # same assembly pages.yml deploys from main, scanned on every pull
+      # request, so a CDN script or a remote badge is caught before the merge
+      # and not first on the live site.
+      - name: Assemble the Pages site (npm run docs:pages, as pages.yml does)
+        run: npm run docs:pages
+
+      - name: Pages third-party host gate (no resource from another host)
+        run: npm run docs:pages:check

@@ -5,9 +5,10 @@
  *   node scripts/build-docs-site.mjs            # -> docs-site/
  *   node scripts/build-docs-site.mjs --out DIR
  *
- * The Pages workflow copies the output to ``/docs`` on the site next to
- * ``/api`` (TypeDoc) and ``/schema``. The Markdown stays the source of
- * truth; the output is a build artifact and is gitignored.
+ * ``npm run docs:pages`` copies the output to ``/docs`` on the site next to
+ * ``/api`` (TypeDoc) and ``/schema``; the Pages workflow deploys that, and CI
+ * scans it on every pull request. The Markdown stays the source of truth;
+ * the output is a build artifact and is gitignored.
  *
  * The output carries the Mermaid bundle the diagram pages load
  * (``assets/mermaid.min.js``): the ``mermaid`` devDependency's own build, at
