@@ -9,6 +9,7 @@
   "name": "learn-content-engine",
   "includeVersion": true,
   "readme": "README.md",
+  "plugin": ["./scripts/typedoc-plugin-remote-images.mjs"],
   "excludePrivate": true,
   "excludeInternal": true,
   "treatWarningsAsErrors": true,
