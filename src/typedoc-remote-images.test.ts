@@ -42,6 +42,13 @@ describe("remoteImagesToAltText", () => {
     expect(remoteImagesToAltText('<img alt="d" width=20 src=https://cdn.example.org/d.png>')).toBe("d");
   });
 
+  it("reads a source as the browser does, the way the host gate reads it: a backslash is a slash", () => {
+    expect(remoteImagesToAltText(String.raw`<img src="\\cdn.example.org\g.png" alt="g">`)).toBe("g");
+    expect(remoteImagesToAltText(String.raw`<img src="/\cdn.example.org/h.png" alt="h">`)).toBe("h");
+    const rootRelative = String.raw`<img src="\media\i.png" alt="i">`;
+    expect(remoteImagesToAltText(rootRelative)).toBe(rootRelative);
+  });
+
   it("drops a remote image without alt text (decorative in HTML terms) and keeps alt text inert", () => {
     expect(remoteImagesToAltText('x<img src="https://cdn.example.org/e.png">y')).toBe("xy");
     expect(remoteImagesToAltText('x<img src="https://cdn.example.org/e.png" alt="">y')).toBe("xy");

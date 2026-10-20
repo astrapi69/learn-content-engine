@@ -9,10 +9,12 @@
  * which hands both hosts the visitor's IP address. As text, "npm version" and
  * "CI" stay links to the same targets.
  *
- * Remote means an http(s) or protocol-relative source (``isRemoteUrl``, the
- * definition the third-party host gate applies too). A relative,
- * root-relative or data: source is served by the site itself and stays. A
- * remote image without alt text is decorative in HTML terms and is dropped.
+ * Remote means a source the browser would fetch from another host
+ * (``isRemoteUrl`` in ``remote-url.mjs``, the resolution the third-party host
+ * gate applies too, so ``\\host\x.png`` counts as ``//host/x.png``). A
+ * relative, root-relative or data: source is served by the site itself and
+ * stays. A remote image without alt text is decorative in HTML terms and is
+ * dropped.
  *
  * Registered in typedoc.json (``plugin``). It listens to
  * ``MarkdownEvent.PARSE`` below TypeDoc's own Markdown renderer, so it

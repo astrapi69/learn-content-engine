@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -15,7 +15,9 @@ import type { Finding } from "../scripts/external-hosts-lib.mjs";
  * the visitor's IP address to whoever hosts it, before the visitor has done
  * anything. The scanner is a port of bibliogon's
  * scripts/check_external_hosts.py (bibliogon#874); the synthetic cases below
- * are its pytest cases, plus the branches the original leaves untested.
+ * are its pytest cases, plus the branches the original leaves untested, plus
+ * the nine fetch forms astrapi69/bibliogon#1124 lists, with the pages seeded
+ * there as fixtures (src/__fixtures__/external-hosts/).
  *
  * Hyperlinks, rel=canonical, Open-Graph metadata and a JSON-LD @context are
  * strings, not fetches: the scanner must not report them, or every real
@@ -40,6 +42,20 @@ function siteWith(files: Record<string, string>): string {
 }
 
 const hosts = (findings: Finding[]): Set<string> => new Set(findings.map((finding) => finding.host));
+
+/** The report lines of one page, scanned with the Pages site's own origin. */
+const reportLines = (html: string): string[] =>
+  scanSite(siteWith({ "index.html": html }), "https://astrapi69.github.io").findings.map(describeFinding);
+
+/**
+ * The pages seeded for astrapi69/bibliogon#1124, one fetch form each, copied
+ * byte for byte. Headless Chromium requested the foreign URL on every one of
+ * them (2026-10-20); the original scanner, and this port before the fix,
+ * passed all but the control.
+ */
+const SEEDED = fileURLToPath(new URL("./__fixtures__/external-hosts/", import.meta.url));
+const seededLines = (name: string): string[] =>
+  scanSite(join(SEEDED, name), "https://astrapi69.github.io").findings.map(describeFinding);
 
 describe("scanSite: the original's synthetic artifacts (bibliogon#874)", () => {
   it("reports an external stylesheet and a font preconnect, not rel=canonical or a hyperlink", () => {
@@ -201,6 +217,203 @@ describe("scanSite: the original's rules the pytest cases leave out", () => {
   });
 });
 
+describe("scanSite: the nine fetch forms the original passes (astrapi69/bibliogon#1124)", () => {
+  it("reads a CSS url() in an inline style attribute", () => {
+    expect(seededLines("inline-style-url")).toEqual(["index.html: <div style> url() -> https://cdn.example/hero.jpg"]);
+  });
+
+  it("reads a <video poster>", () => {
+    expect(seededLines("video-poster")).toEqual(["index.html: <video poster> -> https://cdn.example/poster.jpg"]);
+  });
+
+  it("reads an <input type=image src>", () => {
+    expect(seededLines("input-image")).toEqual(["index.html: <input type=image src> -> https://cdn.example/button.png"]);
+  });
+
+  it("reads an SVG <image href>", () => {
+    expect(seededLines("svg-image-href")).toEqual(["index.html: <image href> -> https://cdn.example/i.png"]);
+  });
+
+  it("resolves a relative reference against a <base href> on another host", () => {
+    expect(seededLines("base-href")).toEqual(["index.html: <script src> via <base href> -> https://cdn.example/app.js"]);
+  });
+
+  it("reads the candidates of <link rel=preload imagesrcset>", () => {
+    expect(seededLines("preload-imagesrcset")).toEqual([
+      "index.html: <link rel=preload imagesrcset> -> https://cdn.example/a.png",
+    ]);
+  });
+
+  it("parses an <iframe srcdoc> as the page it is", () => {
+    expect(seededLines("iframe-srcdoc")).toEqual(["index.html: <iframe srcdoc> <img src> -> https://cdn.example/x.png"]);
+  });
+
+  it("reads a backslash URL as the browser does: \\\\host\\x.js is //host/x.js", () => {
+    const { findings } = scanSite(join(SEEDED, "backslash-src"), "https://astrapi69.github.io");
+    expect(findings.map(describeFinding)).toEqual([String.raw`index.html: <script src> -> \\cdn.example\x.js`]);
+    expect(hosts(findings)).toEqual(new Set(["cdn.example"]));
+  });
+
+  it("reads a static import in an inline module script (Mermaid's documented ESM embed)", () => {
+    expect(seededLines("esm-import-mermaid")).toEqual([
+      "index.html: <script> import -> https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs",
+    ]);
+  });
+
+  it("still reports the control: a <script src> from a CDN", () => {
+    expect(seededLines("control-script-src")).toEqual([
+      "index.html: <script src> -> https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js",
+    ]);
+  });
+});
+
+describe("scanSite: around the nine forms (each variant Chromium fetched, 2026-10-20)", () => {
+  it("reads every load of an inline script: dynamic import(), importScripts(), new Worker(), import and export from", () => {
+    expect(
+      reportLines(
+        '<script>import("https://cdn.example/dynamic.js");</script>' +
+          "<script>import(/* webpackIgnore: true */ 'https://cdn.example/commented.js');</script>" +
+          "<script>new Worker(URL.createObjectURL(new Blob(['importScripts(\"https://cdn.example/a.js\", \"//cdn.example/b.js\")'])));</script>" +
+          '<script>new Worker("https://cdn.example/w.js"); new SharedWorker(new URL("https://cdn.example/s.js", import.meta.url));</script>' +
+          '<script type="module">export { x } from "//cdn.example/re-export.js"; import "https://cdn.example/side-effect.js";</script>',
+      ),
+    ).toEqual([
+      "index.html: <script> import() -> https://cdn.example/dynamic.js",
+      "index.html: <script> import() -> https://cdn.example/commented.js",
+      "index.html: <script> importScripts() -> https://cdn.example/a.js",
+      "index.html: <script> importScripts() -> //cdn.example/b.js",
+      "index.html: <script> new Worker() -> https://cdn.example/w.js",
+      "index.html: <script> new Worker() -> https://cdn.example/s.js",
+      "index.html: <script> import -> //cdn.example/re-export.js",
+      "index.html: <script> import -> https://cdn.example/side-effect.js",
+    ]);
+  });
+
+  it("reads a script's string literal as JavaScript does: escapes resolved, a template literal only without substitutions", () => {
+    expect(
+      reportLines(
+        "<script>" +
+          'import("https:\\/\\/cdn.example\\x2fa.js");' +
+          'import("\\u0068ttps://cdn.example/b.js");' +
+          'import("\\u{68}ttps://cdn.example/c.js");' +
+          "import(`https://cdn.example/d.js`);" +
+          "import(`https://${host}/e.js`);" +
+          "</script>",
+      ),
+    ).toEqual([
+      "index.html: <script> import() -> https://cdn.example/a.js",
+      "index.html: <script> import() -> https://cdn.example/b.js",
+      "index.html: <script> import() -> https://cdn.example/c.js",
+      "index.html: <script> import() -> https://cdn.example/d.js",
+    ]);
+  });
+
+  it("reads a script element whatever its type: worker code is often kept in one", () => {
+    expect(reportLines('<script type="text/js-worker">importScripts("https://cdn.example/w.js");</script>')).toEqual([
+      "index.html: <script> importScripts() -> https://cdn.example/w.js",
+    ]);
+  });
+
+  it("does not take a script's other strings and look-alike calls for loads", () => {
+    expect(
+      reportLines(
+        '<script>const api = "https://api.example/v1"; location.href = "https://example.org/";' +
+          'loader.import("https://cdn.example/method.js"); reimport("https://cdn.example/re.js");' +
+          'const kind = "import"; new Worker(workerUrl); console.log(import.meta.url);</script>',
+      ),
+    ).toEqual([]);
+  });
+
+  it("reads an import map's entries, the URLs a bare import resolves to", () => {
+    expect(
+      reportLines(
+        '<script type="importmap">{"imports": {"m": "https://cdn.example/m.js", "local": "./l.js"},' +
+          ' "scopes": {"/x/": {"n": "//cdn.example/n.js"}}}</script>' +
+          '<script type="importmap">{not json</script><script type="importmap">["https://cdn.example/array.js"]</script>',
+      ),
+    ).toEqual(["index.html: <script type=importmap> -> https://cdn.example/m.js", "index.html: <script type=importmap> -> //cdn.example/n.js"]);
+  });
+
+  it("reads the SVG elements that load what href or xlink:href names; an SVG <a> stays a hyperlink", () => {
+    expect(
+      reportLines(
+        '<svg><image xlink:href="https://cdn.example/x.png"/><filter id="f"><feImage href="https://cdn.example/fe.png"/></filter>' +
+          '<use href="https://cdn.example/s.svg#a"/><script href="https://cdn.example/s.js"></script>' +
+          '<a href="https://cdn.example/link"><text>t</text></a></svg>',
+      ),
+    ).toEqual([
+      "index.html: <image xlink:href> -> https://cdn.example/x.png",
+      "index.html: <feImage href> -> https://cdn.example/fe.png",
+      "index.html: <use href> -> https://cdn.example/s.svg#a",
+      "index.html: <script href> -> https://cdn.example/s.js",
+    ]);
+  });
+
+  it("reads <input src> only for type=image, the one input type that fetches it", () => {
+    expect(
+      reportLines(
+        '<input type=" IMAGE " src="https://cdn.example/a.png"><input type="text" src="https://cdn.example/t.png">' +
+          '<input src="https://cdn.example/u.png">',
+      ),
+    ).toEqual(["index.html: <input type=image src> -> https://cdn.example/a.png"]);
+  });
+
+  it("resolves other spellings by the URL standard, and keeps a root-relative backslash local", () => {
+    const { findings } = scanSite(
+      siteWith({
+        "index.html":
+          '<img src="/\\cdn.example/a.png"><img src="h&#9;ttps://cdn.example/b.png"><img src="http:\\\\cdn.example\\c.png">' +
+          '<img src="\\local.png">',
+      }),
+    );
+    expect(findings.map((finding) => finding.host)).toEqual(["cdn.example", "cdn.example", "cdn.example"]);
+  });
+
+  it("reads CSS escapes as CSS does: an escaped backslash makes a protocol-relative URL, a single one does not", () => {
+    expect(
+      reportLines(
+        String.raw`<div style="background:url(\\\\cdn.example\\y.png)">a</div>` +
+          String.raw`<div style="background:url(\\cdn.example\x.png)">b</div>` +
+          String.raw`<div style="background:url(\2f\2f cdn.example/h.png)">c</div>` +
+          String.raw`<div style="background:url(\110000 https://cdn.example/z.png)">d</div>`,
+      ),
+    ).toEqual([String.raw`index.html: <div style> url() -> \\cdn.example\y.png`, "index.html: <div style> url() -> //cdn.example/h.png"]);
+  });
+
+  it("lets a <base href> on another host reach every relative reference: <style>, style attributes, srcdoc, module imports", () => {
+    expect(
+      reportLines(
+        '<base href="https://cdn.example/"><style>.a { background: url(s.png); }</style><div style="background: url(d.png)"></div>' +
+          '<iframe srcdoc="&lt;img src=r.png&gt;"></iframe><script type="module">import "./m.js";</script>',
+      ),
+    ).toEqual([
+      "index.html: css url() via <base href> -> https://cdn.example/s.png",
+      "index.html: <div style> url() via <base href> -> https://cdn.example/d.png",
+      "index.html: <iframe srcdoc> <img src> via <base href> -> https://cdn.example/r.png",
+      "index.html: <script> import via <base href> -> https://cdn.example/m.js",
+    ]);
+  });
+
+  it("keeps relative references local under a <base href> on the site itself", () => {
+    expect(
+      reportLines(
+        '<base href="/learn-content-engine/"><script src="a.js"></script><img src="https://astrapi69.github.io/x.png">' +
+          '<div style="background: url(b.png)"></div>',
+      ),
+    ).toEqual([]);
+  });
+
+  it("keeps hyperlinks non-findings in the new forms: backslash, SVG <a>, under a foreign <base href>, inside srcdoc", () => {
+    expect(
+      reportLines(
+        String.raw`<base href="https://cdn.example/"><a href="rel.html">r</a><a href="\\cdn.example\x">b</a>` +
+          '<svg><a href="https://cdn.example/svg-a"><text y="10">s</text></a></svg>' +
+          '<iframe srcdoc="&lt;a href=&quot;https://cdn.example/in-srcdoc&quot;&gt;l&lt;/a&gt;"></iframe>',
+      ),
+    ).toEqual([]);
+  });
+});
+
 describe("scripts/check-external-hosts.mjs (the CLI the Pages workflows run)", () => {
   const CLI = join(REPO_ROOT, "scripts/check-external-hosts.mjs");
 
@@ -230,6 +443,18 @@ describe("scripts/check-external-hosts.mjs (the CLI the Pages workflows run)", (
       "EXTERNAL: docs/index.html: <script src> -> https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js",
     );
     expect(run.output).toContain("1 third-party resource fetch(es).");
+  });
+
+  it("exits 1 on the pages seeded for bibliogon#1124 and names the foreign URL of each", () => {
+    const cases = readdirSync(SEEDED).sort();
+    expect(cases).toHaveLength(10);
+    const run = runCli([SEEDED, "--origin", "https://astrapi69.github.io"]);
+    expect(run.status).toBe(1);
+    const reported = run.output
+      .split("\n")
+      .filter((line) => line.startsWith("EXTERNAL: "))
+      .map((line) => line.slice("EXTERNAL: ".length).split("/")[0]);
+    expect(reported.sort()).toEqual(cases);
   });
 
   it("does not count the site's own origin given with --origin", () => {
