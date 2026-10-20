@@ -173,7 +173,7 @@ describe("scripts/build-docs-site.mjs end-to-end", () => {
     expect(loadingPages.sort()).toEqual(pagesWithDiagrams.sort());
   });
 
-  it("loads nothing from another host: the third-party host gate finds nothing in the output", () => {
+  it("gives the third-party host gate nothing to report: no foreign reference in any form it reads", () => {
     const { scanned, findings } = scanSite(outDir, "https://astrapi69.github.io");
     expect(scanned).toContain("schema-diagrams.html");
     expect(findings.map(describeFinding)).toEqual([]);

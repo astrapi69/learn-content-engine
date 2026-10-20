@@ -8,8 +8,8 @@
  * ``../schema/*.json`` stays relative because the site serves ``/schema`` at
  * exactly that path (the schema ``$id`` URLs).
  *
- * The site loads nothing from another host (engine#272): a page with a
- * diagram loads Mermaid from ``MERMAID_ASSET`` next to the pages, the bundle
+ * No page loads Mermaid from another host (engine#272): a page with a
+ * diagram loads it from ``MERMAID_ASSET`` next to the pages, the bundle
  * of the ``mermaid`` devDependency that ``package-lock.json`` pins, which the
  * build copies there. A CDN would receive every visitor's IP address before
  * the visitor has done anything.

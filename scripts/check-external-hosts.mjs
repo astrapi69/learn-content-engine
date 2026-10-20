@@ -5,10 +5,12 @@
  *   npm run docs:pages && npm run docs:pages:check
  *   node scripts/check-external-hosts.mjs <site-dir> [--origin <url>]
  *
- * Scans every HTML page, stylesheet, web manifest and service worker under
- * the directory for a resource the browser would fetch from another host;
- * the rules are in external-hosts-lib.mjs, ported from bibliogon. Runs in
- * ci.yml on every pull request and in pages.yml before the deploy.
+ * Reads every HTML page, stylesheet, web manifest and service worker under
+ * the directory for a reference the browser would fetch from another host,
+ * in the forms external-hosts-lib.mjs lists (a copy of bibliogon's scanner,
+ * astrapi69/bibliogon#1124). It runs no JavaScript, so a request a script
+ * makes at runtime is outside it. Runs in ci.yml on every pull request and
+ * in pages.yml before the deploy.
  *
  * Exit 0: nothing found. Exit 1: a finding whose host is not in
  * ALLOWED_HOSTS. Exit 2: the run proves nothing (a usage error, no such
@@ -51,9 +53,12 @@ for (const found of findings.filter((candidate) => !failing.includes(candidate))
 for (const found of failing) console.log(`EXTERNAL: ${describeFinding(found)}`);
 if (failing.length > 0) {
   console.log(
-    `\n${failing.length} third-party resource fetch(es). Self-host the resource, or add the host to ` +
+    `\n${failing.length} third-party reference(s). Self-host the resource, or add the host to ` +
       "ALLOWED_HOSTS in scripts/external-hosts-lib.mjs with a written reason.",
   );
   process.exit(1);
 }
-console.log(`OK: no third-party resource fetch in ${root} (${scanned.length} file(s) scanned, ${pages} HTML page(s))`);
+console.log(
+  `OK: no third-party reference in ${root} (${scanned.length} file(s) read, ${pages} HTML page(s)).\n` +
+    "scripts/external-hosts-lib.mjs lists the forms read; no JavaScript is run, so a request a script makes at runtime is not covered.",
+);

@@ -68,9 +68,9 @@ import { JSDOM, VirtualConsole } from "jsdom";
 
 import { OWN_SITE, foreignUrl } from "./remote-url.mjs";
 
-/** ``host -> reason``. Empty on purpose: the Pages site fetches nothing from
- *  a third party (engine#272). An entry here is a decision with a reason, not
- *  a way to make the check pass. */
+/** ``host -> reason``. Empty on purpose: the Pages site needs nothing from a
+ *  third party (engine#272). An entry here is a decision with a reason, not a
+ *  way to make the check pass. */
 export const ALLOWED_HOSTS = Object.freeze({});
 
 const FETCHING_LINK_RELS = new Set([

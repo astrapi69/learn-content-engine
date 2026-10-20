@@ -12,7 +12,7 @@
  *
  * The output carries the Mermaid bundle the diagram pages load
  * (``assets/mermaid.min.js``): the ``mermaid`` devDependency's own build, at
- * the version ``package-lock.json`` pins, so no page fetches anything from a
+ * the version ``package-lock.json`` pins, so no page loads Mermaid from a
  * CDN (engine#272). Mermaid's MIT licence ships next to it
  * (``assets/mermaid.min.js.LICENSE.txt``): the licence asks for its notice
  * in every copy, and the bundle does not carry it.

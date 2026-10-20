@@ -428,11 +428,13 @@ describe("scripts/check-external-hosts.mjs (the CLI the Pages workflows run)", (
     }
   }
 
-  it("exits 0 on a site that loads nothing from another host, and says what it scanned", () => {
+  it("exits 0 when nothing it reads names another host, and says what it read and what it does not", () => {
     const root = siteWith({ "index.html": '<a href="https://github.com/astrapi69">repo</a>', "a.css": "b {}" });
     const run = runCli([root]);
     expect(run.status).toBe(0);
-    expect(run.output).toContain(`OK: no third-party resource fetch in ${root} (2 file(s) scanned, 1 HTML page(s))`);
+    expect(run.output).toContain(`OK: no third-party reference in ${root} (2 file(s) read, 1 HTML page(s)).`);
+    // The OK line must not claim more than the scan: it reads files, it runs no JavaScript.
+    expect(run.output).toContain("scripts/external-hosts-lib.mjs lists the forms read; no JavaScript is run");
   });
 
   it("exits 1 and names file, kind and URL for each third-party resource", () => {
@@ -442,7 +444,7 @@ describe("scripts/check-external-hosts.mjs (the CLI the Pages workflows run)", (
     expect(run.output).toContain(
       "EXTERNAL: docs/index.html: <script src> -> https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js",
     );
-    expect(run.output).toContain("1 third-party resource fetch(es).");
+    expect(run.output).toContain("1 third-party reference(s).");
   });
 
   it("exits 1 on the pages seeded for bibliogon#1124 and names the foreign URL of each", () => {
