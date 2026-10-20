@@ -5,6 +5,35 @@ All notable changes to `learn-content-engine`. The format is inspired by
 [SemVer](https://semver.org/) (schema evolution is additive, see
 [docs/concepts.md](docs/concepts.md#schema-version-policy-additive)).
 
+## [Unreleased]
+
+### The Pages site loads nothing from a third-party host (engine#272)
+
+The docs site and the API reference on
+`https://astrapi69.github.io/learn-content-engine/` sent requests to other
+hosts on page load (measured on 2026-10-20 over 40 pages of the live site):
+every docs page with a diagram loaded Mermaid from `cdn.jsdelivr.net`, an
+unpinned `mermaid@11`, and `/api/` loaded the README's npm and CI badges
+from `img.shields.io` and `github.com`. Each request handed the visitor's
+IP address to that host before the visitor had done anything.
+
+- The docs site serves Mermaid itself: `npm run docs:site` copies the
+  bundle of the `mermaid` devDependency, the version `package-lock.json`
+  pins, to `docs-site/assets/mermaid.min.js` (`/docs/assets/` on the site),
+  and the pages load it by a relative path.
+- The API reference shows the badges as text links: a local TypeDoc plugin
+  (`scripts/typedoc-plugin-remote-images.mjs`) replaces a remote image in
+  rendered Markdown with its alt text. The README keeps its badges for
+  GitHub and npm, where they load through the platform's image proxy.
+- A gate keeps it that way: `npm run docs:pages` assembles the site as the
+  Pages workflow deploys it, and `npm run docs:pages:check`
+  (`scripts/check-external-hosts.mjs`, a port of bibliogon's
+  `check_external_hosts.py`) fails on any resource from another host. CI
+  runs both on every pull request, the Pages workflow before each deploy;
+  `make pages-check` runs them locally.
+
+No change to the library code, the schema or the types.
+
 ## [0.42.0] - 2026-10-13
 
 One new author warning, no schema change, nothing blocks:

@@ -16,6 +16,9 @@ Useful targets (`make help` lists all):
 - `make test` / `make coverage` - Vitest, optionally with a v8 coverage report.
 - `make lint` / `make typecheck` - ESLint / `tsc --noEmit`.
 - `make conformance-real` - on-demand run over the real content repos (network).
+- `make pages-check` - assemble the GitHub Pages site as the deploy does
+  (`npm run docs:pages`) and fail on any resource it would load from another
+  host (`npm run docs:pages:check`). CI runs it on every pull request.
 
 `make release-check` must stay green after every change.
 
