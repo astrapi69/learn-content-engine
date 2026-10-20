@@ -5,9 +5,10 @@ name: pages
 # /schema, so the schema $id URLs
 # (https://astrapi69.github.io/learn-content-engine/schema/*.json) resolve.
 #
-# The site loads nothing from a third-party host (engine#272): the assembled
-# _site is scanned before it is uploaded, and ci.yml runs the same assembly
-# and scan on every pull request.
+# The assembled _site is scanned for third-party references before it is
+# uploaded (engine#272), and ci.yml runs the same assembly and scan on every
+# pull request. The scan reads files for the forms listed in
+# scripts/external-hosts-lib.mjs and runs no JavaScript.
 
 on:
   push:
@@ -44,7 +45,7 @@ jobs:
       - name: Build and assemble the site (npm run docs:pages)
         run: npm run docs:pages
 
-      - name: Third-party host gate (nothing on the site loads from another host)
+      - name: Third-party host gate (static scan of _site, no JavaScript run)
         run: npm run docs:pages:check
 
       - name: Upload Pages artifact

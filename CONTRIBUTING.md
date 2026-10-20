@@ -17,8 +17,10 @@ Useful targets (`make help` lists all):
 - `make lint` / `make typecheck` - ESLint / `tsc --noEmit`.
 - `make conformance-real` - on-demand run over the real content repos (network).
 - `make pages-check` - assemble the GitHub Pages site as the deploy does
-  (`npm run docs:pages`) and fail on any resource it would load from another
-  host (`npm run docs:pages:check`). CI runs it on every pull request.
+  (`npm run docs:pages`) and fail on a third-party reference in the forms
+  the host gate reads (`npm run docs:pages:check`; the forms are listed in
+  `scripts/external-hosts-lib.mjs`). It reads files and runs no JavaScript.
+  CI runs it on every pull request.
 
 `make release-check` must stay green after every change.
 

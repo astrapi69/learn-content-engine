@@ -77,7 +77,7 @@ prose-check: ## Prose gate over docs/ + README (ms-check: em-dashes, invisible c
 
 # ─── Pages site ──────────────────────────────────────────────────────
 
-pages-check: ## Assemble the Pages site (_site/) and fail on any resource from a third-party host (engine#272)
+pages-check: ## Assemble the Pages site (_site/), fail on a third-party reference in the forms the host gate reads (engine#272)
 	npm run docs:pages
 	npm run docs:pages:check
 

@@ -15,21 +15,35 @@ hosts on page load (measured on 2026-10-20 over 40 pages of the live site):
 every docs page with a diagram loaded Mermaid from `cdn.jsdelivr.net`, an
 unpinned `mermaid@11`, and `/api/` loaded the README's npm and CI badges
 from `img.shields.io` and `github.com`. Each request handed the visitor's
-IP address to that host before the visitor had done anything.
+IP address to that host before the visitor had done anything. After the
+fix, a browser capture of all 133 pages of the assembled site recorded no
+request to another host (2026-10-20).
 
 - The docs site serves Mermaid itself: `npm run docs:site` copies the
   bundle of the `mermaid` devDependency, the version `package-lock.json`
   pins, to `docs-site/assets/mermaid.min.js` (`/docs/assets/` on the site),
-  and the pages load it by a relative path.
+  and the pages load it by a relative path. Mermaid's MIT licence ships
+  next to it as `mermaid.min.js.LICENSE.txt`, since the bundle does not
+  carry it.
 - The API reference shows the badges as text links: a local TypeDoc plugin
   (`scripts/typedoc-plugin-remote-images.mjs`) replaces a remote image in
-  rendered Markdown with its alt text. The README keeps its badges for
-  GitHub and npm, where they load through the platform's image proxy.
-- A gate keeps it that way: `npm run docs:pages` assembles the site as the
-  Pages workflow deploys it, and `npm run docs:pages:check`
-  (`scripts/check-external-hosts.mjs`, a port of bibliogon's
-  `check_external_hosts.py`) fails on any resource from another host. CI
-  runs both on every pull request, the Pages workflow before each deploy;
+  rendered Markdown with its alt text in brackets, so `/api/` reads
+  "[npm version] [CI]", two links. The README keeps its badges for GitHub
+  and npm, where they load through the platform's image proxy.
+- A gate guards the forms it can read: `npm run docs:pages` assembles the
+  site as the Pages workflow deploys it, and `npm run docs:pages:check`
+  (`scripts/check-external-hosts.mjs`) fails on a third-party reference in
+  the site's HTML, CSS files, web manifests and service workers. In HTML it
+  reads the elements and attributes that fetch, CSS in `<style>` and in
+  `style` attributes, the loads an inline script names (`import`,
+  `import()`, `importScripts()`, `new Worker()`, an import map) and an
+  `<iframe srcdoc>`, and it resolves references against a `<base href>`;
+  `scripts/external-hosts-lib.mjs` lists every form. It reads files and
+  runs no JavaScript, so a request a script makes at runtime is outside
+  it. The rules are a copy of bibliogon's `check_external_hosts.py` until
+  astrapi69/bibliogon#1124 makes it one shared tool, and they cover the
+  nine fetch forms that issue found the original passes. CI runs both on
+  every pull request, the Pages workflow before each deploy;
   `make pages-check` runs them locally.
 
 No change to the library code, the schema or the types.
