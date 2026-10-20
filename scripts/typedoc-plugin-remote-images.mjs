@@ -1,13 +1,15 @@
 /**
  * Local TypeDoc plugin (engine#272): a remote image in rendered Markdown
- * becomes its alt text.
+ * becomes its alt text in brackets.
  *
  * TypeDoc renders README.md into the start page of the API reference, the
  * npm and CI badges included. On github.com and npmjs.com those images load
  * through the platform's image proxy; on the Pages site the visitor's browser
  * fetched them from img.shields.io and github.com on every visit to /api/,
- * which hands both hosts the visitor's IP address. As text, "npm version" and
- * "CI" stay links to the same targets.
+ * which hands both hosts the visitor's IP address. As text, "[npm version]"
+ * and "[CI]" stay links to the same targets. The brackets stand where the
+ * badge's box stood: without them the two links ran together as "npm version
+ * CI", and an image inside a sentence read as part of the sentence.
  *
  * Remote means a source the browser would fetch from another host
  * (``isRemoteUrl`` in ``remote-url.mjs``, the resolution the third-party host
@@ -49,15 +51,17 @@ function asText(altText) {
 }
 
 /**
- * The HTML with every remote ``<img>`` replaced by its alt text (empty when
- * it has none). Images the site serves itself, and markup that is not a real
- * tag (``&lt;img ...&gt;`` in a code sample), are returned unchanged.
+ * The HTML with every remote ``<img>`` replaced by its alt text in brackets,
+ * or by nothing when the alt text is empty or blank. Images the site serves
+ * itself, and markup that is not a real tag (``&lt;img ...&gt;`` in a code
+ * sample), are returned unchanged.
  */
 export function remoteImagesToAltText(html) {
   return html.replace(IMG_TAG, (imgTag) => {
     const attributes = attributesOf(imgTag);
     if (!isRemoteUrl(attributes.get("src") ?? "")) return imgTag;
-    return asText(attributes.get("alt") ?? "");
+    const altText = attributes.get("alt") ?? "";
+    return altText.trim() === "" ? "" : `[${asText(altText)}]`;
   });
 }
 
