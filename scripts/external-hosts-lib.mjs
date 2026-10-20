@@ -43,6 +43,17 @@
  * ``alternate``, Open-Graph and other ``<meta>`` content, a JSON-LD
  * ``@context``.
  *
+ * Reported although the browser may not fetch it, since a file scan cannot
+ * tell what a page runs or which element a style rule matches (conservative
+ * findings, each loaded in Chromium 149 on 2026-10-20): a worker script on
+ * another origin, which Chromium refuses before any request; an SVG ``<use>``
+ * reference on another origin, refused the same way; a
+ * protocol-relative ``importScripts()`` URL in a script's text, which does
+ * not resolve in a blob: worker; a script of a worker type the page never
+ * runs; an import map entry nothing imports; the ``url()`` of a ``<style>``
+ * rule no element matches; ``<input type=" image ">``, which with the spaces
+ * makes no image button.
+ *
  * Not read, so never reported: JavaScript beyond the loads above. The scan
  * reads files and runs nothing. ``.js`` files other than service workers are
  * skipped (a provider base URL in a bundle is a string, not a fetch), and a

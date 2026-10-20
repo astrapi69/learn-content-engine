@@ -267,8 +267,25 @@ describe("scanSite: the nine fetch forms the original passes (astrapi69/bibliogo
   });
 });
 
-describe("scanSite: around the nine forms (each variant Chromium fetched, 2026-10-20)", () => {
+/**
+ * Variants of the nine forms, and the non-findings next to them. Each page
+ * was loaded in headless Chromium 149 on 2026-10-20, every request to another
+ * host answered locally. Chromium requested no third-party URL that the scan
+ * leaves out, and every URL the scan reports except the conservative findings
+ * the tests name: a file scan cannot tell whether a page runs a script or
+ * whether a style rule matches an element, so it reports the reference either
+ * way.
+ */
+describe("scanSite: around the nine forms", () => {
   it("reads every load of an inline script: dynamic import(), importScripts(), new Worker(), import and export from", () => {
+    // Chromium requested dynamic.js, commented.js, re-export.js and
+    // side-effect.js. The other four are conservative: Chromium refuses a
+    // worker script from another origin before any request (each constructor
+    // on its own; in this input the fourth script does not even run, since
+    // import.meta in a classic script is a syntax error), and an
+    // importScripts() call fails before its first fetch when one of its URLs
+    // does not resolve, as //cdn.example/b.js does not in a blob: worker
+    // (a.js on its own is fetched).
     expect(
       reportLines(
         '<script>import("https://cdn.example/dynamic.js");</script>' +
@@ -309,6 +326,8 @@ describe("scanSite: around the nine forms (each variant Chromium fetched, 2026-1
   });
 
   it("reads a script element whatever its type: worker code is often kept in one", () => {
+    // Conservative as it stands: Chromium does not run this script, and
+    // requests w.js once the page makes a worker of its text.
     expect(reportLines('<script type="text/js-worker">importScripts("https://cdn.example/w.js");</script>')).toEqual([
       "index.html: <script> importScripts() -> https://cdn.example/w.js",
     ]);
@@ -325,6 +344,8 @@ describe("scanSite: around the nine forms (each variant Chromium fetched, 2026-1
   });
 
   it("reads an import map's entries, the URLs a bare import resolves to", () => {
+    // Conservative: Chromium requests an entry only when something imports
+    // it, and nothing does here.
     expect(
       reportLines(
         '<script type="importmap">{"imports": {"m": "https://cdn.example/m.js", "local": "./l.js"},' +
@@ -335,6 +356,9 @@ describe("scanSite: around the nine forms (each variant Chromium fetched, 2026-1
   });
 
   it("reads the SVG elements that load what href or xlink:href names; an SVG <a> stays a hyperlink", () => {
+    // Chromium requested x.png, fe.png (although nothing applies the filter)
+    // and s.js. s.svg is conservative: Chromium loads a <use> reference only
+    // from the page's own origin and refuses this one before any request.
     expect(
       reportLines(
         '<svg><image xlink:href="https://cdn.example/x.png"/><filter id="f"><feImage href="https://cdn.example/fe.png"/></filter>' +
@@ -350,12 +374,18 @@ describe("scanSite: around the nine forms (each variant Chromium fetched, 2026-1
   });
 
   it("reads <input src> only for type=image, the one input type that fetches it", () => {
+    // Chromium requested a.png (the keyword in any case), not t.png or u.png,
+    // and not p.png either: with spaces around it the keyword makes no image
+    // button. The scan reports p.png all the same (conservative).
     expect(
       reportLines(
-        '<input type=" IMAGE " src="https://cdn.example/a.png"><input type="text" src="https://cdn.example/t.png">' +
-          '<input src="https://cdn.example/u.png">',
+        '<input type="IMAGE" src="https://cdn.example/a.png"><input type=" image " src="https://cdn.example/p.png">' +
+          '<input type="text" src="https://cdn.example/t.png"><input src="https://cdn.example/u.png">',
       ),
-    ).toEqual(["index.html: <input type=image src> -> https://cdn.example/a.png"]);
+    ).toEqual([
+      "index.html: <input type=image src> -> https://cdn.example/a.png",
+      "index.html: <input type=image src> -> https://cdn.example/p.png",
+    ]);
   });
 
   it("resolves other spellings by the URL standard, and keeps a root-relative backslash local", () => {
@@ -381,6 +411,9 @@ describe("scanSite: around the nine forms (each variant Chromium fetched, 2026-1
   });
 
   it("lets a <base href> on another host reach every relative reference: <style>, style attributes, srcdoc, module imports", () => {
+    // Chromium requested d.png, r.png and m.js. s.png is conservative: it
+    // requests the url() of a <style> rule only for an element the rule
+    // matches, and no element here has class "a".
     expect(
       reportLines(
         '<base href="https://cdn.example/"><style>.a { background: url(s.png); }</style><div style="background: url(d.png)"></div>' +
