@@ -150,6 +150,17 @@ describe("scripts/build-docs-site.mjs end-to-end", () => {
     expect(installed.version).toBe(lockfile.packages["node_modules/mermaid"].version);
   });
 
+  it("ships Mermaid's MIT licence next to the bundle: the licence asks for it in every copy (engine#272)", () => {
+    // Named after the bundle, as bundlers name extracted licences, and .txt so
+    // GitHub Pages serves it as text/plain rather than as a download.
+    const shipped = join(outDir, "assets/mermaid.min.js.LICENSE.txt");
+    expect(dirname(MERMAID_ASSET)).toBe("assets");
+    expect(existsSync(shipped)).toBe(true);
+    const licence = createRequire(import.meta.url).resolve("mermaid/LICENSE");
+    expect(readFileSync(shipped).equals(readFileSync(licence))).toBe(true);
+    expect(readFileSync(shipped, "utf8")).toMatch(/^The MIT License/);
+  });
+
   it("references the shipped bundle from every page that draws a diagram, and only from those", () => {
     const pagesWithDiagrams = readdirSync(join(REPO_ROOT, "docs"))
       .filter((name) => name.endsWith(".md"))

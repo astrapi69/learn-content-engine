@@ -13,7 +13,9 @@
  * The output carries the Mermaid bundle the diagram pages load
  * (``assets/mermaid.min.js``): the ``mermaid`` devDependency's own build, at
  * the version ``package-lock.json`` pins, so no page fetches anything from a
- * CDN (engine#272).
+ * CDN (engine#272). Mermaid's MIT licence ships next to it
+ * (``assets/mermaid.min.js.LICENSE.txt``): the licence asks for its notice
+ * in every copy, and the bundle does not carry it.
  */
 
 import { copyFileSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -25,7 +27,11 @@ import { MERMAID_ASSET, docTitle, renderDocPage, renderDocsIndex } from "./docs-
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const DOCS_DIR = join(REPO_ROOT, "docs");
-const MERMAID_BUNDLE = createRequire(import.meta.url).resolve("mermaid/dist/mermaid.min.js");
+const requireFromHere = createRequire(import.meta.url);
+const MERMAID_BUNDLE = requireFromHere.resolve("mermaid/dist/mermaid.min.js");
+const MERMAID_LICENSE = requireFromHere.resolve("mermaid/LICENSE");
+/** Named after the bundle, as bundlers name an extracted licence; .txt so it is served as text. */
+const MERMAID_LICENSE_ASSET = `${MERMAID_ASSET}.LICENSE.txt`;
 
 const args = process.argv.slice(2);
 const outFlag = args.indexOf("--out");
@@ -54,4 +60,5 @@ const pages = sources.map((name) => {
 writeFileSync(join(outDir, "index.html"), renderDocsIndex(pages));
 mkdirSync(dirname(join(outDir, MERMAID_ASSET)), { recursive: true });
 copyFileSync(MERMAID_BUNDLE, join(outDir, MERMAID_ASSET));
-console.log(`docs site: ${pages.length} page(s) + index + ${MERMAID_ASSET} -> ${outDir}`);
+copyFileSync(MERMAID_LICENSE, join(outDir, MERMAID_LICENSE_ASSET));
+console.log(`docs site: ${pages.length} page(s) + index + ${MERMAID_ASSET} + ${MERMAID_LICENSE_ASSET} -> ${outDir}`);
