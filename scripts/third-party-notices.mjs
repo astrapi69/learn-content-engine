@@ -242,7 +242,9 @@ export function noticeTexts(packages, options) {
 /**
  * The notices file for ``bundle`` (its path on the site): a header naming the
  * root package, then one section per package with its licence field and the
- * text of each notice file, verbatim.
+ * text of each notice file, verbatim but with LF line ends: some packages ship
+ * CRLF texts, and git normalises them on commit, so a file pinned by hash in
+ * a repository would no longer match its own checkout.
  */
 export function renderNotices(packages, bundle) {
   const [root] = packages;
@@ -258,7 +260,7 @@ export function renderNotices(packages, bundle) {
     [
       RULE,
       `${pkg.name}@${pkg.version} ${describe(pkg.license)}`,
-      ...pkg.files.map((file) => `${THIN}\n${file.name}\n${THIN}\n${file.text.trimEnd()}`),
+      ...pkg.files.map((file) => `${THIN}\n${file.name}\n${THIN}\n${file.text.replace(/\r\n?/g, "\n").trimEnd()}`),
     ].join("\n"),
   );
   return `${header}\n\n${sections.join("\n\n")}\n`;

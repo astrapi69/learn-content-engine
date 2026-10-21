@@ -241,4 +241,13 @@ describe("renderNotices", () => {
     expect(text.indexOf("dep licence")).toBeLessThan(text.indexOf("dep notice"));
     expect(text.endsWith("\n")).toBe(true);
   });
+
+  it("writes LF line ends whatever a package ships, so the file keeps its hash through git", () => {
+    const text = renderNotices(
+      [{ name: "crlf", version: "1.0.0", license: "MIT", files: [{ name: "LICENSE", text: "line one\r\nline two\rline three\r\n" }] }],
+      "assets/x.js",
+    );
+    expect(text).not.toContain("\r");
+    expect(text).toContain("line one\nline two\nline three");
+  });
 });
