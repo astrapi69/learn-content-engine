@@ -1,19 +1,29 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
+import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { describe, it, expect, afterAll } from "vitest";
+import { describe, it, expect, afterAll, beforeAll } from "vitest";
 
-import { docTitle, renderDocPage, renderDocsIndex, rewriteDocLink } from "../scripts/docs-site-lib.mjs";
+import {
+  MERMAID_ASSET,
+  docTitle,
+  renderDocPage,
+  renderDocsIndex,
+  rewriteDocLink,
+} from "../scripts/docs-site-lib.mjs";
+import { describeFinding, scanSite } from "../scripts/external-hosts-lib.mjs";
 
 /**
  * The docs site build (engine#152): every top-level docs/*.md is rendered to
  * HTML for GitHub Pages. The pure functions carry the two decisions that can
  * silently break the site: how a Markdown link becomes a site link, and how
  * a mermaid fence becomes a diagram. The end-to-end run proves the script
- * writes one page per doc plus an index.
+ * writes one page per doc plus an index, and ships the Mermaid renderer the
+ * pages load: from the site itself, never from a CDN that would receive every
+ * visitor's IP address (engine#272).
  */
 
 const REPO_ROOT = fileURLToPath(new URL("..", import.meta.url));
@@ -84,6 +94,16 @@ describe("renderDocPage", () => {
     expect(html).toContain("mermaid.min.js");
   });
 
+  it("loads Mermaid from the site itself, relative to the page, never from a CDN (engine#272)", () => {
+    const html = renderDocPage("# Diagrams\n\n```mermaid\nflowchart LR\n  A --> B\n```\n", "schema-diagrams");
+    // Relative, so it resolves under the /learn-content-engine/docs/ sub-path
+    // the site is served from; a leading slash would leave the repository path.
+    expect(MERMAID_ASSET).toBe("assets/mermaid.min.js");
+    expect(html).toContain(`<script src="${MERMAID_ASSET}"></script>`);
+    expect(html).not.toMatch(/<script[^>]*\ssrc="(?:[a-z][a-z0-9+.-]*:)?\/\//i);
+    expect(html).not.toContain("cdn.jsdelivr.net");
+  });
+
   it("keeps other fenced code as code, not as a mermaid container", () => {
     const html = renderDocPage('# X\n\n```json\n{"id": "l1"}\n```\n', "x");
     expect(html).toContain('<code class="language-json">');
@@ -104,10 +124,12 @@ describe("renderDocsIndex", () => {
 
 describe("scripts/build-docs-site.mjs end-to-end", () => {
   const outDir = mkdtempSync(join(tmpdir(), "lce-docs-site-"));
+  beforeAll(() => {
+    execFileSync("node", [join(REPO_ROOT, "scripts/build-docs-site.mjs"), "--out", outDir], { cwd: REPO_ROOT });
+  });
   afterAll(() => rmSync(outDir, { recursive: true, force: true }));
 
   it("writes one .html per top-level docs/*.md plus an index", () => {
-    execFileSync("node", [join(REPO_ROOT, "scripts/build-docs-site.mjs"), "--out", outDir], { cwd: REPO_ROOT });
     const sources = readdirSync(join(REPO_ROOT, "docs")).filter((name) => name.endsWith(".md"));
     expect(sources.length).toBeGreaterThan(0);
     for (const source of sources) {
@@ -116,5 +138,44 @@ describe("scripts/build-docs-site.mjs end-to-end", () => {
     const index = readFileSync(join(outDir, "index.html"), "utf8");
     expect(index).toContain('href="extensions.html"');
     expect(index).not.toContain("blog/");
+  });
+
+  it("ships the Mermaid bundle that package-lock.json pins, at the path the pages load it from (engine#272)", () => {
+    const shipped = join(outDir, MERMAID_ASSET);
+    expect(existsSync(shipped)).toBe(true);
+    const pinned = createRequire(import.meta.url).resolve("mermaid/dist/mermaid.min.js");
+    expect(readFileSync(shipped).equals(readFileSync(pinned))).toBe(true);
+    const lockfile = JSON.parse(readFileSync(join(REPO_ROOT, "package-lock.json"), "utf8"));
+    const installed = JSON.parse(readFileSync(join(dirname(pinned), "..", "package.json"), "utf8"));
+    expect(installed.version).toBe(lockfile.packages["node_modules/mermaid"].version);
+  });
+
+  it("ships Mermaid's MIT licence next to the bundle: the licence asks for it in every copy (engine#272)", () => {
+    // Named after the bundle, as bundlers name extracted licences, and .txt so
+    // GitHub Pages serves it as text/plain rather than as a download.
+    const shipped = join(outDir, "assets/mermaid.min.js.LICENSE.txt");
+    expect(dirname(MERMAID_ASSET)).toBe("assets");
+    expect(existsSync(shipped)).toBe(true);
+    const licence = createRequire(import.meta.url).resolve("mermaid/LICENSE");
+    expect(readFileSync(shipped).equals(readFileSync(licence))).toBe(true);
+    expect(readFileSync(shipped, "utf8")).toMatch(/^The MIT License/);
+  });
+
+  it("references the shipped bundle from every page that draws a diagram, and only from those", () => {
+    const pagesWithDiagrams = readdirSync(join(REPO_ROOT, "docs"))
+      .filter((name) => name.endsWith(".md"))
+      .filter((name) => readFileSync(join(REPO_ROOT, "docs", name), "utf8").includes("```mermaid"))
+      .map((name) => name.replace(/\.md$/, ".html"));
+    expect(pagesWithDiagrams).toContain("schema-diagrams.html");
+    const loadingPages = readdirSync(outDir)
+      .filter((name) => name.endsWith(".html"))
+      .filter((name) => readFileSync(join(outDir, name), "utf8").includes(`<script src="${MERMAID_ASSET}">`));
+    expect(loadingPages.sort()).toEqual(pagesWithDiagrams.sort());
+  });
+
+  it("gives the third-party host gate nothing to report: no foreign reference in any form it reads", () => {
+    const { scanned, findings } = scanSite(outDir, "https://astrapi69.github.io");
+    expect(scanned).toContain("schema-diagrams.html");
+    expect(findings.map(describeFinding)).toEqual([]);
   });
 });

@@ -6,7 +6,18 @@ import tseslint from "typescript-eslint";
 export default tseslint.config(
   {
     // The precompiled schema validators are generated code (engine#261).
-    ignores: ["dist/**", "node_modules/**", "coverage/**", "docs-api/**", "src/schema-validators.generated.ts"],
+    // docs-site/ carries the Mermaid bundle the docs pages load (engine#272);
+    // like docs-api/ and the assembled Pages site _site/ it is a gitignored
+    // build output, not source.
+    ignores: [
+      "dist/**",
+      "node_modules/**",
+      "coverage/**",
+      "docs-api/**",
+      "docs-site/**",
+      "_site/**",
+      "src/schema-validators.generated.ts",
+    ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,

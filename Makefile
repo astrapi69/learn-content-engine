@@ -8,7 +8,7 @@
 # quality gate (lint, typecheck, test, build) before pushing to the registry.
 
 .PHONY: help install ci build typecheck lint test test-watch coverage \
-        sync-types sync-types-check conformance-real pack-dry release-check \
+        sync-types sync-types-check conformance-real pages-check pack-dry release-check \
         publish publish-dry clean
 
 # Default
@@ -74,6 +74,12 @@ prose-check: ## Prose gate over docs/ + README (ms-check: em-dashes, invisible c
 		|| { echo "prose-check: docs/ yields fewer than 10 markdown files - wrong directory?"; exit 2; }
 	ms-check docs --exclude "blog/STYLE.md" --exclude "blog/de/STYLE.md"
 	ms-check README.md
+
+# ─── Pages site ──────────────────────────────────────────────────────
+
+pages-check: ## Assemble the Pages site (_site/), fail on a third-party reference in the forms the host gate reads (engine#272)
+	npm run docs:pages
+	npm run docs:pages:check
 
 # ─── Package ─────────────────────────────────────────────────────────
 

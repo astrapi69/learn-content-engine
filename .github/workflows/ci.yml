@@ -73,3 +73,15 @@ jobs:
 
       - name: API docs drift gate (TypeDoc build stays green, warnings are errors)
         run: npm run docs:api:check
+
+      # A third-party host gate for the Pages site (engine#272): the same
+      # assembly pages.yml deploys from main, scanned on every pull request,
+      # so a CDN script or a remote badge is caught before the merge and not
+      # first on the live site. The scan reads the site's HTML, CSS, web
+      # manifests and service workers for the forms listed in
+      # scripts/external-hosts-lib.mjs; it runs no JavaScript.
+      - name: Assemble the Pages site (npm run docs:pages, as pages.yml does)
+        run: npm run docs:pages
+
+      - name: Pages third-party host gate (static scan of HTML, CSS, manifests, service workers)
+        run: npm run docs:pages:check

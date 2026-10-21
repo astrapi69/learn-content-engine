@@ -64,6 +64,8 @@
     "docs:api": "typedoc",
     "docs:api:check": "typedoc --emit none",
     "docs:site": "node scripts/build-docs-site.mjs",
+    "docs:pages": "npm run docs:api && npm run docs:site && rm -rf _site && mkdir -p _site/schema && cp -r docs-api _site/api && cp -r docs-site _site/docs && cp schema/*.json _site/schema/ && cp .github/pages/index.html _site/index.html",
+    "docs:pages:check": "node scripts/check-external-hosts.mjs _site --origin https://astrapi69.github.io",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
