@@ -7,6 +7,29 @@ All notable changes to `learn-content-engine`. The format is inspired by
 
 ## [Unreleased]
 
+### The self-hosted Mermaid bundle ships the notices of everything it contains (engine#274)
+
+The docs site serves Mermaid's standalone bundle since engine#272, and next to
+it shipped only Mermaid's own licence. The bundle also contains the code of 73
+other packages: d3, dagre, cytoscape, KaTeX, DOMPurify and, bundled a level
+deeper into Mermaid's parser, langium, chevrotain (Apache-2.0, which asks for a
+copy of the licence itself) and the vscode-languageserver packages.
+Redistributing the bundle means shipping each of their notices.
+
+- `docs-site/assets/mermaid.min.js.LICENSE.txt` now carries the licence and
+  NOTICE files of all 74 packages. What the bundle contains is read from its
+  source maps (`scripts/third-party-notices.mjs`,
+  `scripts/mermaid-notices.mjs`), following `@mermaid-js/parser`'s own maps,
+  not from the dependency tree: the bundle was built from Mermaid's lockfile,
+  so versions differ from what npm installs here, and langium and chevrotain
+  are not installed at all.
+- Each text comes from the package installed at that exact version, or from
+  `third-party/licenses/`, which `scripts/vendor-licence-texts.mjs` fills with
+  `npm pack` (25 packages today). The build fails on a source map entry it
+  cannot attribute and on a package without a licence text, naming the
+  command that fetches it.
+- Nothing in the npm package changes; `third-party/` is not published.
+
 ### The Pages site loads nothing from a third-party host (engine#272)
 
 The docs site and the API reference on
@@ -22,9 +45,9 @@ request to another host (2026-10-20).
 - The docs site serves Mermaid itself: `npm run docs:site` copies the
   bundle of the `mermaid` devDependency, the version `package-lock.json`
   pins, to `docs-site/assets/mermaid.min.js` (`/docs/assets/` on the site),
-  and the pages load it by a relative path. Mermaid's MIT licence ships
-  next to it as `mermaid.min.js.LICENSE.txt`, since the bundle does not
-  carry it.
+  and the pages load it by a relative path. The notices of what the bundle
+  contains ship next to it as `mermaid.min.js.LICENSE.txt` (see engine#274
+  below; the first version of this fix shipped Mermaid's licence only).
 - The API reference shows the badges as text links: a local TypeDoc plugin
   (`scripts/typedoc-plugin-remote-images.mjs`) replaces a remote image in
   rendered Markdown with its alt text in brackets, so `/api/` reads
