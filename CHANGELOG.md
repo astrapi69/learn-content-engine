@@ -28,6 +28,11 @@ Redistributing the bundle means shipping each of their notices.
   `npm pack` (25 packages today). The build fails on a source map entry it
   cannot attribute and on a package without a licence text, naming the
   command that fetches it.
+- `scripts/write-mermaid-notices.mjs` writes the same file for a Mermaid
+  bundle vendored elsewhere, from a scratch install of that version, and
+  fetches missing texts on request (adaptive-learner#3813). A package that
+  ships its licence only as a README section, as fastdom 1.0.12 does, gets
+  that section as `LICENSE.from-README` with a line naming its origin.
 - Nothing in the npm package changes; `third-party/` is not published.
 
 ### The Pages site loads nothing from a third-party host (engine#272)

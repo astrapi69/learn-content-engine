@@ -61,6 +61,24 @@ export function isLicenceFile(name) {
   return LICENCE_FILE.test(name);
 }
 
+/**
+ * The licence section of a README (a ``License``/``Licence`` heading of any
+ * level, up to the next heading of the same or a higher level), for a
+ * package that ships its licence only there. Null when there is no such
+ * section or it holds no licence text (a grant of permission or a copyright
+ * line).
+ */
+export function licenceSectionOf(readme) {
+  const lines = readme.split("\n");
+  const start = lines.findIndex((line) => /^#{1,6}\s*licen[cs]e\b/i.test(line));
+  if (start === -1) return null;
+  const level = /^#+/.exec(lines[start])[0].length;
+  let end = start + 1;
+  while (end < lines.length && !(/^#+/.test(lines[end]) && /^#+/.exec(lines[end])[0].length <= level)) end += 1;
+  const section = lines.slice(start + 1, end).join("\n").trim();
+  return /permission is hereby granted|copyright/i.test(section) ? `${section}\n` : null;
+}
+
 const keyOf = (pkg) => `${pkg.name}@${pkg.version}`;
 const byNameThenVersion = (a, b) =>
   a.name.localeCompare(b.name) || a.version.localeCompare(b.version, undefined, { numeric: true });
@@ -178,28 +196,43 @@ function readTexts(dir) {
   return { license: licenseOf(manifest), files: names.map((name) => ({ name, text: readFileSync(join(dir, name), "utf8") })) };
 }
 
+/** Each package's texts: the installed copy at that version, else the vendored one, whichever holds a licence file; null for neither. */
+function textSources(packages, { searchFrom, vendorDir }) {
+  const installed = installedPackages(searchFrom);
+  const withLicence = (dir) => {
+    if (!dir || !existsSync(join(dir, "package.json"))) return null;
+    const texts = readTexts(dir);
+    return texts.files.some((file) => isLicenceFile(file.name)) ? texts : null;
+  };
+  // The installed copy first; a vendored one when it is not installed, or
+  // installed without a licence file (fastdom ships its licence in the README).
+  return packages.map((pkg) => {
+    const texts = withLicence(installed.get(keyOf(pkg))) ?? withLicence(join(vendorDir, vendorDirName(pkg)));
+    return texts ? { ...pkg, ...texts } : null;
+  });
+}
+
+/**
+ * The ``name@version`` of every package whose licence text is neither
+ * installed under ``searchFrom`` at that version nor vendored in
+ * ``vendorDir`` (or whose texts hold no licence file).
+ */
+export function missingNoticeTexts(packages, options) {
+  return textSources(packages, options).flatMap((texts, i) => (texts ? [] : [keyOf(packages[i])]));
+}
+
 /**
  * Each package with its licence field and notice files: from the package
  * installed under ``searchFrom`` at that exact version, else from
  * ``vendorDir/<vendorDirName>``. Throws listing every package that has
  * neither, or whose texts hold no licence file.
  */
-export function noticeTexts(packages, { searchFrom, vendorDir }) {
-  const installed = installedPackages(searchFrom);
-  const missing = [];
-  const result = packages.map((pkg) => {
-    const vendored = join(vendorDir, vendorDirName(pkg));
-    const dir = installed.get(keyOf(pkg)) ?? (existsSync(join(vendored, "package.json")) ? vendored : null);
-    const texts = dir ? readTexts(dir) : null;
-    if (!texts || !texts.files.some((file) => isLicenceFile(file.name))) {
-      missing.push(keyOf(pkg));
-      return null;
-    }
-    return { ...pkg, ...texts };
-  });
+export function noticeTexts(packages, options) {
+  const result = textSources(packages, options);
+  const missing = result.flatMap((texts, i) => (texts ? [] : [keyOf(packages[i])]));
   if (missing.length > 0) {
     throw new Error(
-      `${missing.length} package(s) without a licence text, neither installed at that version nor vendored in ${vendorDir}:\n  ` +
+      `${missing.length} package(s) without a licence text, neither installed at that version nor vendored in ${options.vendorDir}:\n  ` +
         `${missing.join("\n  ")}\nFetch them with: node scripts/vendor-licence-texts.mjs ${missing.join(" ")}`,
     );
   }

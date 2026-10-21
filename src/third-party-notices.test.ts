@@ -13,6 +13,8 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   bundledPackages,
   isNoticeFile,
+  licenceSectionOf,
+  missingNoticeTexts,
   findPackageDir,
   noticeTexts,
   renderNotices,
@@ -130,6 +132,18 @@ describe("isNoticeFile", () => {
   });
 });
 
+describe("licenceSectionOf", () => {
+  it("takes a README's licence section up to the next heading of its level", () => {
+    const readme = "# pkg\n\n## Usage\n\nx\n\n## License\n\n(The MIT License)\n\nCopyright (c) 2016 A\n\n### Note\n\nkept\n\n## Contributors\n\nB\n";
+    expect(licenceSectionOf(readme)).toBe("(The MIT License)\n\nCopyright (c) 2016 A\n\n### Note\n\nkept\n");
+  });
+
+  it("returns null without a licence heading, and for a section that only names the licence", () => {
+    expect(licenceSectionOf("# pkg\n\nno licence here\n")).toBeNull();
+    expect(licenceSectionOf("# pkg\n\n## Licence\n\nMIT\n")).toBeNull();
+  });
+});
+
 describe("findPackageDir", () => {
   it("finds a package nested under its dependent before a hoisted one, as Node resolves it", () => {
     const modules = join(base, "node_modules");
@@ -177,6 +191,29 @@ describe("noticeTexts", () => {
         { searchFrom: base, vendorDir: join(base, "vendor") },
       ),
     ).toThrow(/2 package\(s\) without a licence text[\s\S]*ghost@1\.0\.0[\s\S]*@s\/ghost@2\.0\.0[\s\S]*vendor-licence-texts\.mjs/);
+  });
+
+  it("names the packages that lack a text without throwing, for a caller that fetches them", () => {
+    const modules = join(base, "node_modules");
+    writePackage(join(modules, "inst"), "inst", "1.0.0", { LICENSE: "inst\n" });
+    expect(
+      missingNoticeTexts(
+        [
+          { name: "inst", version: "1.0.0" },
+          { name: "ghost", version: "1.0.0" },
+        ],
+        { searchFrom: base, vendorDir: join(base, "vendor") },
+      ),
+    ).toEqual(["ghost@1.0.0"]);
+  });
+
+  it("takes the vendored copy when the installed one ships no licence file", () => {
+    const modules = join(base, "node_modules");
+    writePackage(join(modules, "readme-only"), "readme-only", "1.0.0", { "README.md": "## License\n\nMIT\n" });
+    const vendor = join(base, "vendor");
+    writePackage(join(vendor, "readme-only@1.0.0"), "readme-only", "1.0.0", { "LICENSE.from-README": "extracted\n" }, "MIT");
+    const [pkg] = noticeTexts([{ name: "readme-only", version: "1.0.0" }], { searchFrom: base, vendorDir: vendor });
+    expect(pkg?.files.map((file) => file.name)).toEqual(["LICENSE.from-README"]);
   });
 
   it("refuses a vendored copy that holds no licence file", () => {

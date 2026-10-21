@@ -51,8 +51,12 @@ export function mermaidBundlePackages(mermaidDir) {
   return bundledPackages(join(mermaidDir, "dist", "mermaid.min.js.map"), mermaidRules(mermaidDir));
 }
 
-/** The notices text for the bundle served at ``bundle`` (its path on the site). */
-export function mermaidNotices(mermaidDir, bundle) {
-  const packages = noticeTexts(mermaidBundlePackages(mermaidDir), { searchFrom: REPO_ROOT, vendorDir: VENDOR_DIR });
+/**
+ * The notices text for the bundle served at ``bundle`` (its path on the
+ * site). Texts come from packages installed under ``searchFrom`` and from
+ * ``vendorDir``; both default to this repository's.
+ */
+export function mermaidNotices(mermaidDir, bundle, { searchFrom = REPO_ROOT, vendorDir = VENDOR_DIR } = {}) {
+  const packages = noticeTexts(mermaidBundlePackages(mermaidDir), { searchFrom, vendorDir });
   return renderNotices(packages, bundle);
 }

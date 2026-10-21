@@ -5,4 +5,4 @@ import type { BundleRules, PackageId } from "./third-party-notices.mjs";
 export const VENDOR_DIR: string;
 export function mermaidRules(mermaidDir: string): BundleRules;
 export function mermaidBundlePackages(mermaidDir: string): PackageId[];
-export function mermaidNotices(mermaidDir: string, bundle: string): string;
+export function mermaidNotices(mermaidDir: string, bundle: string, options?: { searchFrom?: string; vendorDir?: string }): string;
