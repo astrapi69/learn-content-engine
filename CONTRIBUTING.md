@@ -21,6 +21,13 @@ Useful targets (`make help` lists all):
   the host gate reads (`npm run docs:pages:check`; the forms are listed in
   `scripts/external-hosts-lib.mjs`). It reads files and runs no JavaScript.
   CI runs it on every pull request.
+- After a `mermaid` bump, `npm run docs:site` may stop with a list of
+  packages whose licence text is missing: the site ships the notice of every
+  package the Mermaid bundle's source maps name
+  (`docs-site/assets/mermaid.min.js.LICENSE.txt`, engine#274), and a bundled
+  version that is not installed here has to be vendored. Run the command the
+  build prints (`node scripts/vendor-licence-texts.mjs <name@version> ...`,
+  which uses `npm pack`) and commit `third-party/licenses/`.
 
 `make release-check` must stay green after every change.
 

@@ -15,6 +15,7 @@ import {
   rewriteDocLink,
 } from "../scripts/docs-site-lib.mjs";
 import { describeFinding, scanSite } from "../scripts/external-hosts-lib.mjs";
+import { mermaidBundlePackages } from "../scripts/mermaid-notices.mjs";
 
 /**
  * The docs site build (engine#152): every top-level docs/*.md is rendered to
@@ -150,15 +151,25 @@ describe("scripts/build-docs-site.mjs end-to-end", () => {
     expect(installed.version).toBe(lockfile.packages["node_modules/mermaid"].version);
   });
 
-  it("ships Mermaid's MIT licence next to the bundle: the licence asks for it in every copy (engine#272)", () => {
+  it("ships the licence of every package the Mermaid bundle contains next to it (engine#272, engine#274)", () => {
     // Named after the bundle, as bundlers name extracted licences, and .txt so
-    // GitHub Pages serves it as text/plain rather than as a download.
+    // GitHub Pages serves it as text/plain rather than as a download. The
+    // standalone bundle carries the code of every package its source maps
+    // name, so every one of their notices ships, not only Mermaid's.
     const shipped = join(outDir, "assets/mermaid.min.js.LICENSE.txt");
     expect(dirname(MERMAID_ASSET)).toBe("assets");
     expect(existsSync(shipped)).toBe(true);
-    const licence = createRequire(import.meta.url).resolve("mermaid/LICENSE");
-    expect(readFileSync(shipped).equals(readFileSync(licence))).toBe(true);
-    expect(readFileSync(shipped, "utf8")).toMatch(/^The MIT License/);
+    const text = readFileSync(shipped, "utf8");
+    const mermaidDir = dirname(createRequire(import.meta.url).resolve("mermaid/package.json"));
+    const packages = mermaidBundlePackages(mermaidDir);
+    const mermaidVersion = createRequire(import.meta.url)("mermaid/package.json").version as string;
+    expect(packages[0]).toEqual({ name: "mermaid", version: mermaidVersion });
+    expect(text.startsWith(`Third-party notices for ${MERMAID_ASSET} (mermaid ${mermaidVersion})\n`)).toBe(true);
+    expect(text).toContain(readFileSync(join(mermaidDir, "LICENSE"), "utf8").trimEnd());
+    for (const pkg of packages) expect(text).toContain(`${pkg.name}@${pkg.version} (`);
+    expect(packages.length).toBeGreaterThan(50);
+    expect(text).toMatch(/\nchevrotain@[\d.]+ \(Apache-2\.0\)\n/);
+    expect(text).toContain("Apache License");
   });
 
   it("references the shipped bundle from every page that draws a diagram, and only from those", () => {

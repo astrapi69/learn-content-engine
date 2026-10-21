@@ -13,9 +13,11 @@
  * The output carries the Mermaid bundle the diagram pages load
  * (``assets/mermaid.min.js``): the ``mermaid`` devDependency's own build, at
  * the version ``package-lock.json`` pins, so no page loads Mermaid from a
- * CDN (engine#272). Mermaid's MIT licence ships next to it
- * (``assets/mermaid.min.js.LICENSE.txt``): the licence asks for its notice
- * in every copy, and the bundle does not carry it.
+ * CDN (engine#272). The notices of everything the bundle contains ship next
+ * to it (``assets/mermaid.min.js.LICENSE.txt``): Mermaid's licence and the
+ * licence and NOTICE files of every package the bundle's source maps name,
+ * because each licence asks for its notice in every copy (engine#274,
+ * ``scripts/mermaid-notices.mjs``).
  */
 
 import { copyFileSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -24,12 +26,13 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { MERMAID_ASSET, docTitle, renderDocPage, renderDocsIndex } from "./docs-site-lib.mjs";
+import { mermaidNotices } from "./mermaid-notices.mjs";
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const DOCS_DIR = join(REPO_ROOT, "docs");
 const requireFromHere = createRequire(import.meta.url);
 const MERMAID_BUNDLE = requireFromHere.resolve("mermaid/dist/mermaid.min.js");
-const MERMAID_LICENSE = requireFromHere.resolve("mermaid/LICENSE");
+const MERMAID_DIR = dirname(requireFromHere.resolve("mermaid/package.json"));
 /** Named after the bundle, as bundlers name an extracted licence; .txt so it is served as text. */
 const MERMAID_LICENSE_ASSET = `${MERMAID_ASSET}.LICENSE.txt`;
 
@@ -60,5 +63,5 @@ const pages = sources.map((name) => {
 writeFileSync(join(outDir, "index.html"), renderDocsIndex(pages));
 mkdirSync(dirname(join(outDir, MERMAID_ASSET)), { recursive: true });
 copyFileSync(MERMAID_BUNDLE, join(outDir, MERMAID_ASSET));
-copyFileSync(MERMAID_LICENSE, join(outDir, MERMAID_LICENSE_ASSET));
+writeFileSync(join(outDir, MERMAID_LICENSE_ASSET), mermaidNotices(MERMAID_DIR, MERMAID_ASSET));
 console.log(`docs site: ${pages.length} page(s) + index + ${MERMAID_ASSET} + ${MERMAID_LICENSE_ASSET} -> ${outDir}`);
