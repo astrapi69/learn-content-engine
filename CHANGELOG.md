@@ -7,6 +7,18 @@ All notable changes to `learn-content-engine`. The format is inspired by
 
 ## [Unreleased]
 
+### A parametric variable's description says what the engine does (engine#277)
+
+The description of `ExerciseVariable` in `schema/lesson.schema.json` ended
+"The engine validates the contract and never samples or evaluates". That has
+not been true since engine#220: `resolveExerciseVariables` samples and
+evaluates a parametric exercise and `evaluateExpression` is exported. The
+description now names both helpers and that the random source is a parameter.
+Consumers that render the schema's descriptions carried the false sentence:
+adaptive-learner's generated lesson-format reference publishes it in eight
+languages and follows on its next re-pin. No type, field or rule changes;
+`x-schema-version` stays 1.19.
+
 ### The self-hosted Mermaid bundle ships the notices of everything it contains (engine#274)
 
 The docs site serves Mermaid's standalone bundle since engine#272, and next to
