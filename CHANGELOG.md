@@ -7,6 +7,8 @@ All notable changes to `learn-content-engine`. The format is inspired by
 
 ## [Unreleased]
 
+## [0.42.1] - 2026-10-22
+
 ### A parametric variable's description says what the engine does (engine#277)
 
 The description of `ExerciseVariable` in `schema/lesson.schema.json` ended
