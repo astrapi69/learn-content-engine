@@ -142,7 +142,7 @@ Three classes, and they are not equally urgent:
   (see [schema-version policy](concepts.md#schema-version-policy-additive)), so
   content authored against an older version stays valid under a newer one: a
   manifest that declares `schema_version: "1.2"` keeps validating although the
-  manifest schema_version field currently defaults to 1.7. A repo that does not
+  field's default has moved on since. A repo that does not
   want the new field does not need the release.
 - **New error rules.** These move the pin, because content that was valid
   before can be invalid after. Rare under the additive policy, but not
