@@ -140,6 +140,11 @@ a **new `ExerciseType` now starts here**:
    run `make sync-types` to regenerate `src/types/lesson-schema.generated.ts`.
    The [byte baseline](src/schema-baseline.test.ts) intentionally goes red on a
    schema change - update it in the same commit so the change is deliberate.
+   Every schema change, description-only included, bumps `x-schema-version`
+   in both schema files (they move in lockstep) and adds a row to the
+   [version ledger](src/__fixtures__/schema-baseline/schema-version-ledger.json);
+   the [ledger test](src/schema-version-ledger.test.ts) names the digest to add
+   and fails on a change without a bump and on a bump without a change (engine#279).
 2. Mirror the new type's cross-field rule in `src/rules.ts` (RED first: add a
    rejecting negative test, then implement) with `E-*`/`W-*` rule ids + catalog
    rows. A message that names a value (a term, an id, a count) also passes it as

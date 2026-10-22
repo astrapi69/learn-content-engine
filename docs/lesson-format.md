@@ -956,7 +956,12 @@ lockstep and changes nothing else, so `schema_version`'s default stays at
 `purpose` (what `bridge` lifts) and two line breaks restored after v1.16
 (engine#182). v1.19 (engine#242) adds an exercise field, `case_sensitive`;
 the manifest schema moves its `x-schema-version` in lockstep and changes
-nothing else. When comparing your pin
+nothing else. v1.20 is a description-only edit again (engine#277, the
+`ExerciseVariable` description). Release 0.42.1 first published it under
+1.19, against this rule, and 0.42.2 gives it its number. Since 0.42.2 a
+ledger test enforces the rule in both directions (engine#279,
+`src/schema-version-ledger.test.ts`): content that changes under an
+unchanged number fails, and so does a number that rises without a change. When comparing your pin
 against a new engine release, `x-schema-version` tells you the schema
 DEFINITION moved; `schema_version` tells you whether your MANIFESTS need a
 field update.

@@ -7,6 +7,42 @@ All notable changes to `learn-content-engine`. The format is inspired by
 
 ## [Unreleased]
 
+## [0.42.2] - 2026-10-22
+
+### `x-schema-version` moves with every schema change, and only then (engine#279)
+
+0.42.1 changed a schema description and kept `x-schema-version` at 1.19,
+although the counter bumps on every change to the schema definition,
+description-only edits included (docs/lesson-format.md, since #139). Two
+different contents were published as 1.19, and a consumer that compares the
+number to see whether the definition moved saw nothing.
+
+- **1.20.** Both schema files move to 1.20, in lockstep as always; the
+  content is 0.42.1's. `quality-rules.json` and `grading-presets.json` carry
+  the new `$schema-version`.
+- **A ledger gate, both directions.** `src/__fixtures__/schema-baseline/schema-version-ledger.json`
+  maps each version to the digest of the schema set's content (both files,
+  `$id` and `x-schema-version` removed). `src/schema-version-ledger.test.ts`,
+  part of `make release-check`, fails when:
+  - the content changes under an unchanged number;
+  - a number rises without a change;
+  - the two files are out of lockstep;
+  - two rows share a digest.
+  Seeded negative probes cover each case, on a ledger that is consistent by
+  construction. Before the bump the test failed on this repository with "the
+  schema content changed but x-schema-version is still 1.19".
+- **History.** A check over every release tag found content that changed
+  under an unchanged number seven times. Five predate the rule: 0.7.0, 0.8.1
+  and 0.8.2, 0.14.0, 0.20.0. Two came after it: 0.24.1 (1.14) and 0.42.1
+  (1.19). A number that rose without a change never occurred.
+- **Docs name no version where none is needed.** README, `concepts.md`,
+  `architecture.md`, `comparative-analysis.md` and the three blog posts in
+  both languages no longer state the current schema or package version; the
+  schema file states it. A diagram in `comparative-analysis.md` still said
+  "schema 1.15" four versions later, out of reach of the version-claims gate.
+  The manifest `schema_version` default in `lesson-format.md` stays: authors
+  need it, and it keeps the version-claims gate from scanning blind.
+
 ## [0.42.1] - 2026-10-22
 
 ### A parametric variable's description says what the engine does (engine#277)
@@ -19,7 +55,9 @@ description now names both helpers and that the random source is a parameter.
 Consumers that render the schema's descriptions carried the false sentence:
 adaptive-learner's generated lesson-format reference publishes it in eight
 languages and follows on its next re-pin. No type, field or rule changes;
-`x-schema-version` stays 1.19.
+`x-schema-version` stays 1.19. *Correction (0.42.2): this was wrong. A
+description-only edit bumps `x-schema-version` too (docs/lesson-format.md);
+0.42.2 gives this content its number, 1.20.*
 
 ### The self-hosted Mermaid bundle ships the notices of everything it contains (engine#274)
 

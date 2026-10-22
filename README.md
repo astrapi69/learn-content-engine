@@ -17,7 +17,7 @@ Beyond validity it checks a lesson against the shared quality minimums
 instance (`resolveExerciseVariables`) and maps a lesson run's percent to the
 verdict of its set's `evaluation` block (`gradeFor`), so every consumer gets
 the same answer.
-Tracks the lesson schema, currently **v1.19**.
+Ships the lesson schema it validates against (`schema/lesson.schema.json`; its version is `x-schema-version` there).
 
 ## Install
 
